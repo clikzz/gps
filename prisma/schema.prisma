@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserProfile {
+  id           String         @id @db.Uuid
+  email        String         @unique
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+  name         String?
+  avatar_url   String?
+  
+  pets         Pets[]
+  photoLogs    PhotoLog[]
+  forums       Forum[]
+  badges       Badges[]
+  reviews      Reviews[]
+  lostPets     LostPets[]     @relation("UserReportedLostPets")
+  marketplaceItems MarketplaceItems[]
+
+  @@map("UserProfiles")
+}
+
+model Pets {
+  id           BigInt         @id @default(autoincrement())
+  user_id      String         @db.Uuid
+  name         String?
+  species      String?
+  breed        String?
+  birth_date   DateTime?
+  LostPets     LostPets[]
+  Medications  Medications[]
+  user         UserProfile    @relation(fields: [user_id], references: [id])
+  Vaccinations Vaccinations[]
+
+  @@map("Pets")
+}
+
+model PhotoLog {
+  id          BigInt      @id @default(autoincrement())
+  user_id     String      @db.Uuid
+  photo_url   String?
+  title       String?
+  description String?
+  taken_at    DateTime?
+  hashtags    String[]
+  user        UserProfile @relation(fields: [user_id], references: [id])
+
+  @@map("PhotoLog")
+}
+
+model Vaccinations {
+  id               BigInt    @id @default(autoincrement())
+  pet_id           BigInt
+  type             String?
+  application_date DateTime?
+  next_dose_date   DateTime?
+  pet              Pets      @relation(fields: [pet_id], references: [id])
+
+  @@map("Vaccinations")
+}
+
+model Medications {
+  id       BigInt  @id @default(autoincrement())
+  pet_id   BigInt
+  name     String?
+  dose     String?
+  duration String?
+  pet      Pets    @relation(fields: [pet_id], references: [id])
+
+  @@map("Medications")
+}
+
+model Forum {
+  id         BigInt      @id @default(autoincrement())
+  user_id    String      @db.Uuid
+  title      String?
+  content    String?
+  created_at DateTime    @default(now())
+  user       UserProfile @relation(fields: [user_id], references: [id])
+
+  @@map("Forum")
+}
+
+model Badges {
+  id         BigInt      @id @default(autoincrement())
+  user_id    String      @db.Uuid
+  badge_type String?
+  awarded_at DateTime    @default(now())
+  user       UserProfile @relation(fields: [user_id], references: [id])
+
+  @@map("Badges")
+}
+
+model Services {
+  id             BigInt    @id @default(autoincrement())
+  name           String?
+  address        String?
+  hours          String?
+  contact_info   String?
+  average_rating Float?
+  reviews        Reviews[]
+
+  @@map("Services")
+}
+
+model Reviews {
+  id         BigInt      @id @default(autoincrement())
+  service_id BigInt
+  user_id    String      @db.Uuid
+  rating     Int?
+  comment    String?
+  created_at DateTime    @default(now())
+  service    Services    @relation(fields: [service_id], references: [id])
+  user       UserProfile @relation(fields: [user_id], references: [id])
+
+  @@map("Reviews")
+}
+
+model LostPets {
+  id          BigInt      @id @default(autoincrement())
+  pet_id      BigInt
+  reported_by String      @db.Uuid
+  location    String?
+  reported_at DateTime    @default(now())
+  pet         Pets        @relation(fields: [pet_id], references: [id])
+  user        UserProfile @relation("UserReportedLostPets", fields: [reported_by], references: [id])
+
+  @@map("LostPets")
+}
+
+model MarketplaceItems {
+  id             BigInt      @id @default(autoincrement())
+  user_id        String      @db.Uuid
+  title          String?
+  image_url      String?
+  description    String?
+  condition      String?
+  price          Float?
+  contact_method String?
+  created_at     DateTime    @default(now())
+  status         String?     @default("active")
+  user           UserProfile @relation(fields: [user_id], references: [id])
+
+  @@map("MarketplaceItems")
+}

@@ -1,4 +1,4 @@
-name: Deploy to University Server
+name: Deploy Next.js to University Server
 
 on:
   push:
@@ -12,13 +12,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up OpenVPN
-        uses: kota65535/github-actions-openvpn@v2
-        with:
-          config_file: ${{ secrets.OVPN_CONFIG }}
-          username: ${{ secrets.VPN_USERNAME }}
-          password: ${{ secrets.VPN_PASSWORD }}
+      # Configurar VPN con autenticación
+      - name: Install OpenVPN
+        run: |
+          sudo apt update
+          sudo apt install -y openvpn
 
+      - name: Setup VPN configuration
+        run: |
+          echo "${{ secrets.OVPN_CONFIG }}" > config.ovpn
+          chmod 600 config.ovpn
+          
+          # Crear archivo de credenciales para OpenVPN
+          echo "${{ secrets.VPN_USERNAME }}" > vpn-credentials.txt
+          echo "${{ secrets.VPN_PASSWORD }}" >> vpn-credentials.txt
+          chmod 600 vpn-credentials.txt
+
+      - name: Connect to VPN
+        run: |
+          sudo openvpn --config config.ovpn --auth-user-pass vpn-credentials.txt --daemon
+          # Esperar a que se conecte
+          sleep 15
+          # Comprobar la conexión
+          echo "Comprobando conexión VPN..."
+          ifconfig
+
+      # Configurar SSH
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
@@ -31,17 +50,18 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
+      # Desplegar la aplicación
+      - name: Test connection
+        run: |
+          # Comprobar conexión al servidor
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "echo Conexión exitosa"
+
       - name: Deploy to server
         run: |
-          # Crear directorio inicial si no existe
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "mkdir -p ~/nextjs-project"
-          
-          # Clonar o actualizar el repositorio en el servidor
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && git init && git remote add origin ${{ github.server_url }}/${{ github.repository }} || true"
+          # Clonar el repositorio en el servidor
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && git init ."
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && git remote add origin ${{ github.server_url }}/${{ github.repository }} || git remote set-url origin ${{ github.server_url }}/${{ github.repository }}"
           ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && git fetch --all && git reset --hard origin/main"
           
-          # Crear archivo .env con la URL de la base de datos
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "echo 'DATABASE_URL=${{ secrets.DATABASE_URL }}' > ~/nextjs-project/.env"
-          
-          # Ejecutar el script de despliegue
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && chmod +x deploy.sh && ./deploy.sh"
+          # Ejecutar script de despliegue
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && ./deploy.sh"

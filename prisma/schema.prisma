@@ -10,7 +10,7 @@ datasource db {
 
 model UserProfile {
   id           String         @id @db.Uuid
-  public_id    BigInt?        @default(autoincrement())
+  public_id    BigInt?        @default(dbgenerated("nextval('userprofiles_public_id_seq')")) @db.BigInt
   email        String         @unique
   created_at   DateTime       @default(now())
   updated_at   DateTime       @updatedAt

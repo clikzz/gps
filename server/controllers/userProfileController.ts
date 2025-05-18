@@ -8,7 +8,7 @@ export const fetchUserProfile = async (userId: string) => {
   const profile = await getUserProfile(userId);
   const userProfile = {
     ...profile,
-    public_id: profile?.public_id.toString(),
+    public_id: profile?.public_id ? profile.public_id.toString() : undefined,
     pets: profile?.pets.map((pet: Pet) => ({
       ...pet,
       id: pet.id.toString(),

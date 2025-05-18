@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model UserProfile {
@@ -29,10 +30,15 @@ model UserProfile {
 model Pets {
   id           BigInt         @id @default(autoincrement())
   user_id      String         @db.Uuid
-  name         String?
-  species      String?
-  breed        String?
-  birth_date   DateTime?
+  name         String
+  species      String
+  date_of_birth DateTime?
+  date_of_adoption DateTime?
+  sex          String?
+  fixed        Boolean?
+  active       Boolean? @default(true)
+  photo_url    String?
+
   LostPets     LostPets[]
   Medications  Medications[]
   user         UserProfile    @relation(fields: [user_id], references: [id])

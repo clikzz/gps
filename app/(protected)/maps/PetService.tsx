@@ -1,0 +1,1 @@
+// filtrar el mapa por palabras claves relacionadas a mascotas "mascota" "veterinario" "perro" "gato" "canino" "felino" "animal" "animales" y permitir seleccionar uno marcando en el mapa como llegar a este punto en mapbox

@@ -3,62 +3,85 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model UserProfile {
-  id           String         @id @db.Uuid
-  public_id    BigInt?        @default(dbgenerated("nextval('userprofiles_public_id_seq')")) @db.BigInt
-  email        String         @unique
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  name         String?
-  avatar_url   String?
-  
-  pets         Pets[]
-  photoLogs    PhotoLog[]
-  forums       Forum[]
-  badges       Badges[]
-  reviews      Reviews[]
-  lostPets     LostPets[]     @relation("UserReportedLostPets")
+  id               String             @id @db.Uuid
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @updatedAt
+  name             String?
+  avatar_url       String?
+  email            String             @unique
+  public_id        BigInt?            @default(autoincrement())
+  badges           Badges[]
+  forums           Forum[]
+  lostPets         LostPets[]         @relation("UserReportedLostPets")
   marketplaceItems MarketplaceItems[]
+  pets             Pets[]
+  timeline_entries TimelineEntry[]
+  reviews          Reviews[]
 
   @@map("UserProfiles")
 }
 
 model Pets {
-  id           BigInt         @id @default(autoincrement())
-  user_id      String         @db.Uuid
-  name         String
-  species      String
-  date_of_birth DateTime?
+  id               BigInt         @id @default(autoincrement())
+  user_id          String         @db.Uuid
+  name             String
+  species          String
+  active           Boolean?       @default(true)
   date_of_adoption DateTime?
-  sex          String?
-  fixed        Boolean?
-  active       Boolean? @default(true)
-  photo_url    String?
-
-  LostPets     LostPets[]
-  Medications  Medications[]
-  user         UserProfile    @relation(fields: [user_id], references: [id])
-  Vaccinations Vaccinations[]
+  date_of_birth    DateTime?
+  fixed            Boolean?
+  photo_url        String?
+  sex              String?
+  LostPets         LostPets[]
+  Medications      Medications[]
+  user             UserProfile    @relation(fields: [user_id], references: [id])
+  timeline_entries TimelineEntry[]
+  Vaccinations     Vaccinations[]
 
   @@map("Pets")
 }
 
-model PhotoLog {
-  id          BigInt      @id @default(autoincrement())
-  user_id     String      @db.Uuid
-  photo_url   String?
-  title       String?
-  description String?
-  taken_at    DateTime?
-  hashtags    String[]
-  user        UserProfile @relation(fields: [user_id], references: [id])
+model TimelineEntry {
+  id          String   @id @default(uuid()) 
+  user_id     String   @db.Uuid 
+  pet_id      BigInt 
+  title       String? 
+  description String? 
+  event_date  DateTime 
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  user       UserProfile          @relation(fields: [user_id], references: [id])
+  pet        Pets                 @relation(fields: [pet_id], references: [id])
+  photos     TimelineEntryPhoto[] 
+  milestones Milestone[]          
 
-  @@map("PhotoLog")
+  @@map("TimelineEntries") 
+}
+
+model TimelineEntryPhoto {
+  id                String   @id @default(uuid())
+  timeline_entry_id String 
+  photo_url         String 
+  order             Int? 
+  created_at        DateTime @default(now())
+  timeline_entry TimelineEntry @relation(fields: [timeline_entry_id], references: [id], onDelete: Cascade)
+
+  @@map("TimelineEntryPhotos")
+}
+
+model Milestone {
+  id        String  @id @default(uuid())
+  name      String  @unique 
+  icon_url  String? 
+  timeline_entries TimelineEntry[]
+
+  @@map("Milestones")
 }
 
 model Vaccinations {
@@ -155,4 +178,14 @@ model MarketplaceItems {
   user           UserProfile @relation(fields: [user_id], references: [id])
 
   @@map("MarketplaceItems")
+}
+
+model debug_logs {
+  id            Int       @id @default(autoincrement())
+  event_type    String?
+  user_id       String?   @db.Uuid
+  email         String?
+  error_message String?
+  details       Json?
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
 }

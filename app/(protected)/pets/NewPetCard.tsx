@@ -1,10 +1,7 @@
-import React from 'react'
-
+import React from "react";
 
 function NewPetCard() {
-  return (
-    <div>NewPetCard</div>
-  )
+  return <div>NewPetCard</div>;
 }
 
-export default NewPetCard
+export default NewPetCard;

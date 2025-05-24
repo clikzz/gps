@@ -7,8 +7,9 @@ import { authenticateUser } from "@/server/middlewares/authMiddleware";
 // GET a pet by ID
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
   const petId = params.id;
@@ -18,8 +19,9 @@ export async function GET(
 // PUT to update a pet by ID
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
   const petId = params.id;

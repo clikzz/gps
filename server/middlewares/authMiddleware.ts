@@ -2,7 +2,6 @@ import { createClient } from "@/utils/supabase/server";
 import { createServerClient } from "@supabase/ssr";
 
 export const authenticateUser = async (req: Request) => {
-  // Check for Authorization header first
   const authHeader = req.headers.get("authorization");
   const bearerToken = authHeader?.startsWith("Bearer ")
     ? authHeader.substring(7)
@@ -11,7 +10,6 @@ export const authenticateUser = async (req: Request) => {
   let supabase;
 
   if (bearerToken) {
-    // Create client with Bearer token
     supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -21,7 +19,6 @@ export const authenticateUser = async (req: Request) => {
             return [];
           },
           setAll() {
-            // No-op for Bearer token auth
           },
         },
         global: {
@@ -32,7 +29,6 @@ export const authenticateUser = async (req: Request) => {
       }
     );
   } else {
-    // Fallback to cookie-based client
     supabase = await createClient();
   }
 

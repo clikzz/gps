@@ -17,22 +17,51 @@ function PetCard({ pet }: { pet: Pet }) {
       <CardHeader>
         <CardTitle>{pet.name}</CardTitle>
         <CardDescription>{pet.species}</CardDescription>
+        {pet.photo_url && (
+          <img
+            src={pet.photo_url}
+            alt={pet.name}
+            className="w-full h-48 object-cover rounded-lg"
+          />
+        )}
+        <CardContent>
+          <Label htmlFor="pet-description">Alive</Label>
+          <Input
+            id="pet-alive"
+            value={pet.active?.toString()}
+            readOnly
+            className="mt-2"
+          />
+          <Label htmlFor="pet-age">Adoption</Label>
+          <Input
+            id="pet-adoption"
+            value={pet.date_of_adoption?.toString()}
+            readOnly
+            className="mt-2"
+          />
+          <Label htmlFor="pet-birth">Birth</Label>
+          <Input
+            id="pet-birth"
+            value={pet.date_of_birth?.toString()}
+            readOnly
+            className="mt-2"
+          />
+          <Label htmlFor="pet-fixed">Fixed</Label>
+          <Input
+            id="pet-fixed"
+            value={pet.fixed?.toString()}
+            readOnly
+            className="mt-2"
+          />
+          <Label htmlFor="sex">Sex</Label>
+          <Input
+            id="pet-sex"
+            value={pet.sex?.toString()}
+            readOnly
+            className="mt-2"
+          />
+        </CardContent>
       </CardHeader>
-      <CardContent>
-        <div className="grid gap-4">
-          <div>
-            <Label htmlFor="name">Nombre</Label>
-            <Input id="name" defaultValue={pet.name} />
-          </div>
-          <div>
-            <Label htmlFor="type">Tipo</Label>
-            <Input id="type" defaultValue={pet.species} />
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button>Guardar cambios</Button>
-      </CardFooter>
     </Card>
   );
 }

@@ -3,14 +3,12 @@ import { type NextRequest, NextResponse } from "next/server";
 
 export const updateSession = async (request: NextRequest) => {
   try {
-    // Create an unmodified response
     let response = NextResponse.next({
       request: {
         headers: request.headers,
       },
     });
 
-    // Check for Authorization header first (for API testing tools like Hoppscotch)
     const authHeader = request.headers.get("authorization");
     const bearerToken = authHeader?.startsWith("Bearer ")
       ? authHeader.substring(7)
@@ -20,7 +18,6 @@ export const updateSession = async (request: NextRequest) => {
     let user;
 
     if (bearerToken) {
-      // Create client for Bearer token authentication
       supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -40,12 +37,9 @@ export const updateSession = async (request: NextRequest) => {
           },
         }
       );
-
-      // Get user with Bearer token
       const { data, error } = await supabase.auth.getUser();
       user = { data, error };
     } else {
-      // Fallback to cookie-based authentication (original behavior)
       supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -69,7 +63,6 @@ export const updateSession = async (request: NextRequest) => {
         }
       );
 
-      // This will refresh session if expired - required for Server Components
       user = await supabase.auth.getUser();
     }
 
@@ -79,6 +72,10 @@ export const updateSession = async (request: NextRequest) => {
     }
 
     if (request.nextUrl.pathname.startsWith("/profile") && user.error) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+
+    if (request.nextUrl.pathname.startsWith("/pets") && user.error) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
     }
 

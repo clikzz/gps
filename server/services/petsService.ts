@@ -14,20 +14,33 @@ export const getPetById = async (id: number) => {
 
 export const createPet = async ({
   user,
-  name,
-  species,
+  pet,
 }: {
   user: {
     id: string;
   };
-  name: string;
-  species: string;
+  pet: {
+    name: string;
+    species: string;
+    active?: boolean;
+    date_of_adoption?: Date;
+    date_of_birth?: Date;
+    fixed?: boolean;
+    sex?: string;
+    photo_url?: string;
+  };
 }) => {
   return await prisma.pets.create({
     data: {
       user_id: user.id,
-      name,
-      species,
+      name: pet.name,
+      species: pet.species,
+      ...(pet.active !== undefined && { active: pet.active }),
+      ...(pet.date_of_adoption && { date_of_adoption: pet.date_of_adoption }),
+      ...(pet.date_of_birth && { date_of_birth: pet.date_of_birth }),
+      ...(pet.fixed !== undefined && { fixed: pet.fixed }),
+      ...(pet.sex && { sex: pet.sex }),
+      ...(pet.photo_url && { photo_url: pet.photo_url }),
     },
   });
 };

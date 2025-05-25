@@ -12,11 +12,17 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
-  const body = await req.json();
-  const { name, species } = body;
+
+  const pet = await req.json();
+  if (!pet) {
+    return new Response(JSON.stringify({ error: "Invalid pet data" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   return addPet({
     user,
-    name,
-    species,
+    pet,
   });
 }

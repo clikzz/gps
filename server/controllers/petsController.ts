@@ -22,19 +22,25 @@ export const fetchPets = async (userId: string) => {
 
 export const addPet = async ({
   user,
-  name,
-  species,
+  pet,
 }: {
   user: {
     id: string;
   };
-  name: string;
-  species: string;
+  pet: {
+    name: string;
+    species: string;
+    active?: boolean;
+    date_of_adoption?: Date;
+    date_of_birth?: Date;
+    fixed?: boolean;
+    sex?: string;
+    photo_url?: string;
+  };
 }) => {
   const newPet = await createPet({
     user,
-    name,
-    species,
+    pet,
   });
   const formattedPet = {
     ...newPet,

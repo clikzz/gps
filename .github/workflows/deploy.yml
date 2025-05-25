@@ -68,20 +68,21 @@ jobs:
     - name: Deploy to server
       run: |
         ssh -p 1207 aloyola@146.83.198.35 << 'EOF'
-        
         # Cambiamos a root para poder ejecutar comandos con privilegios (ajusta según tu seguridad)
-            echo "${{ secrets.SERVER_ROOT_PASSWORD }}" | su - root -c "
-              cd /home/aloyola
+        echo "${{ secrets.SERVER_ROOT_PASSWORD }}" | su - root -c "
+          cd /home/aloyola
               
-              # Si el directorio del proyecto ya existe y tiene git, se actualiza
-              if [ -d 'mi-proyecto' ] && [ -d 'mi-proyecto/.git' ]; then
-                cd mi-proyecto
-                git pull
-              else
-                # En caso contrario se clona el repositorio (reemplaza la URL con la de tu repositorio)
-                git clone https://github.com/tu-usuario/tu-repo.git mi-proyecto
-                cd mi-proyecto
-              fi
+          # Si el directorio del proyecto ya existe y tiene git, se actualiza
+          if [ -d 'mi-proyecto' ] && [ -d 'mi-proyecto/.git' ]; then
+            cd mi-proyecto
+            git pull
+          else
+            # En caso contrario se clona el repositorio (reemplaza la URL con la de tu repositorio)
+            git clone https://github.com/clikzz/gps.git mi-proyecto
+            cd mi-proyecto
+          fi
+          "
+        EOF
 
     - name: Install and restart application
       run: |

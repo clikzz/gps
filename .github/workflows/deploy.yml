@@ -10,167 +10,129 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Run tests (if you have them)
-      run: npm test --if-present
+      - name: Run tests (if you have them)
+        run: npm test --if-present
 
-    - name: Build application
-      run: npm run build
-      env:
-        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      - name: Build application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
-    - name: Install OpenVPN
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y openvpn openvpn-systemd-resolved
+      - name: Install OpenVPN
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openvpn openvpn-systemd-resolved
 
-    - name: Create VPN config file
-      run: |
-        echo "${{ secrets.OPENVPN_CONFIG }}" > config.ovpn
-        # Si tu .ovpn requiere credenciales separadas, crear archivo auth
-        if [ ! -z "${{ secrets.VPN_USERNAME }}" ] && [ ! -z "${{ secrets.VPN_PASSWORD }}" ]; then
-          echo "${{ secrets.VPN_USERNAME }}" > auth.txt
-          echo "${{ secrets.VPN_PASSWORD }}" >> auth.txt
-          echo "auth-user-pass auth.txt" >> config.ovpn
-        fi
+      - name: Create VPN config file
+        run: |
+          echo "${{ secrets.OPENVPN_CONFIG }}" > config.ovpn
+          # Si tu .ovpn requiere credenciales separadas, crear archivo auth
+          if [ ! -z "${{ secrets.VPN_USERNAME }}" ] && [ ! -z "${{ secrets.VPN_PASSWORD }}" ]; then
+            echo "${{ secrets.VPN_USERNAME }}" > auth.txt
+            echo "${{ secrets.VPN_PASSWORD }}" >> auth.txt
+            echo "auth-user-pass auth.txt" >> config.ovpn
+          fi
 
-    - name: Connect to VPN
-      run: |
-        sudo openvpn --config config.ovpn --daemon --log /tmp/openvpn.log
-        sleep 30  # Esperar a que se establezca la conexión
+      - name: Connect to VPN
+        run: |
+          sudo openvpn --config config.ovpn --daemon --log /tmp/openvpn.log
+          sleep 30  # Esperar a que se establezca la conexión
         
-    - name: Verify VPN connection
-      run: |
-        # Verificar que podemos llegar al servidor
-        ping -c 3 146.83.198.35 || (echo "VPN connection failed" && cat /tmp/openvpn.log && exit 1)
+      - name: Verify VPN connection
+        run: |
+          # Verificar que podemos llegar al servidor
+          ping -c 3 146.83.198.35 || (echo "VPN connection failed" && cat /tmp/openvpn.log && exit 1)
 
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -p 1207 146.83.198.35 >> ~/.ssh/known_hosts
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p 1207 146.83.198.35 >> ~/.ssh/known_hosts
 
-    - name: Deploy to server
-      run: |
-        # Crear directorio temporal para el deployment
-        DEPLOY_DIR="/tmp/nextjs-deploy-$(date +%s)"
-        
-        # Crear archivo de deployment en el servidor
-        ssh -p 1207 aloyola@146.83.198.35 << 'EOF'
-          # Cambiar a root
-          echo "${{ secrets.SERVER_ROOT_PASSWORD }}" | su - root -c "
-            cd /home/aloyola
-            
-            # Backup actual si existe
-            if [ -d 'mi-proyecto' ]; then
-              cp -r mi-proyecto mi-proyecto-backup-$(date +%s)
-            fi
-            
-            # Crear directorio del proyecto si no existe
-            mkdir -p mi-proyecto
-          "
-        EOF
+      - name: Deploy application
+        run: |
+          ssh -p 1207 aloyola@146.83.198.35 << 'EOF'
+            # Cambiamos a root para poder ejecutar comandos con privilegios (ajusta según tu seguridad)
+            echo "${{ secrets.SERVER_ROOT_PASSWORD }}" | su - root -c "
+              cd /home/aloyola
+              
+              # Si el directorio del proyecto ya existe y tiene git, se actualiza
+              if [ -d 'mi-proyecto' ] && [ -d 'mi-proyecto/.git' ]; then
+                cd mi-proyecto
+                git pull
+              else
+                # En caso contrario se clona el repositorio (reemplaza la URL con la de tu repositorio)
+                git clone https://github.com/tu-usuario/tu-repo.git mi-proyecto
+                cd mi-proyecto
+              fi
+              
+              # Actualizar o crear el archivo de variables de entorno
+              cat > .env.local << 'ENVEOF'
+NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+DATABASE_URL=${{ secrets.DATABASE_URL }}
+NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+NEXTAUTH_URL=http://146.83.198.35:1208
+ENVEOF
+  
+              # Instalar dependencias en modo producción
+              npm ci --only=production
+  
+              # Si usas Prisma, generar el client
+              if [ -f 'prisma/schema.prisma' ]; then
+                npx prisma generate
+              fi
+  
+              # Build de la aplicación
+              npm run build
+  
+              # Reiniciar la aplicación con PM2
+              pm2 restart mi-app-nextjs || pm2 start ecosystem.config.js
+  
+              echo 'Deployment completed successfully!'
+            "
+          EOF
 
-    - name: Upload project files
-      run: |
-        # Crear tarball excluyendo archivos no necesarios
-        tar -czf deploy.tar.gz \
-          --exclude='.git' \
-          --exclude='node_modules' \
-          --exclude='.next' \
-          --exclude='*.log' \
-          --exclude='.env*' \
-          .
-        
-        # Subir archivo al servidor
-        scp -P 1207 deploy.tar.gz aloyola@146.83.198.35:/home/aloyola/
+      - name: Verify deployment
+        run: |
+          sleep 15
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://146.83.198.35:1208 || echo "000")
+          if [ "$response" = "200" ] || [ "$response" = "301" ] || [ "$response" = "302" ]; then
+            echo "✅ Application is responding (HTTP $response)"
+          else
+            echo "❌ Application not responding (HTTP $response)"
+            ssh -p 1207 aloyola@146.83.198.35 "echo '${{ secrets.SERVER_ROOT_PASSWORD }}' | su - root -c 'pm2 logs mi-app-nextjs --lines 20'"
+            exit 1
+          fi
 
-    - name: Install and restart application
-      run: |
-        ssh -p 1207 aloyola@146.83.198.35 << 'EOF'
-          echo "${{ secrets.SERVER_ROOT_PASSWORD }}" | su - root -c "
-            cd /home/aloyola
-            
-            # Extraer nuevos archivos
-            tar -xzf deploy.tar.gz -C mi-proyecto
-            cd mi-proyecto
-            
-            # Crear archivo de variables de entorno
-            cat > .env.local << 'ENVEOF'
-        NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        DATABASE_URL=${{ secrets.DATABASE_URL }}
-        NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-        NEXTAUTH_URL=http://146.83.198.35:1208
-        ENVEOF
-            
-            # Instalar dependencias
-            npm ci --only=production
-            
-            # Generar Prisma client si existe
-            if [ -f 'prisma/schema.prisma' ]; then
-              npx prisma generate
-            fi
-            
-            # Build de la aplicación
-            npm run build
-            
-            # Reiniciar aplicación con PM2
-            pm2 restart mi-app-nextjs || pm2 start ecosystem.config.js
-            
-            # Limpiar archivos temporales
-            rm -f /home/aloyola/deploy.tar.gz
-            
-            echo 'Deployment completed successfully!'
-          "
-        EOF
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f config.ovpn auth.txt ~/.ssh/id_rsa
+          sudo pkill openvpn || true
 
-    - name: Verify deployment
-      run: |
-        # Esperar un poco para que la aplicación inicie
-        sleep 15
-        
-        # Verificar que la aplicación responde
-        response=$(curl -s -o /dev/null -w "%{http_code}" http://146.83.198.35:1208 || echo "000")
-        if [ "$response" = "200" ] || [ "$response" = "301" ] || [ "$response" = "302" ]; then
-          echo "✅ Application is responding (HTTP $response)"
-        else
-          echo "❌ Application not responding (HTTP $response)"
-          # Mostrar logs para debugging
-          ssh -p 1207 aloyola@146.83.198.35 "echo '${{ secrets.SERVER_ROOT_PASSWORD }}' | su - root -c 'pm2 logs mi-app-nextjs --lines 20'"
-          exit 1
-        fi
-
-    - name: Cleanup
-      if: always()
-      run: |
-        # Limpiar archivos locales
-        rm -f config.ovpn auth.txt deploy.tar.gz ~/.ssh/id_rsa
-        
-        # Desconectar VPN
-        sudo pkill openvpn || true
-
-    - name: Notify deployment status
-      if: always()
-      run: |
-        if [ "${{ job.status }}" = "success" ]; then
-          echo "🚀 Deployment successful! App available at: http://146.83.198.35:1208"
-        else
-          echo "❌ Deployment failed. Check the logs above."
-        fi
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "🚀 Deployment successful! App available at: http://146.83.198.35:1208"
+          else
+            echo "❌ Deployment failed. Check the logs above."
+          fi

@@ -84,13 +84,13 @@ jobs:
               
               # Actualizar o crear el archivo de variables de entorno
               cat > .env.local << 'ENVEOF'
-NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-DATABASE_URL=${{ secrets.DATABASE_URL }}
-NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-NEXTAUTH_URL=http://146.83.198.35:1208
-ENVEOF
+              NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+              NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+              SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+              DATABASE_URL=${{ secrets.DATABASE_URL }}
+              NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+              NEXTAUTH_URL=http://146.83.198.35:1208
+              ENVEOF
   
               # Instalar dependencias en modo producción
               npm ci --only=production

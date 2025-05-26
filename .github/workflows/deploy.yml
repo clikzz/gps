@@ -41,6 +41,7 @@ jobs:
 
     - name: Connect to VPN
       uses: kota65535/github-openvpn-connect-action@v2
+      timeout-minutes: 2
       with:
         config_file: .github/workflows/client.ovpn
         username: ${{ secrets.VPN_USERNAME }}

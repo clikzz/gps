@@ -34,10 +34,10 @@ jobs:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
         DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
-    - name: Install OpenVPN
+    - name: Install OpenVPN and tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y openvpn openvpn-systemd-resolved
+        sudo apt-get install -y openvpn openvpn-systemd-resolved netcat-openbsd
 
     - name: Create VPN config file
       run: |
@@ -140,67 +140,352 @@ jobs:
         
         # Mostrar interfaces de red para debugging
         echo "=== Network Interfaces ==="
-        ip addr show
+        ip addr show | grep -A 5 "tun0"
         
-        # Mostrar tabla de rutas
-        echo "=== Routing Table ==="
-        ip route show
+        # Mostrar tabla de rutas relevantes
+        echo "=== VPN Routes ==="
+        ip route show | grep -E "(146\.83|198\.83|10\.0\.10)"
         
-        # Verificar que podemos llegar al servidor
-        echo "🔄 Testing connectivity to server..."
+        # Probar conectividad con diferentes IPs conocidas
+        echo "🔄 Testing connectivity to known server IPs..."
         
-        # Primero probar con la IP original
-        if timeout 10 ping -c 2 146.83.198.35; then
-          echo "✅ Server 146.83.198.35 is reachable"
-          SERVER_IP="146.83.198.35"
-        elif timeout 10 ping -c 2 146.83.198.45; then
-          echo "✅ Server 146.83.198.45 is reachable (alternative IP from routing table)"
-          SERVER_IP="146.83.198.45"
-        else
-          echo "⚠️ Direct ping failed, trying DNS resolution..."
-          
-          # Intentar resolver por hostname si está disponible
-          if nslookup 198-35.eq.ubiobio.cl 2>/dev/null | grep -q "Address:"; then
-            RESOLVED_IP=$(nslookup 198-35.eq.ubiobio.cl | grep "Address:" | tail -1 | awk '{print $2}')
-            echo "🔍 Resolved hostname to: $RESOLVED_IP"
+        POSSIBLE_IPS=("146.83.198.35" "146.83.198.45" "35.198.83.146")
+        SERVER_IP=""
+        
+        for ip in "${POSSIBLE_IPS[@]}"; do
+          echo "🔍 Testing $ip..."
+          if timeout 10 ping -c 2 "$ip" >/dev/null 2>&1; then
+            echo "✅ $ip is reachable via ping"
             
-            if timeout 10 ping -c 2 "$RESOLVED_IP"; then
-              echo "✅ Server is reachable via resolved IP: $RESOLVED_IP"
-              SERVER_IP="$RESOLVED_IP"
+            # Verificar también que el puerto SSH esté abierto
+            if timeout 10 nc -z "$ip" 1207 >/dev/null 2>&1; then
+              echo "✅ SSH port 1207 is open on $ip"
+              SERVER_IP="$ip"
+              break
             else
-              echo "❌ Cannot reach server via resolved IP: $RESOLVED_IP"
+              echo "⚠️ SSH port 1207 is closed on $ip"
             fi
           else
-            echo "❌ Cannot resolve hostname"
+            echo "❌ $ip is not reachable via ping"
           fi
+        done
+        
+        # Si no encontramos una IP que funcione, intentar resolución DNS
+        if [ -z "$SERVER_IP" ]; then
+          echo "🔍 Trying DNS resolution for university server..."
+          
+          # Intentar varias formas de resolver
+          for hostname in "198-35.eq.ubiobio.cl" "gps.ubiobio.cl"; do
+            echo "🔍 Resolving $hostname..."
+            if RESOLVED_IP=$(nslookup "$hostname" 2>/dev/null | grep "Address:" | tail -1 | awk '{print $2}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+
+
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        
+        # Usar la IP determinada en el paso anterior
+        SERVER_IP="${SERVER_IP:-146.83.198.35}"
+        
+        # Configurar SSH con timeout más corto
+        cat >> ~/.ssh/config << EOF
+        Host target-server
+            HostName $SERVER_IP
+            Port 1207
+            User aloyola
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            ConnectTimeout 30
+            ServerAliveInterval 10
+            ServerAliveCountMax 3
+        EOF
+        
+        echo "🔧 SSH configured for server: $SERVER_IP"
+
+    - name: Test SSH connection
+      run: |
+        echo "🔍 Testing SSH connection..."
+        
+        # Usar la IP determinada en el paso anterior
+        SERVER_IP="${SERVER_IP:-146.83.198.35}"
+        echo "🔗 Testing SSH to: $SERVER_IP:1207"
+        
+        # Verificar que el puerto SSH esté realmente abierto
+        echo "🔍 Checking if SSH port is open..."
+        if timeout 15 nc -z "$SERVER_IP" 1207; then
+          echo "✅ SSH port 1207 is open on $SERVER_IP"
+        else
+          echo "❌ SSH port 1207 is not responding on $SERVER_IP"
+          echo "🔍 Trying alternative ports..."
+          
+          for port in 22 2222 1207; do
+            echo "Testing port $port..."
+            if timeout 10 nc -z "$SERVER_IP" "$port"; then
+              echo "✅ Port $port is open on $SERVER_IP"
+            else
+              echo "❌ Port $port is closed on $SERVER_IP"
+            fi
+          done
+          
+          echo "⚠️ SSH port test failed, but continuing with connection attempt..."
         fi
         
-        # Si no pudimos conectar con ninguna IP, mostrar información de debug
-        if [ -z "${SERVER_IP:-}" ]; then
-          echo "❌ Cannot reach server through VPN with any known IP"
-          echo "=== OpenVPN Final Status ==="
-          sudo cat /tmp/openvpn.status 2>/dev/null || echo "No status file found"
-          echo "=== OpenVPN Final Log (last 20 lines) ==="
-          sudo tail -20 /tmp/openvpn.log 2>/dev/null || echo "No log file found"
+        # Intentar conexión SSH con más opciones de debugging
+        echo "🔗 Attempting SSH connection..."
+        if timeout 30 ssh -v -o ConnectTimeout=25 -o StrictHostKeyChecking=no target-server "echo 'SSH connection successful'"; then
+          echo "✅ SSH connection working"
+        else
+          echo "❌ SSH connection failed"
+          echo "🔍 SSH Debug Information:"
+          echo "- Server IP: $SERVER_IP"
+          echo "- Port: 1207"
+          echo "- User: aloyola"
           
-          echo "=== Testing VPN gateway ==="
-          if timeout 5 ping -c 2 10.0.10.1; then
-            echo "✅ VPN gateway (10.0.10.1) is reachable"
-          else
-            echo "❌ VPN gateway (10.0.10.1) is not reachable"
+          echo "🔍 Testing basic connectivity:"
+          echo "Ping test:"
+          timeout 10 ping -c 3 "$SERVER_IP" || echo "Ping failed"
+          
+          echo "Port scan (common SSH ports):"
+          for port in 22 1207 2222; do
+            timeout 5 nc -z "$SERVER_IP" "$port" && echo "Port $port: OPEN" || echo "Port $port: CLOSED"
+          done
+          
+          echo "🔍 Network route to server:"
+          ip route get "$SERVER_IP" || echo "No route found"
+          
+          exit 1
+        fi
+
+    - name: Deploy to server
+      run: |
+        echo "🚀 Starting deployment..."
+        
+        ssh target-server << 'EOF'
+        set -e  # Exit on any error
+        
+        echo "🔄 Switching to root and updating code..."
+        echo "${{ secrets.SERVER_ROOT_PASSWORD }}" | su - root -c '
+          set -e
+          cd /home/aloyola
+          
+          # Backup actual si existe
+          if [ -d "mi-proyecto" ]; then
+            echo "📦 Creating backup..."
+            cp -r mi-proyecto mi-proyecto.backup.$(date +%Y%m%d_%H%M%S) || true
           fi
           
-          echo "=== Available routes through VPN ==="
-          ip route show | grep "10.0.10" || echo "No VPN routes found"
+          # Actualizar o clonar repositorio
+          if [ -d "mi-proyecto" ] && [ -d "mi-proyecto/.git" ]; then
+            echo "🔄 Updating existing repository..."
+            cd mi-proyecto
+            git fetch --all
+            git reset --hard origin/main
+            git pull origin main
+          else
+            echo "📥 Cloning repository..."
+            rm -rf mi-proyecto
+            git clone https://github.com/clikzz/gps.git mi-proyecto
+            cd mi-proyecto
+          fi
           
-          # No salir con error aún, intentar continuar
-          echo "⚠️ Continuing deployment despite ping issues..."
-          SERVER_IP="146.83.198.35"  # Usar la IP original como fallback
+          echo "✅ Code updated successfully"
+        '
+        EOF
+
+    - name: Install and restart application
+      run: |
+        echo "🔧 Installing dependencies and restarting application..."
+        
+        ssh target-server << 'EOF'
+        set -e
+        
+        echo "${{ secrets.SERVER_ROOT_PASSWORD }}" | su - root -c '
+          set -e
+          cd /home/aloyola/mi-proyecto
+          
+          echo "📝 Creating environment file..."
+          cat > .env.local << "ENVEOF"
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          DIRECT_URL=${{ secrets.DIRECT_URL }}
+          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL=http://146.83.198.35:1208
+          ENVEOF
+          
+          echo "📦 Installing dependencies..."
+          npm ci --only=production --silent
+          
+          echo "🔨 Generating Prisma client..."
+          if [ -f "prisma/schema.prisma" ]; then
+            npx prisma generate
+          fi
+          
+          echo "🏗️ Building application..."
+          npm run build
+          
+          echo "🔄 Managing PM2 process..."
+          # Verificar si PM2 está instalado
+          if ! command -v pm2 &> /dev/null; then
+            echo "Installing PM2..."
+            npm install -g pm2
+          fi
+          
+          # Crear ecosystem.config.js si no existe
+          if [ ! -f "ecosystem.config.js" ]; then
+            cat > ecosystem.config.js << "ECOEOF"
+          module.exports = {
+            apps: [{
+              name: "next-app",
+              script: "npm",
+              args: "start",
+              cwd: "/home/aloyola/mi-proyecto",
+              instances: 1,
+              exec_mode: "fork",
+              watch: false,
+              max_memory_restart: "1G",
+              env: {
+                NODE_ENV: "production",
+                PORT: 1208
+              },
+              error_file: "/home/aloyola/logs/next-app-err.log",
+              out_file: "/home/aloyola/logs/next-app-out.log",
+              log_file: "/home/aloyola/logs/next-app.log"
+            }]
+          }
+          ECOEOF
+          fi
+          
+          # Crear directorio de logs
+          mkdir -p /home/aloyola/logs
+          
+          # Reiniciar la aplicación
+          pm2 stop next-app || echo "App was not running"
+          pm2 delete next-app || echo "App was not in PM2"
+          pm2 start ecosystem.config.js
+          pm2 save
+          
+          echo "✅ Application restarted successfully"
+        '
+        EOF
+
+    - name: Verify deployment
+      run: |
+        echo "🔍 Verifying deployment..."
+        
+        # Usar la IP determinada anteriormente
+        SERVER_IP="${SERVER_IP:-146.83.198.35}"
+        APP_URL="http://$SERVER_IP:1208"
+        
+        echo "🌐 Testing application at: $APP_URL"
+        
+        # Esperar a que la aplicación inicie
+        sleep 20
+        
+        # Verificar múltiples veces con diferentes códigos de éxito
+        max_attempts=6
+        for attempt in $(seq 1 $max_attempts); do
+          echo "🔄 Verification attempt $attempt/$max_attempts..."
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$APP_URL" || echo "000")
+          
+          case $response in
+            200|301|302|304)
+              echo "✅ Application is responding successfully (HTTP $response)"
+              echo "🌐 Application URL: $APP_URL"
+              exit 0
+              ;;
+            000)
+              echo "⏳ Connection timeout (attempt $attempt/$max_attempts)"
+              ;;
+            *)
+              echo "⚠️ Unexpected response: HTTP $response (attempt $attempt/$max_attempts)"
+              ;;
+          esac
+          
+          if [ $attempt -lt $max_attempts ]; then
+            sleep 10
+          fi
+        done
+        
+        echo "❌ Application verification failed after $max_attempts attempts"
+        echo "🔍 Checking application logs..."
+        
+        ssh target-server "echo '${{ secrets.SERVER_ROOT_PASSWORD }}' | su - root -c 'pm2 logs next-app --lines 30' 2>/dev/null || echo 'Could not retrieve PM2 logs'"
+        exit 1
+
+    - name: Cleanup
+      if: always()
+      run: |
+        echo "🧹 Cleaning up..."
+        
+        # Limpiar archivos sensibles
+        rm -f config.ovpn auth.txt ~/.ssh/id_rsa
+        
+        # Desconectar VPN
+        if [ -f /tmp/openvpn.pid ]; then
+          sudo kill $(cat /tmp/openvpn.pid) 2>/dev/null || true
+        fi
+        sudo pkill -f openvpn || true
+        
+        echo "✅ Cleanup completed"
+
+    - name: Deployment Summary
+      if: always()
+      run: |
+        echo "=================================="
+        echo "🚀 DEPLOYMENT SUMMARY"
+        echo "=================================="
+        
+        if [ "${{ job.status }}" = "success" ]; then
+          echo "✅ Status: SUCCESS"
+          echo "🌐 Application URL: http://${SERVER_IP:-146.83.198.35}:1208"
+          echo "📊 PM2 Status: Active"
+        else
+          echo "❌ Status: FAILED"
+          echo "📝 Check the logs above for details"
+        fi
+        
+        echo "🕐 Completed at: $(date)"
+        echo "=================================="); then
+              echo "🔍 $hostname resolved to: $RESOLVED_IP"
+              
+              if timeout 10 ping -c 2 "$RESOLVED_IP" >/dev/null 2>&1; then
+                echo "✅ $RESOLVED_IP is reachable via ping"
+                
+                if timeout 10 nc -z "$RESOLVED_IP" 1207 >/dev/null 2>&1; then
+                  echo "✅ SSH port 1207 is open on $RESOLVED_IP"
+                  SERVER_IP="$RESOLVED_IP"
+                  break
+                fi
+              fi
+            fi
+          done
+        fi
+        
+        # Como último recurso, usar la IP original y mostrar información de debug
+        if [ -z "$SERVER_IP" ]; then
+          echo "⚠️ No server IP responded to both ping and SSH port check"
+          echo "=== Debug Information ==="
+          echo "VPN Gateway test:"
+          timeout 5 ping -c 2 10.0.10.1 && echo "✅ VPN gateway OK" || echo "❌ VPN gateway unreachable"
+          
+          echo "=== All routes ==="
+          ip route show
+          
+          echo "=== OpenVPN Status ==="
+          sudo cat /tmp/openvpn.status 2>/dev/null || echo "No status file"
+          
+          echo "⚠️ Using fallback IP 146.83.198.35 and continuing..."
+          SERVER_IP="146.83.198.35"
         fi
         
         # Exportar la IP del servidor para pasos siguientes
         echo "SERVER_IP=$SERVER_IP" >> $GITHUB_ENV
-        echo "🎯 Using server IP: $SERVER_IP"
+        echo "🎯 Final server IP selected: $SERVER_IP"
 
     - name: Setup SSH
       run: |
@@ -288,11 +573,8 @@ jobs:
           cat > .env.local << "ENVEOF"
           NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           DIRECT_URL=${{ secrets.DIRECT_URL }}
-          NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
-          NEXTAUTH_URL=http://146.83.198.35:1208
           ENVEOF
           
           echo "📦 Installing dependencies..."

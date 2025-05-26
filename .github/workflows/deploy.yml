@@ -148,21 +148,59 @@ jobs:
         
         # Verificar que podemos llegar al servidor
         echo "🔄 Testing connectivity to server..."
-        if timeout 10 ping -c 3 146.83.198.35; then
-          echo "✅ Server is reachable through VPN"
+        
+        # Primero probar con la IP original
+        if timeout 10 ping -c 2 146.83.198.35; then
+          echo "✅ Server 146.83.198.35 is reachable"
+          SERVER_IP="146.83.198.35"
+        elif timeout 10 ping -c 2 146.83.198.45; then
+          echo "✅ Server 146.83.198.45 is reachable (alternative IP from routing table)"
+          SERVER_IP="146.83.198.45"
         else
-          echo "❌ Cannot reach server through VPN"
+          echo "⚠️ Direct ping failed, trying DNS resolution..."
+          
+          # Intentar resolver por hostname si está disponible
+          if nslookup 198-35.eq.ubiobio.cl 2>/dev/null | grep -q "Address:"; then
+            RESOLVED_IP=$(nslookup 198-35.eq.ubiobio.cl | grep "Address:" | tail -1 | awk '{print $2}')
+            echo "🔍 Resolved hostname to: $RESOLVED_IP"
+            
+            if timeout 10 ping -c 2 "$RESOLVED_IP"; then
+              echo "✅ Server is reachable via resolved IP: $RESOLVED_IP"
+              SERVER_IP="$RESOLVED_IP"
+            else
+              echo "❌ Cannot reach server via resolved IP: $RESOLVED_IP"
+            fi
+          else
+            echo "❌ Cannot resolve hostname"
+          fi
+        fi
+        
+        # Si no pudimos conectar con ninguna IP, mostrar información de debug
+        if [ -z "${SERVER_IP:-}" ]; then
+          echo "❌ Cannot reach server through VPN with any known IP"
           echo "=== OpenVPN Final Status ==="
           sudo cat /tmp/openvpn.status 2>/dev/null || echo "No status file found"
           echo "=== OpenVPN Final Log (last 20 lines) ==="
           sudo tail -20 /tmp/openvpn.log 2>/dev/null || echo "No log file found"
           
-          # Intentar diagnóstico adicional
-          echo "=== DNS Resolution Test ==="
-          nslookup 146.83.198.35 || echo "DNS resolution failed"
+          echo "=== Testing VPN gateway ==="
+          if timeout 5 ping -c 2 10.0.10.1; then
+            echo "✅ VPN gateway (10.0.10.1) is reachable"
+          else
+            echo "❌ VPN gateway (10.0.10.1) is not reachable"
+          fi
           
-          exit 1
+          echo "=== Available routes through VPN ==="
+          ip route show | grep "10.0.10" || echo "No VPN routes found"
+          
+          # No salir con error aún, intentar continuar
+          echo "⚠️ Continuing deployment despite ping issues..."
+          SERVER_IP="146.83.198.35"  # Usar la IP original como fallback
         fi
+        
+        # Exportar la IP del servidor para pasos siguientes
+        echo "SERVER_IP=$SERVER_IP" >> $GITHUB_ENV
+        echo "🎯 Using server IP: $SERVER_IP"
 
     - name: Setup SSH
       run: |
@@ -170,10 +208,13 @@ jobs:
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         
+        # Usar la IP determinada en el paso anterior
+        SERVER_IP="${SERVER_IP:-146.83.198.35}"
+        
         # Configurar SSH con timeout más corto
-        cat >> ~/.ssh/config << 'EOF'
+        cat >> ~/.ssh/config << EOF
         Host target-server
-            HostName 146.83.198.35
+            HostName $SERVER_IP
             Port 1207
             User aloyola
             IdentityFile ~/.ssh/id_rsa
@@ -183,6 +224,8 @@ jobs:
             ServerAliveInterval 10
             ServerAliveCountMax 3
         EOF
+        
+        echo "🔧 SSH configured for server: $SERVER_IP"
 
     - name: Test SSH connection
       run: |
@@ -273,26 +316,26 @@ jobs:
           # Crear ecosystem.config.js si no existe
           if [ ! -f "ecosystem.config.js" ]; then
             cat > ecosystem.config.js << "ECOEOF"
-            module.exports = {
-              apps: [{
-                name: "next-app",
-                script: "npm",
-                args: "start",
-                cwd: "/home/aloyola/mi-proyecto",
-                instances: 1,
-                exec_mode: "fork",
-                watch: false,
-                max_memory_restart: "1G",
-                env: {
-                  NODE_ENV: "production",
-                  PORT: 1208
-                },
-                error_file: "/home/aloyola/logs/next-app-err.log",
-                out_file: "/home/aloyola/logs/next-app-out.log",
-                log_file: "/home/aloyola/logs/next-app.log"
-              }]
-            }
-            ECOEOF
+          module.exports = {
+            apps: [{
+              name: "next-app",
+              script: "npm",
+              args: "start",
+              cwd: "/home/aloyola/mi-proyecto",
+              instances: 1,
+              exec_mode: "fork",
+              watch: false,
+              max_memory_restart: "1G",
+              env: {
+                NODE_ENV: "production",
+                PORT: 1208
+              },
+              error_file: "/home/aloyola/logs/next-app-err.log",
+              out_file: "/home/aloyola/logs/next-app-out.log",
+              log_file: "/home/aloyola/logs/next-app.log"
+            }]
+          }
+          ECOEOF
           fi
           
           # Crear directorio de logs
@@ -312,6 +355,12 @@ jobs:
       run: |
         echo "🔍 Verifying deployment..."
         
+        # Usar la IP determinada anteriormente
+        SERVER_IP="${SERVER_IP:-146.83.198.35}"
+        APP_URL="http://$SERVER_IP:1208"
+        
+        echo "🌐 Testing application at: $APP_URL"
+        
         # Esperar a que la aplicación inicie
         sleep 20
         
@@ -320,12 +369,12 @@ jobs:
         for attempt in $(seq 1 $max_attempts); do
           echo "🔄 Verification attempt $attempt/$max_attempts..."
           
-          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 http://146.83.198.35:1208 || echo "000")
+          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$APP_URL" || echo "000")
           
           case $response in
             200|301|302|304)
               echo "✅ Application is responding successfully (HTTP $response)"
-              echo "🌐 Application URL: http://146.83.198.35:1208"
+              echo "🌐 Application URL: $APP_URL"
               exit 0
               ;;
             000)
@@ -372,7 +421,7 @@ jobs:
         
         if [ "${{ job.status }}" = "success" ]; then
           echo "✅ Status: SUCCESS"
-          echo "🌐 Application URL: http://146.83.198.35:1208"
+          echo "🌐 Application URL: http://${SERVER_IP:-146.83.198.35}:1208"
           echo "📊 PM2 Status: Active"
         else
           echo "❌ Status: FAILED"

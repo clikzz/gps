@@ -1,6 +1,6 @@
 'use client';
 
-import LostPetsMap from '@/components/LostPetsMap';
+import LostPetsMap from '@/components/FindMap';
 
 export default function LostPetsPage() {
   return (

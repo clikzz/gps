@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateUser } from "@/server/middlewares/authMiddleware";
 import { fetchAllMissingPets } from "@/server/controllers/findMyPet.controller";
 
-// GET /api/find-my-pet/all
+// GET /api/find-my-pet/getAll
 export async function GET(req: NextRequest) {
   const user = await authenticateUser(req);
   if (user instanceof Response) {

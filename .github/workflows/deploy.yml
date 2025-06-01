@@ -1,274 +1,103 @@
-name: Deploy to University Server
+name: Despliegue a produccion
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main # Se ejecuta en cada push a la rama main
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    
+  tests: # Job para ejecutar pruebas
+    runs-on: ubuntu-latest # Crea un entorno virtual en Ubuntu
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout código # Clona el repositorio en el entorno virtual
+        uses: actions/checkout@v4 # Usa una acción de GitHub
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
+      - name: Instalar Node.js # Instala Node.js en el entorno virtual
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Instalar dependencias # Instala las dependencias del proyecto
+        run: npm install
 
-    - name: Run tests
-      run: npm test --if-present
+      - name: Construir proyecto
+        run: npm run build
 
-    - name: Build application
-      run: npm run build
-      env:
-        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      - name: Ejecutar pruebas # Ejecuta las pruebas del proyecto
+        run: npm test
 
-    - name: Install OpenVPN
-      run: |
-        sudo apt update
-        sudo apt install -y openvpn openvpn-systemd-resolved netcat-openbsd
+  # CUIDADO: Las conexiones SSH y OpenVPN pueden ser peligrosas si no se protegen correctamente.
+  # Asegúrate de que todas las credenciales estén protegidas usando los secretos del repositorio.
+  # EN NINGÚN CASO SE DEBEN DEJAR CREDENCIALES EXPUESTAS EN ESTE ARCHIVO NI EN NINGÚN OTRO.
+  # Si no sabes cómo proteger tus credenciales, consulta la documentación de GitHub o pregunta a un profesor.
+  # https://docs.github.com/es/actions/security-guides/encrypted-secrets
 
-    - name: Connect to VPN
-      uses: kota65535/github-openvpn-connect-action@v2
-      timeout-minutes: 2
-      with:
-        config_file: .github/workflows/client.ovpn
-        username: ${{ secrets.VPN_USERNAME }}
-        password: ${{ secrets.VPN_PASSWORD }}
+  deploy: # Job para desplegar el proyecto
+    needs: tests # Este job depende del job de pruebas, por lo que no se ejecutará si el job de pruebas falla
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY:      ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      DATABASE_URL:      ${{ secrets.DATABASE_URL }}
+      DIRECT_URL:   ${{ secrets.DIRECT_URL }}
+    steps:
+      - name: Instalar dependencias (OpenVPN, SSH y sshpass)
+        run: |
+          sudo apt update -qq > /dev/null 2>&1
+          sudo apt install -y -qq openvpn openvpn-systemd-resolved openssh-client sshpass
 
-    - name: Verify VPN connection
-      run: |
-        echo "🔍 Verifying VPN connection..."
-        echo "=== Network Interfaces ==="
-        ip addr show
-        echo "=== VPN Routes ==="
-        ip route show
-        
-        # Verificar que la interfaz VPN esté activa
-        if ! ip addr show | grep -q "tun\|tap"; then
-          echo "❌ No VPN interface found"
-          exit 1
-        else
-          echo "✅ VPN interface detected"
-        fi
-        
-        # Verificar conectividad con el servidor
-        SERVER_IP="146.83.198.35"
-        echo "🔍 Testing connectivity to server IP: $SERVER_IP"
-        
-        if timeout 10 ping -c 2 "$SERVER_IP" >/dev/null 2>&1; then
-          echo "✅ Server is reachable via ping"
-        else
-          echo "⚠️ Server is not reachable via ping, but continuing..."
-        fi
-        
-        if timeout 10 nc -z "$SERVER_IP" 1207 >/dev/null 2>&1; then
-          echo "✅ SSH port 1207 is open"
-        else
-          echo "⚠️ SSH port 1207 is not responding, but continuing..."
-        fi
-        
-        echo "SERVER_IP=$SERVER_IP" >> $GITHUB_ENV
+      - name: Conexion a la VPN de la UBB
+        uses: kota65535/github-openvpn-connect-action@v3.1.0
+        timeout-minutes: 2
+        continue-on-error: false
+        with:
+          config_file: .github/workflows/client.ovpn
+          username: ${{ secrets.VPN_USERNAME }}
+          password: ${{ secrets.VPN_PASSWORD }}
 
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        
-        cat >> ~/.ssh/config << EOF
-        Host target-server
-            HostName ${{ env.SERVER_IP }}
-            Port 1207
-            User aloyola
-            IdentityFile ~/.ssh/id_rsa
-            StrictHostKeyChecking no
-            UserKnownHostsFile /dev/null
-            ConnectTimeout 30
-            ServerAliveInterval 10
-            ServerAliveCountMax 3
-        EOF
-        
-        echo "🔧 SSH configured for server: ${{ env.SERVER_IP }}"
+      # La siguiente sección es para conectarse al servidor y desplegar el código
+      # Este ejemplo usa sshpass para conectarse al servidor usando SSH.
+      # Es recomendable usar claves SSH en lugar de contraseñas para mayor seguridad, evitando el uso de contraseñas.
+      # Hay muchas formas de hacer esto, este es solo un ejemplo sencillo con Node. Debe ser adaptado a tu proyecto.
 
-    - name: Test SSH connection
-      run: |
-        echo "🔍 Testing SSH connection to ${{ env.SERVER_IP }}:1207..."
-        
-        if timeout 30 ssh -v -o ConnectTimeout=25 target-server "echo 'SSH connection successful'"; then
-          echo "✅ SSH connection working"
-        else
-          echo "❌ SSH connection failed"
-          exit 1
-        fi
-
-    - name: Deploy to server
-      run: |
-        echo "🚀 Starting deployment..."
-        
-        ssh target-server << 'EOF'
-        set -e
-        echo "🔄 Switching to root and updating code..."
-        echo "${{ secrets.SERVER_ROOT_PASSWORD }}" | su - root -c '
-          set -e
-          cd /home/aloyola
-          
-          if [ -d "mi-proyecto" ]; then
-            echo "📦 Creating backup..."
-            cp -r mi-proyecto mi-proyecto.backup.$(date +%Y%m%d_%H%M%S) || true
-          fi
-          
-          if [ -d "mi-proyecto" ] && [ -d "mi-proyecto/.git" ]; then
-            echo "🔄 Updating existing repository..."
-            cd mi-proyecto
-            git fetch --all
-            git reset --hard origin/main
-            git pull origin main
-          else
-            echo "📥 Cloning repository..."
-            rm -rf mi-proyecto
-            git clone https://github.com/clikzz/gps.git mi-proyecto
-            cd mi-proyecto
-          fi
-          
-          echo "✅ Code updated successfully"
-        '
-        EOF
-
-    - name: Install and restart application
-      run: |
-        echo "🔧 Installing dependencies and restarting application..."
-        
-        ssh target-server << 'EOF'
-        set -e
-        echo "${{ secrets.SERVER_ROOT_PASSWORD }}" | su - root -c '
-          set -e
-          cd /home/aloyola/mi-proyecto
-          
-          echo "📝 Creating environment file..."
-          cat > .env.local << "ENVEOF"
-          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          DIRECT_URL=${{ secrets.DIRECT_URL }}
-          ENVEOF
-          
-          echo "📦 Installing dependencies..."
-          npm ci --only=production --silent
-          
-          if [ -f "prisma/schema.prisma" ]; then
-            echo "🔨 Generating Prisma client..."
-            npx prisma generate
-          fi
-          
-          echo "🏗️ Building application..."
-          npm run build
-          
-          echo "🔄 Managing PM2 process..."
-          if ! command -v pm2 &> /dev/null; then
-            echo "Installing PM2..."
-            npm install -g pm2
-          fi
-          
-          if [ ! -f "ecosystem.config.js" ]; then
-            cat > ecosystem.config.js << "ECOEOF"
-            module.exports = {
-              apps: [{
-                name: "next-app",
-                script: "npm",
-                args: "start",
-                cwd: "/home/aloyola/mi-proyecto",
-                instances: 1,
-                exec_mode: "fork",
-                watch: false,
-                max_memory_restart: "1G",
-                env: {
-                  NODE_ENV: "production",
-                  PORT: 1208
-                },
-                error_file: "/home/aloyola/logs/next-app-err.log",
-                out_file: "/home/aloyola/logs/next-app-out.log",
-                log_file: "/home/aloyola/logs/next-app.log"
-              }]
-            }
-            ECOEOF
-          fi
-          
-          mkdir -p /home/aloyola/logs
-          pm2 stop next-app || echo "App was not running"
-          pm2 delete next-app || echo "App was not in PM2"
-          pm2 start ecosystem.config.js
-          pm2 save
-          
-          echo "✅ Application restarted successfully"
-        '
-        EOF
-
-    - name: Verify deployment
-      run: |
-        echo "🔍 Verifying deployment..."
-        APP_URL="http://${{ env.SERVER_IP }}:1208"
-        echo "🌐 Testing application at: $APP_URL"
-        sleep 20
-        
-        max_attempts=6
-        for attempt in $(seq 1 $max_attempts); do
-          echo "🔄 Verification attempt $attempt/$max_attempts..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$APP_URL" || echo "000")
-          
-          case $response in
-            200|301|302|304)
-              echo "✅ Application is responding successfully (HTTP $response)"
-              exit 0
-              ;;
-            000)
-              echo "⏳ Connection timeout (attempt $attempt/$max_attempts)"
-              ;;
-            *)
-              echo "⚠️ Unexpected response: HTTP $response (attempt $attempt/$max_attempts)"
-              ;;
-          esac
-          
-          [ $attempt -lt $max_attempts ] && sleep 10
-        done
-        
-        echo "❌ Application verification failed after $max_attempts attempts"
-        ssh target-server "echo '${{ secrets.SERVER_ROOT_PASSWORD }}' | su - root -c 'pm2 logs next-app --lines 30' 2>/dev/null || echo 'Could not retrieve PM2 logs'"
-        exit 1
-
-    - name: Cleanup
-      if: always()
-      run: |
-        echo "🧹 Cleaning up..."
-        rm -f ~/.ssh/id_rsa
-        sudo pkill -f openvpn || true
-        echo "✅ Cleanup completed"
-
-    - name: Deployment Summary
-      if: always()
-      run: |
-        echo "=================================="
-        echo "🚀 DEPLOYMENT SUMMARY"
-        echo "=================================="
-        
-        if [ "${{ job.status }}" = "success" ]; then
-          echo "✅ Status: SUCCESS"
-          echo "🌐 Application URL: http://${{ env.SERVER_IP }}:1208"
-        else
-          echo "❌ Status: FAILED"
-          echo "📝 Check the logs above for details"
-        fi
-        
-        echo "🕐 Completed at: $(date)"
-        echo "=================================="
+      - name: Conexión SSH y Despliegue
+        timeout-minutes: 3
+        # 1. Conexión SSH al servidor
+        # 2. Ir al directorio del proyecto
+        # 3. Actualizar el código fuente desde el repositorio remoto
+        # 4. Instalar dependencias del proyecto
+        # 5. Verificar el estado de pm2 y reiniciar el servicio si es necesario
+        # 6. Reiniciar el servicio de pm2
+        run: |
+          sshpass -p "${{ secrets.PROD_PASSWORD }}" ssh \
+            -q \
+            -o StrictHostKeyChecking=no \
+            -p ${{ secrets.PROD_PORT }} \
+            ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
+              set -euo pipefail
+              cd cicd/EICRV
+              echo "▶ Creando/actualizando .env…"
+              # Creamos el archivo .env con los valores que vienen como texto plano
+              # desde el runner.  Si existe, lo sobreescribimos.
+              cat > .env << EOF
+                NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+                NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+                DATABASE_URL=$DATABASE_URL
+                DIRECT_URL=$DIRECT_URL
+              EOF
+              chmod 600 .env
+              
+              echo "Actualizando código fuente..."
+              git fetch origin main
+              git reset --hard origin/main
+              echo "Instalando dependencias..."
+              npm ci
+              echo "Generando cliente"
+              if [ -f 'prisma/schema.prisma' ]; then
+              npx prisma generate
+              fi
+              echo "Buildeando aplicación"
+              npm run build
+              echo "Proceso PM2"
+              pm2 restart next-app || pm2 start ecosystem.config.js
+          EOF

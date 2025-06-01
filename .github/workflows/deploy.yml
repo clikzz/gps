@@ -84,7 +84,7 @@ jobs:
           -p ${{ secrets.PROD_PORT }} \
           ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
           set -eo pipefail
-          cd cicd
+          cd cicd/gps
 
           echo "▶ Creando/actualizando .env…"
           echo "NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" > .env

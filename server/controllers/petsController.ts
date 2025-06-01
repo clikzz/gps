@@ -5,6 +5,7 @@ import {
   putPetById,
 } from "../services/petsService";
 import { Pets as Pet } from "@prisma/client";
+import { petSchema } from "@/server/validations/petsValidation";
 
 export const fetchPets = async (userId: string) => {
   const pets = await getPets(userId);
@@ -38,6 +39,18 @@ export const addPet = async ({
     photo_url?: string;
   };
 }) => {
+  const parsedPet = petSchema.safeParse({
+    ...pet,
+    user_id: user.id,
+  });
+
+  if (!parsedPet.success) {
+    return new Response(JSON.stringify(parsedPet.error), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const newPet = await createPet({
     user,
     pet,

@@ -3,7 +3,7 @@ name: Despliegue a produccion
 on:
   push:
     branches:
-      - main # Se ejecuta en cada push a la rama main
+      - alvaro
 
 jobs:
   tests: # Job para ejecutar pruebas
@@ -24,7 +24,7 @@ jobs:
         run: npm run build
 
       #- name: Ejecutar pruebas # Ejecuta las pruebas del proyecto
-        #run: npm test
+      #run: npm test
 
   # CUIDADO: Las conexiones SSH y OpenVPN pueden ser peligrosas si no se protegen correctamente.
   # Asegúrate de que todas las credenciales estén protegidas usando los secretos del repositorio.
@@ -36,10 +36,10 @@ jobs:
     needs: tests # Este job depende del job de pruebas, por lo que no se ejecutará si el job de pruebas falla
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY:      ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      DATABASE_URL:      ${{ secrets.DATABASE_URL }}
-      DIRECT_URL:   ${{ secrets.DIRECT_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
       - name: Instalar dependencias (OpenVPN, SSH y sshpass)
         run: |
@@ -88,8 +88,8 @@ jobs:
               chmod 600 .env
               
               echo "Actualizando código fuente..."
-              git fetch origin main
-              git reset --hard origin/main
+              git fetch origin alvaro
+              git reset --hard origin/alvaro
               echo "Instalando dependencias..."
               npm ci
               echo "Generando cliente"

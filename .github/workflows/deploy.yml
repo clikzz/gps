@@ -8,6 +8,11 @@ on:
 jobs:
   tests: # Job para ejecutar pruebas
     runs-on: ubuntu-latest # Crea un entorno virtual en Ubuntu
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
       - name: Checkout código # Clona el repositorio en el entorno virtual
         uses: actions/checkout@v4 # Usa una acción de GitHub
@@ -19,6 +24,13 @@ jobs:
 
       - name: Instalar dependencias # Instala las dependencias del proyecto
         run: npm install
+
+      - name: Crear .env
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env
+          echo "DATABASE_URL=$DATABASE_URL" >> .env
+          echo "DIRECT_URL=$DIRECT_URL" >> .env
 
       - name: Construir proyecto
         run: npm run build
@@ -51,7 +63,7 @@ jobs:
         timeout-minutes: 2
         continue-on-error: false
         with:
-          config_file: .github/workflows/client.ovpn
+          config_file: ${{ secrets.VPN_CONFIG_FILE }} # Archivo de configuración de OpenVPN
           username: ${{ secrets.VPN_USERNAME }}
           password: ${{ secrets.VPN_PASSWORD }}
 

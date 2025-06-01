@@ -90,7 +90,7 @@ jobs:
             -p ${{ secrets.PROD_PORT }} \
             ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
               set -euo pipefail
-              cd cicd/EICRV
+              cd cicd
               echo "▶ Creando/actualizando .env…"
               # Creamos el archivo .env con los valores que vienen como texto plano
               # desde el runner.  Si existe, lo sobreescribimos.

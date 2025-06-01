@@ -77,35 +77,32 @@ jobs:
 
       - name: Conexión SSH y Despliegue
         timeout-minutes: 3
-        # 1. Conexión SSH al servidor
-        # 2. Ir al directorio del proyecto
-        # 3. Actualizar el código fuente desde el repositorio remoto
-        # 4. Instalar dependencias del proyecto
-        # 5. Verificar el estado de pm2 y reiniciar el servicio si es necesario
-        # 6. Reiniciar el servicio de pm2
         run: |
           sshpass -p "${{ secrets.PROD_PASSWORD }}" ssh \
           -q \
           -o StrictHostKeyChecking=no \
           -p ${{ secrets.PROD_PORT }} \
-          ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << EOF
-            set -eo pipefail
-            cd cicd
-            echo "▶ Creando/actualizando .env…"
-            tee .env > /dev/null <<EOV
-            NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-            DATABASE_URL=${{ env.DATABASE_URL }}
-            DIRECT_URL=${{ env.DIRECT_URL }}
-            EOV
-            chmod 600 .env
-            echo "Actualizando código fuente..."
-            git fetch origin alvaro
-            git reset --hard origin/alvaro
-            echo "Instalando dependencias..."
-            npm ci
-            echo "Buildeando aplicación"
-            npm run build
-            echo "Proceso PM2"
-            pm2 restart next-app || pm2 start ecosystem.config.js
+          ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
+          set -eo pipefail
+          cd cicd
+
+          echo "▶ Creando/actualizando .env…"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" > .env
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env
+          echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env
+          echo "DIRECT_URL=${{ env.DIRECT_URL }}" >> .env
+          chmod 600 .env
+
+          echo "Actualizando código fuente…"
+          git fetch origin alvaro
+          git reset --hard origin/alvaro
+
+          echo "Instalando dependencias…"
+          npm ci
+
+          echo "Buildeando aplicación…"
+          npm run build
+
+          echo "Proceso PM2…"
+          pm2 restart next-app || pm2 start ecosystem.config.js
           EOF

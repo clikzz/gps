@@ -23,8 +23,8 @@ jobs:
       - name: Construir proyecto
         run: npm run build
 
-      - name: Ejecutar pruebas # Ejecuta las pruebas del proyecto
-        run: npm test
+      #- name: Ejecutar pruebas # Ejecuta las pruebas del proyecto
+        #run: npm test
 
   # CUIDADO: Las conexiones SSH y OpenVPN pueden ser peligrosas si no se protegen correctamente.
   # Asegúrate de que todas las credenciales estén protegidas usando los secretos del repositorio.

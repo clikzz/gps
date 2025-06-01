@@ -85,30 +85,27 @@ jobs:
         # 6. Reiniciar el servicio de pm2
         run: |
           sshpass -p "${{ secrets.PROD_PASSWORD }}" ssh \
-            -q \
-            -o StrictHostKeyChecking=no \
-            -p ${{ secrets.PROD_PORT }} \
-            ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
-              set -euo pipefail
-              cd cicd
-              echo "▶ Creando/actualizando .env…"
-              # Creamos el archivo .env con los valores que vienen como texto plano
-              # desde el runner.  Si existe, lo sobreescribimos.
-              cat > .env << EOF
-                NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-                NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-                DATABASE_URL=$DATABASE_URL
-                DIRECT_URL=$DIRECT_URL
-              EOF
-              chmod 600 .env
-              
-              echo "Actualizando código fuente..."
-              git fetch origin alvaro
-              git reset --hard origin/alvaro
-              echo "Instalando dependencias..."
-              npm ci
-              echo "Buildeando aplicación"
-              npm run build
-              echo "Proceso PM2"
-              pm2 restart next-app || pm2 start ecosystem.config.js
+          -q \
+          -o StrictHostKeyChecking=no \
+          -p ${{ secrets.PROD_PORT }} \
+          ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << EOF
+            set -eo pipefail
+            cd cicd
+            echo "▶ Creando/actualizando .env…"
+            tee .env > /dev/null <<EOV
+            NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            DATABASE_URL=${{ env.DATABASE_URL }}
+            DIRECT_URL=${{ env.DIRECT_URL }}
+            EOV
+            chmod 600 .env
+            echo "Actualizando código fuente..."
+            git fetch origin alvaro
+            git reset --hard origin/alvaro
+            echo "Instalando dependencias..."
+            npm ci
+            echo "Buildeando aplicación"
+            npm run build
+            echo "Proceso PM2"
+            pm2 restart next-app || pm2 start ecosystem.config.js
           EOF

@@ -58,12 +58,15 @@ jobs:
           sudo apt update -qq > /dev/null 2>&1
           sudo apt install -y -qq openvpn openvpn-systemd-resolved openssh-client sshpass
 
+      - name: Crear archivo de configuración OpenVPN # Crea el archivo de configuración de OpenVPN en memoria
+        run: echo "${{ secrets.VPN_CONFIG_FILE }}" > /dev/shm/face-ubb.ovpn
+
       - name: Conexion a la VPN de la UBB
         uses: kota65535/github-openvpn-connect-action@v3.1.0
         timeout-minutes: 2
         continue-on-error: false
         with:
-          config_file: ${{ secrets.VPN_CONFIG_FILE }} # Archivo de configuración de OpenVPN
+          config_file: /dev/shm/face-ubb.ovpn # Archivo de configuración de OpenVPN
           username: ${{ secrets.VPN_USERNAME }}
           password: ${{ secrets.VPN_PASSWORD }}
 
@@ -104,10 +107,6 @@ jobs:
               git reset --hard origin/alvaro
               echo "Instalando dependencias..."
               npm ci
-              echo "Generando cliente"
-              if [ -f 'prisma/schema.prisma' ]; then
-              npx prisma generate
-              fi
               echo "Buildeando aplicación"
               npm run build
               echo "Proceso PM2"

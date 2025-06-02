@@ -1,67 +1,108 @@
-name: Deploy Next.js to University Server
+name: Despliegue a produccion
 
 on:
   push:
     branches:
-      - main
+      - alvaro
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  tests: # Job para ejecutar pruebas
+    runs-on: ubuntu-latest # Crea un entorno virtual en Ubuntu
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout código # Clona el repositorio en el entorno virtual
+        uses: actions/checkout@v4 # Usa una acción de GitHub
 
-      # Configurar VPN con autenticación
-      - name: Install OpenVPN
-        run: |
-          sudo apt update
-          sudo apt install -y openvpn
-
-      - name: Setup VPN configuration
-        run: |
-          echo "${{ secrets.OVPN_CONFIG }}" > config.ovpn
-          chmod 600 config.ovpn
-          
-          # Crear archivo de credenciales para OpenVPN
-          echo "${{ secrets.VPN_USERNAME }}" > vpn-credentials.txt
-          echo "${{ secrets.VPN_PASSWORD }}" >> vpn-credentials.txt
-          chmod 600 vpn-credentials.txt
-
-      - name: Connect to VPN
-        run: |
-          sudo openvpn --config config.ovpn --auth-user-pass vpn-credentials.txt --daemon
-          # Esperar a que se conecte
-          sleep 15
-          # Comprobar la conexión
-          echo "Comprobando conexión VPN..."
-          ifconfig
-
-      # Configurar SSH
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
+      - name: Instalar Node.js # Instala Node.js en el entorno virtual
+        uses: actions/setup-node@v4
         with:
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: unnecessary
-          if_key_exists: replace
+          node-version: "20"
 
-      - name: Add host to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      - name: Instalar dependencias # Instala las dependencias del proyecto
+        run: npm install
 
-      # Desplegar la aplicación
-      - name: Test connection
+      - name: Crear .env
         run: |
-          # Comprobar conexión al servidor
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "echo Conexión exitosa"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env
+          echo "DATABASE_URL=$DATABASE_URL" >> .env
+          echo "DIRECT_URL=$DIRECT_URL" >> .env
 
-      - name: Deploy to server
+      - name: Construir proyecto
+        run: npm run build
+
+      #- name: Ejecutar pruebas # Ejecuta las pruebas del proyecto
+      #run: npm test
+
+  # CUIDADO: Las conexiones SSH y OpenVPN pueden ser peligrosas si no se protegen correctamente.
+  # Asegúrate de que todas las credenciales estén protegidas usando los secretos del repositorio.
+  # EN NINGÚN CASO SE DEBEN DEJAR CREDENCIALES EXPUESTAS EN ESTE ARCHIVO NI EN NINGÚN OTRO.
+  # Si no sabes cómo proteger tus credenciales, consulta la documentación de GitHub o pregunta a un profesor.
+  # https://docs.github.com/es/actions/security-guides/encrypted-secrets
+
+  deploy: # Job para desplegar el proyecto
+    needs: tests # Este job depende del job de pruebas, por lo que no se ejecutará si el job de pruebas falla
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+    steps:
+      - name: Instalar dependencias (OpenVPN, SSH y sshpass)
         run: |
-          # Clonar el repositorio en el servidor
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && git init ."
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && git remote add origin ${{ github.server_url }}/${{ github.repository }} || git remote set-url origin ${{ github.server_url }}/${{ github.repository }}"
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && git fetch --all && git reset --hard origin/main"
-          
-          # Ejecutar script de despliegue
-          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ~/nextjs-project && ./deploy.sh"
+          sudo apt update -qq > /dev/null 2>&1
+          sudo apt install -y -qq openvpn openvpn-systemd-resolved openssh-client sshpass
+
+      - name: Crear archivo de configuración OpenVPN # Crea el archivo de configuración de OpenVPN en memoria
+        run: echo "${{ secrets.VPN_CONFIG_FILE }}" > /dev/shm/face-ubb.ovpn
+
+      - name: Conexion a la VPN de la UBB
+        uses: kota65535/github-openvpn-connect-action@v3.1.0
+        timeout-minutes: 2
+        continue-on-error: false
+        with:
+          config_file: /dev/shm/face-ubb.ovpn # Archivo de configuración de OpenVPN
+          username: ${{ secrets.VPN_USERNAME }}
+          password: ${{ secrets.VPN_PASSWORD }}
+
+      # La siguiente sección es para conectarse al servidor y desplegar el código
+      # Este ejemplo usa sshpass para conectarse al servidor usando SSH.
+      # Es recomendable usar claves SSH en lugar de contraseñas para mayor seguridad, evitando el uso de contraseñas.
+      # Hay muchas formas de hacer esto, este es solo un ejemplo sencillo con Node. Debe ser adaptado a tu proyecto.
+
+      - name: Conexión SSH y Despliegue
+        timeout-minutes: 3
+        run: |
+          sshpass -p "${{ secrets.PROD_PASSWORD }}" ssh \
+          -q \
+          -o StrictHostKeyChecking=no \
+          -p ${{ secrets.PROD_PORT }} \
+          ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
+          set -eo pipefail
+          cd cicd/gps
+
+          echo "▶ Creando/actualizando .env…"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" > .env
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env
+          echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env
+          echo "DIRECT_URL=${{ env.DIRECT_URL }}" >> .env
+          chmod 600 .env
+
+          echo "Actualizando código fuente…"
+          git fetch origin alvaro
+          git reset --hard origin/alvaro
+
+          echo "Instalando dependencias…"
+          npm ci
+
+          echo "Buildeando aplicación…"
+          npm run build
+
+          echo "Proceso PM2…"
+          pm2 restart next-app || pm2 start ecosystem.config.js
+          EOF

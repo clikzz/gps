@@ -2,6 +2,7 @@ import HeaderAuth from "@/components/header-auth";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 import Link from "next/link";
 import "./globals.css";
 
@@ -65,6 +66,7 @@ export default function RootLayout({
             </div>
           </main>
         </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   );

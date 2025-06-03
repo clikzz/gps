@@ -157,7 +157,7 @@ model MissingPets {
   reporter_id  String      @db.Uuid
   latitude     Float
   longitude    Float
-  photo_url    String
+  photo_url    String?
   description  String?
   reported_at  DateTime    @default(now())
   Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)

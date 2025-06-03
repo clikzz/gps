@@ -1,10 +1,13 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
 export const petSchema = z.object({
-  id: z.string("El id debe ser una cadena de texto").optional(),
-  user_id: z.string("El id del usuario debe ser una cadena de texto"),
+  id: z.string().optional(),
+  user_id: z.string(),
   name: z
-    .string("El nombre debe ser una cadena de texto")
+    .string({
+      required_error: "El nombre es requerido",
+      invalid_type_error: "El nombre debe ser una cadena de texto",
+    })
     .min(2, "El nombre debe contener al menos 2 caracteres")
     .max(15, "El nombre debe contener máximo 15 caracteres")
     .regex(/^[^\d]*$/, "El nombre no debe contener números"),
@@ -27,28 +30,49 @@ export const petSchema = z.object({
       "lizard",
       "other",
     ],
-    "Especie no válida"
+    {
+      required_error: "La especie es requerida",
+      invalid_type_error: "Especie no válida",
+    }
   ),
-  active: z.boolean("Esta opción debe ser verdadero o falso").optional(),
+  active: z
+    .boolean({
+      invalid_type_error: "Esta opción debe ser verdadero o falso",
+    })
+    .optional(),
   date_of_adoption: z
-    .string("La fecha de adopción debe ser una cadena de texto")
+    .string({
+      invalid_type_error: "La fecha de adopción debe ser una cadena de texto",
+    })
     .optional()
     .refine((date) => {
-      if (!date) return true;
+      if (!date || date === "") return true;
       const parsedDate = new Date(date);
       return !isNaN(parsedDate.getTime());
     }, "Formato de fecha inválido"),
   date_of_birth: z
-    .string()
+    .string({
+      invalid_type_error: "La fecha de nacimiento debe ser una cadena de texto",
+    })
     .optional()
     .refine((date) => {
-      if (!date) return true;
+      if (!date || date === "") return true;
       const parsedDate = new Date(date);
       return !isNaN(parsedDate.getTime());
     }, "Formato de fecha inválido"),
-  fixed: z.boolean("Esta opción debe ser verdadero o falso").optional(),
-  sex: z
-    .enum(["male", "female"], "El sexo debe ser masculino o femenino")
+  fixed: z
+    .boolean({
+      invalid_type_error: "Esta opción debe ser verdadero o falso",
+    })
     .optional(),
-  photo_url: z.string("La URL de la imagen debe ser un string").optional(),
+  sex: z
+    .enum(["male", "female", "unknown"], {
+      invalid_type_error: "El sexo debe ser masculino o femenino",
+    })
+    .optional(),
+  photo_url: z
+    .string({
+      invalid_type_error: "La URL de la imagen debe ser un string",
+    })
+    .optional(),
 });

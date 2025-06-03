@@ -1,6 +1,6 @@
 'use client';
 
-import FindMap from '@/components/FindMap';
+import FindMap from '@/components/find/FindMap';
 
 export default function FindMyPetPage() {
   return (

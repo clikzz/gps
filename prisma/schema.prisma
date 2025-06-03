@@ -16,8 +16,8 @@ model UserProfile {
   avatar_url       String?
   email            String             @unique
   public_id        BigInt?            @default(autoincrement())
-  missingPets      MissingPet[]
   marketplaceItems MarketplaceItems[]
+  missingPets      MissingPet[]
   pets             Pets[]
   Posts            Posts[]
   reviews          Reviews[]
@@ -38,8 +38,8 @@ model Pets {
   fixed            Boolean?
   photo_url        String?
   sex              String?
-  missingReports   MissingPet[]
   Medications      Medications[]
+  missingReports   MissingPet[]
   user             UserProfile       @relation(fields: [user_id], references: [id])
   TimelineEntries  TimelineEntries[]
   Vaccinations     Vaccinations[]
@@ -95,16 +95,16 @@ model Reviews {
 }
 
 model MissingPet {
-  id           BigInt       @id @default(autoincrement())
-  pet_id       BigInt
-  reporter_id  String       @db.Uuid
-  latitude     Float
-  longitude    Float
-  photo_url    String
-  description  String?
-  reported_at  DateTime     @default(now())
-  pet          Pets         @relation(fields: [pet_id], references: [id], onDelete: Cascade)
-  reporter     UserProfile  @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+  id          BigInt      @id @default(autoincrement())
+  pet_id      BigInt
+  reporter_id String      @db.Uuid
+  latitude    Float
+  longitude   Float
+  photo_url   String?
+  description String?
+  reported_at DateTime    @default(now())
+  pet         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+  reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
 
   @@map("MissingPets")
 }

@@ -4,7 +4,7 @@ export interface MissingPetInput {
   pet_id: number;
   latitude: number;
   longitude: number;
-  photo_url: string;
+  photo_url?: string;
   description?: string;
 }
 
@@ -21,7 +21,7 @@ export const createMissingPet = async (
       pet_id: data.pet_id,
       latitude: data.latitude,
       longitude: data.longitude,
-      photo_url: data.photo_url,
+      photo_url: data.photo_url ?? null,
       description: data.description,
     },
   });
@@ -64,5 +64,15 @@ export const listRecentMissingPets = async () => {
       },
     },
     orderBy: { reported_at: "desc" },
+  });
+};
+
+/**
+ * Listar mascotas del usuario autenticado.
+ */
+export const findPetsByUser = async (userId: string) => {
+  return prisma.pets.findMany({
+    where: { user_id: userId },
+    orderBy: { name: "asc" },
   });
 };

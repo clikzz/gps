@@ -1,4 +1,4 @@
-import { createMissingPet, listRecentMissingPets, listAllMissingPets } from "@/server/services/findMyPet.service";
+import { createMissingPet, listRecentMissingPets, listAllMissingPets, findPetsByUser } from "@/server/services/find.service";
 
 export const reportMissingPet = async (
   reporterId: string,
@@ -10,11 +10,28 @@ export const reportMissingPet = async (
   if (
     typeof pet_id !== "number" ||
     typeof latitude !== "number" ||
-    typeof longitude !== "number" ||
-    typeof photo_url !== "string"
+    typeof longitude !== "number"
   ) {
     return new Response(
       JSON.stringify({ error: "Campos inválidos en el cuerpo de la petición" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  if (
+    photo_url !== undefined &&
+    photo_url !== null &&
+    typeof photo_url !== "string"
+  ) {
+    return new Response(
+      JSON.stringify({ error: "photo_url debe ser un string si se envía" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  if (description !== undefined && typeof description !== "string") {
+    return new Response(
+      JSON.stringify({ error: "description debe ser un string si se envía" }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -23,7 +40,7 @@ export const reportMissingPet = async (
     pet_id,
     latitude,
     longitude,
-    photo_url,
+    photo_url: photo_url ?? null,
     description,
   });
 
@@ -89,3 +106,18 @@ export const fetchRecentMissingPets = async () => {
     headers: { "Content-Type": "application/json" },
   });
 };
+
+export const fetchUserPets = async (userId: string) => {
+  const pets = await findPetsByUser(userId);
+
+  const output = pets.map((pet) => ({
+    ...pet,
+    id: pet.id.toString(),
+    name: pet.name || "Sin nombre",
+  }));
+
+  return new Response(JSON.stringify(output), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}

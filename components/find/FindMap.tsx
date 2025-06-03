@@ -6,6 +6,8 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Marker, Popup } from 'react-map-gl/mapbox';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { CircleUserRound, Dog } from 'lucide-react';
+import ReportButton from '@/components/find/ReportButton';
+import ReportModal from '@/components/find/ReportModal';
 
 const Map = dynamic(
   () => import('react-map-gl/mapbox').then((mod) => mod.default),
@@ -32,8 +34,10 @@ export default function FindMap() {
   const [reports, setReports] = useState<MissingReport[]>([]);
   const [selected, setSelected] = useState<MissingReport | null>(null);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
-    fetch('/api/find-my-pet/recent')
+    fetch('/api/find?mode=recent')
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -44,6 +48,59 @@ export default function FindMap() {
       .catch(console.error);
   }, []);
 
+  const refreshReports = () => {
+    fetch('/api/find?mode=recent')
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: MissingReport[]) => {
+        setReports(data);
+      })
+      .catch(console.error);
+  };
+
+  const handleSubmitReport = async (data: {
+    pet_id: string;
+    file: File | null;
+    description: string;
+  }) => {
+    if (!mapRef.current) {
+      alert('El mapa no está listo aún.');
+      return;
+    }
+
+    // Obtener el centro actual del mapa
+    const { lat, lng } = mapRef.current.getCenter();
+
+    // Preparar FormData para envío multipart/form-data
+    const formData = new FormData();
+    formData.append('pet_id', data.pet_id);
+    formData.append('latitude', String(lat));
+    formData.append('longitude', String(lng));
+    formData.append('description', data.description);
+    if (data.file) {
+      formData.append('file', data.file);
+    }
+
+    try {
+      const res = await fetch('/api/find', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Error al enviar reporte: ${errorText}`);
+      }
+      // Cerrar modal y refrescar marcadores
+      setIsModalOpen(false);
+      refreshReports();
+    } catch (err: any) {
+      console.error(err);
+      alert('No se pudo enviar el reporte. Intenta de nuevo.');
+    }
+  };
+
   return (
     <div className="relative w-full h-full">
       {error && (
@@ -51,6 +108,14 @@ export default function FindMap() {
           {error}
         </div>
       )}
+
+      <ReportButton onClick={() => setIsModalOpen(true)} />
+
+      <ReportModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmitReport}
+      />
 
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}

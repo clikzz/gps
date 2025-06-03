@@ -118,14 +118,14 @@ model Milestones {
 }
 
 model TimelineEntries {
-  id                  String                @id
+  id                  String    @id @default(cuid())
   user_id             String                @db.Uuid
   pet_id              BigInt
   title               String?
   description         String?
   event_date          DateTime
   created_at          DateTime              @default(now())
-  updated_at          DateTime
+  updated_at          DateTime  @updatedAt   
   Pets                Pets                  @relation(fields: [pet_id], references: [id])
   UserProfiles        UserProfile           @relation(fields: [user_id], references: [id])
   TimelineEntryPhotos TimelineEntryPhotos[]
@@ -133,7 +133,7 @@ model TimelineEntries {
 }
 
 model TimelineEntryPhotos {
-  id                String          @id
+  id                  String    @id @default(cuid())
   timeline_entry_id String
   photo_url         String
   order             Int?
@@ -157,7 +157,7 @@ model MissingPets {
   reporter_id  String      @db.Uuid
   latitude     Float
   longitude    Float
-  photo_url    String
+  photo_url    String?
   description  String?
   reported_at  DateTime    @default(now())
   Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)

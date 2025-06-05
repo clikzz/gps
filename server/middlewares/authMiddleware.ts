@@ -1,7 +1,37 @@
 import { createClient } from "@/utils/supabase/server";
+import { createServerClient } from "@supabase/ssr";
 
 export const authenticateUser = async (req: Request) => {
-  const supabase = await createClient();
+  const authHeader = req.headers.get("authorization");
+  const bearerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.substring(7)
+    : null;
+
+  let supabase;
+
+  if (bearerToken) {
+    supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return [];
+          },
+          setAll() {
+          },
+        },
+        global: {
+          headers: {
+            Authorization: `Bearer ${bearerToken}`,
+          },
+        },
+      }
+    );
+  } else {
+    supabase = await createClient();
+  }
+
   const {
     data: { user },
     error,

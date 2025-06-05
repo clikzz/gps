@@ -1,15 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
-import { ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 
 interface Pet {
   id: string;
@@ -62,89 +57,74 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
 
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 relative">
-        {/* Botón X para cerrar */}
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
-        >
-          ✕
-        </button>
-
-        <h2 className="text-xl font-bold mb-4">Reportar Mascota Perdida</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 1. Dropdown de mascotas */}
-          <div>
-            <label className="block font-medium mb-1">Selecciona tu mascota:</label>
-            {loadingPets ? (
-              <p>Cargando mascotas…</p>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className={cn(
-                      'w-full flex justify-between items-center border border-gray-300 rounded px-3 py-2 text-left',
-                      !selectedPetId ? 'text-gray-500' : 'text-black'
-                    )}
-                  >
-                    {selectedPetId
-                      ? pets.find((p) => p.id === selectedPetId)?.name
-                      : '-- elige mascota --'}
-                    <ChevronRight className="h-4 w-4 rotate-90" />
-                  </button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent sideOffset={4}>
+      <Card className="w-full max-w-md mx-4">
+        <CardHeader>
+          <CardTitle>Reportar Mascota Perdida</CardTitle>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            {/* 1. Dropdown de mascotas (nativo por simplicidad) */}
+            <div>
+              <Label htmlFor="pet-select">Selecciona tu mascota:</Label>
+              {loadingPets ? (
+                <p className="text-sm text-muted-foreground">Cargando mascotas…</p>
+              ) : (
+                <select
+                  id="pet-select"
+                  value={selectedPetId}
+                  onChange={(e) => setSelectedPetId(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Tus mascotas</option>
                   {pets.map((p) => (
-                    <DropdownMenuItem
-                      key={p.id}
-                      onSelect={() => setSelectedPetId(p.id)}
-                    >
+                    <option key={p.id} value={p.id}>
                       {p.name}
-                    </DropdownMenuItem>
+                    </option>
                   ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
+                </select>
+              )}
+            </div>
 
-          {/* 2. Input de foto */}
-          <div>
-            <label className="block font-medium mb-1">Foto de respaldo:</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="w-full"
-            />
-          </div>
+            {/* 2. Input de foto */}
+            <div>
+              <Label htmlFor="photo-input">Foto de respaldo (opcional):</Label>
+              <Input
+                id="photo-input"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="mt-1"
+              />
+            </div>
 
-          {/* 3. Descripción opcional */}
-          <div>
-            <label className="block font-medium mb-1">Descripción (opcional):</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-              placeholder="Agregar detalles que ayuden a encontrarla"
-            />
-          </div>
+            {/* 3. Descripción opcional */}
+            <div>
+              <Label htmlFor="description">Descripción (opcional):</Label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder="Agregar detalles que ayuden a encontrarla"
+              />
+            </div>
 
-          {/* Nota sobre ubicación */}
-          <p className="text-sm text-gray-500">
-            La ubicación se tomará del centro actual del mapa. Mueve el mapa para centrarlo sobre
-            el punto donde viste por última vez a tu mascota.
-          </p>
+            {/* Nota sobre ubicación */}
+            <p className="text-sm text-muted-foreground">
+              La ubicación se tomará del centro actual del mapa. Mueve el mapa para centrarlo sobre
+              el punto donde viste por última vez a tu mascota.
+            </p>
+          </CardContent>
 
-          {/* Botón Enviar */}
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-            Enviar Reporte
-          </Button>
+          <CardFooter className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit">Enviar Reporte</Button>
+          </CardFooter>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

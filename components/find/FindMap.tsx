@@ -6,8 +6,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Marker, Popup } from 'react-map-gl/mapbox';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { CircleUserRound, Dog } from 'lucide-react';
-import ReportButton from '@/components/find/ReportButton';
+import ActionsMenu from '@/components/find/ActionsMenu';
 import ReportModal from '@/components/find/ReportModal';
+import MyReports from '@/components/find/MyReports';
+import OthersReports from '@/components/find/OthersReports';
 
 const Map = dynamic(
   () => import('react-map-gl/mapbox').then((mod) => mod.default),
@@ -34,18 +36,12 @@ export default function FindMap() {
   const [reports, setReports] = useState<MissingReport[]>([]);
   const [selected, setSelected] = useState<MissingReport | null>(null);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isMyReportsModalOpen, setIsMyReportsModalOpen] = useState(false);
+  const [isOthersReportsModalOpen, setIsOthersReportsModalOpen] = useState(false);
 
   useEffect(() => {
-    fetch('/api/find?mode=recent')
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data: MissingReport[]) => {
-        setReports(data);
-      })
-      .catch(console.error);
+    refreshReports();
   }, []);
 
   const refreshReports = () => {
@@ -69,19 +65,13 @@ export default function FindMap() {
       alert('El mapa no está listo aún.');
       return;
     }
-
-    // Obtener el centro actual del mapa
     const { lat, lng } = mapRef.current.getCenter();
-
-    // Preparar FormData para envío multipart/form-data
     const formData = new FormData();
     formData.append('pet_id', data.pet_id);
     formData.append('latitude', String(lat));
     formData.append('longitude', String(lng));
     formData.append('description', data.description);
-    if (data.file) {
-      formData.append('file', data.file);
-    }
+    if (data.file) formData.append('file', data.file);
 
     try {
       const res = await fetch('/api/find', {
@@ -92,8 +82,7 @@ export default function FindMap() {
         const errorText = await res.text();
         throw new Error(`Error al enviar reporte: ${errorText}`);
       }
-      // Cerrar modal y refrescar marcadores
-      setIsModalOpen(false);
+      setIsReportModalOpen(false);
       refreshReports();
     } catch (err: any) {
       console.error(err);
@@ -104,17 +93,33 @@ export default function FindMap() {
   return (
     <div className="relative w-full h-full">
       {error && (
-        <div className="absolute top-2 left-2 bg-red-500 text-white p-2 rounded">
+        <div className="absolute top-2 left-2 bg-red-500 p-2 rounded">
           {error}
         </div>
       )}
 
-      <ReportButton onClick={() => setIsModalOpen(true)} />
+      <div className="absolute top-4 right-4 z-20">
+        <ActionsMenu
+          onReportClick={() => setIsReportModalOpen(true)}
+          onMyReportsClick={() => setIsMyReportsModalOpen(true)}
+          onOthersReportsClick={() => setIsOthersReportsModalOpen(true)}
+        />
+      </div>
 
       <ReportModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
         onSubmit={handleSubmitReport}
+      />
+
+      <MyReports
+        isOpen={isMyReportsModalOpen}
+        onClose={() => setIsMyReportsModalOpen(false)}
+      />
+
+      <OthersReports
+        isOpen={isOthersReportsModalOpen}
+        onClose={() => setIsOthersReportsModalOpen(false)}
       />
 
       <Map

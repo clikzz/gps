@@ -11,6 +11,11 @@ interface Pet {
   name: string;
 }
 
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,10 +23,19 @@ interface ReportModalProps {
     pet_id: string;
     file: File | null;
     description: string;
+    location?: LatLng;
   }) => void;
+  onPickLocation: () => void;
+  pickedLocation: LatLng | null;
 }
 
-export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalProps) {
+export default function ReportModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  onPickLocation,
+  pickedLocation,
+}: ReportModalProps) {
   const [pets, setPets] = useState<Pet[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
@@ -52,7 +66,13 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
       alert('Debes seleccionar una mascota.');
       return;
     }
-    onSubmit({ pet_id: selectedPetId, file, description });
+
+    onSubmit({
+      pet_id: selectedPetId,
+      file,
+      description,
+      location: pickedLocation || undefined,
+    });
   };
 
   return (
@@ -63,9 +83,9 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {/* 1. Dropdown de mascotas (nativo por simplicidad) */}
+            {/* 1. Dropdown de mascotas */}
             <div>
-              <Label htmlFor="pet-select">Selecciona tu mascota:</Label>
+              <Label htmlFor="pet-select">Selecciona tu mascota</Label>
               {loadingPets ? (
                 <p className="text-sm text-muted-foreground">Cargando mascotas…</p>
               ) : (
@@ -87,7 +107,7 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
 
             {/* 2. Input de foto */}
             <div>
-              <Label htmlFor="photo-input">Foto de respaldo (opcional):</Label>
+              <Label htmlFor="photo-input">Foto de respaldo</Label>
               <Input
                 id="photo-input"
                 type="file"
@@ -99,7 +119,7 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
 
             {/* 3. Descripción opcional */}
             <div>
-              <Label htmlFor="description">Descripción (opcional):</Label>
+              <Label htmlFor="description">Descripción</Label>
               <textarea
                 id="description"
                 value={description}
@@ -110,10 +130,25 @@ export default function ReportModal({ isOpen, onClose, onSubmit }: ReportModalPr
               />
             </div>
 
+            {/* 4. Botón para marcar ubicación en mapa */}
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={onPickLocation}
+              >
+                {pickedLocation
+                  ? `Ubicación seleccionada: (${pickedLocation.lat.toFixed(5)}, ${pickedLocation.lng.toFixed(5)})`
+                  : 'Marcar ubicación en el mapa'}
+              </Button>
+            </div>
+
             {/* Nota sobre ubicación */}
             <p className="text-sm text-muted-foreground">
-              La ubicación se tomará del centro actual del mapa. Mueve el mapa para centrarlo sobre
-              el punto donde viste por última vez a tu mascota.
+              {pickedLocation
+                ? 'Si estás satisfecho con la ubicación marcada, continúa con el envío.'
+                : 'Si no marcas ubicación, se tomará el centro actual del mapa al enviar.'}
             </p>
           </CardContent>
 

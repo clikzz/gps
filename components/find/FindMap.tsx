@@ -5,9 +5,9 @@ import dynamic from 'next/dynamic';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Marker, Popup } from 'react-map-gl/mapbox';
 import { useUserLocation } from '@/hooks/useUserLocation';
-import { CircleUserRound, Dog } from 'lucide-react';
+import { CircleUserRound, Dog, MapPinCheck } from 'lucide-react';
 import ActionsMenu from '@/components/find/ActionsMenu';
-import ReportModal from '@/components/find/ReportModal';
+import ReportModal, { LatLng } from '@/components/find/ReportModal';
 import MyReports from '@/components/find/MyReports';
 import OthersReports from '@/components/find/OthersReports';
 
@@ -40,6 +40,9 @@ export default function FindMap() {
   const [isMyReportsModalOpen, setIsMyReportsModalOpen] = useState(false);
   const [isOthersReportsModalOpen, setIsOthersReportsModalOpen] = useState(false);
 
+  const [pickLocationMode, setPickLocationMode] = useState(false);
+  const [pickedLocation, setPickedLocation] = useState<LatLng | null>(null);
+
   useEffect(() => {
     refreshReports();
   }, []);
@@ -60,18 +63,32 @@ export default function FindMap() {
     pet_id: string;
     file: File | null;
     description: string;
+    location?: LatLng;
   }) => {
     if (!mapRef.current) {
       alert('El mapa no está listo aún.');
       return;
     }
-    const { lat, lng } = mapRef.current.getCenter();
+
+    // Si el usuario marcó ubicación, la usamos; sino, tomamos el centro
+    let lat: number, lng: number;
+    if (data.location) {
+      lat = data.location.lat;
+      lng = data.location.lng;
+    } else {
+      const center = mapRef.current.getCenter();
+      lat = center.lat;
+      lng = center.lng;
+    }
+
     const formData = new FormData();
     formData.append('pet_id', data.pet_id);
     formData.append('latitude', String(lat));
     formData.append('longitude', String(lng));
     formData.append('description', data.description);
-    if (data.file) formData.append('file', data.file);
+    if (data.file) {
+      formData.append('file', data.file);
+    }
 
     try {
       const res = await fetch('/api/find', {
@@ -83,11 +100,31 @@ export default function FindMap() {
         throw new Error(`Error al enviar reporte: ${errorText}`);
       }
       setIsReportModalOpen(false);
+      setPickedLocation(null);
       refreshReports();
     } catch (err: any) {
       console.error(err);
       alert('No se pudo enviar el reporte. Intenta de nuevo.');
     }
+  };
+
+  // Cuando el usuario solicita “marcar en el mapa”
+  const handlePickLocation = () => {
+    // Cerramos el modal para que el mapa quede clicable
+    setIsReportModalOpen(false);
+    setPickLocationMode(true);
+    alert('Haz clic en el mapa para seleccionar la ubicación definitiva.');
+  };
+
+  // Manejador de clics en el mapa
+  const handleMapClick = (evt: any) => {
+    if (!pickLocationMode) return;
+    // evt.lngLat contiene las coordenadas
+    const [lng, lat] = evt.lngLat.toArray();
+    setPickedLocation({ lat, lng });
+    setPickLocationMode(false);
+    // Reabrimos el modal para que el usuario continúe
+    setIsReportModalOpen(true);
   };
 
   return (
@@ -108,8 +145,14 @@ export default function FindMap() {
 
       <ReportModal
         isOpen={isReportModalOpen}
-        onClose={() => setIsReportModalOpen(false)}
+        onClose={() => {
+          setIsReportModalOpen(false);
+          setPickLocationMode(false);
+          setPickedLocation(null);
+        }}
         onSubmit={handleSubmitReport}
+        onPickLocation={handlePickLocation}
+        pickedLocation={pickedLocation}
       />
 
       <MyReports
@@ -136,6 +179,7 @@ export default function FindMap() {
           mapRef.current = map;
           onMapLoad(map);
         }}
+        onClick={(evt) => handleMapClick(evt)}
       >
         <Marker
           latitude={initial.latitude}
@@ -189,6 +233,19 @@ export default function FindMap() {
               </p>
             </div>
           </Popup>
+        )}
+
+        {pickedLocation && (
+          <Marker
+            latitude={pickedLocation.lat}
+            longitude={pickedLocation.lng}
+            anchor="bottom"
+          >
+            <MapPinCheck
+              size={28}
+              className="text-red-500"
+            />
+          </Marker>
         )}
       </Map>
     </div>

@@ -31,7 +31,7 @@ export default function MyReportsModal({ isOpen, onClose }: MyReportsModalProps)
     if (!isOpen) return;
     setLoading(true);
 
-    fetch('/api/find?mode=all')
+    fetch('/api/find?mode=my')
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

@@ -1,46 +1,30 @@
-import { createMissingPet, listRecentMissingPets, listAllMissingPets, findPetsByUser } from "@/server/services/find.service";
+import { 
+  createMissingPet, 
+  listRecentMissingPets, 
+  listAllMissingPets, 
+  findPetsByUser,
+  listMyMissingPets
+} from "@/server/services/find.service";
+import { Prisma } from "@prisma/client";
+import { reportMissingPetSchema } from "@/server/validations/find.validation";
 
-export const reportMissingPet = async (
-  reporterId: string,
-  body: any
-) => {
-  const { pet_id, latitude, longitude, photo_url, description } = body;
-
-  // validaciones
-  if (
-    typeof pet_id !== "number" ||
-    typeof latitude !== "number" ||
-    typeof longitude !== "number"
-  ) {
-    return new Response(
-      JSON.stringify({ error: "Campos inválidos en el cuerpo de la petición" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+export const reportMissingPet = async ( reporterId: string, body: any ) => {
+  const parseResult = reportMissingPetSchema.safeParse(body);
+  if (!parseResult.success) {
+    const formatted = parseResult.error.format();
+    return new Response(JSON.stringify({ error: formatted }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
   }
+  const { pet_id, latitude, longitude, photo_url, description } = parseResult.data;
 
-  if (
-    photo_url !== undefined &&
-    photo_url !== null &&
-    typeof photo_url !== "string"
-  ) {
-    return new Response(
-      JSON.stringify({ error: "photo_url debe ser un string si se envía" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
-  if (description !== undefined && typeof description !== "string") {
-    return new Response(
-      JSON.stringify({ error: "description debe ser un string si se envía" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
-  }
-
+  try {
   const missing = await createMissingPet(reporterId, {
     pet_id,
     latitude,
     longitude,
-    photo_url: photo_url ?? null,
+    photo_url,
     description,
   });
 
@@ -55,6 +39,26 @@ export const reportMissingPet = async (
     status: 201,
     headers: { "Content-Type": "application/json" },
   });
+  } catch (err: any) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002" &&
+      Array.isArray(err.meta?.target) &&
+      err.meta?.target.includes("pet_id") &&
+      err.meta?.target.includes("reporter_id")
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Ya has reportado esta mascota anteriormente." }),
+        { status: 409, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    console.error(err);
+    return new Response(
+      JSON.stringify({ error: "Error al crear reporte." }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
 };
 
 export const fetchAllMissingPets = async () => {
@@ -101,6 +105,26 @@ export const fetchRecentMissingPets = async () => {
     },
   }));
 
+  return new Response(JSON.stringify(output), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+};
+
+export const fetchMyMissingPets = async (userId: string) => {
+  const list = await listMyMissingPets(userId);
+  const output = list.map((item) => ({
+    ...item,
+    id: item.id.toString(),
+    pet_id: item.pet_id.toString(),
+    reporter_id: item.reporter_id.toString(),
+    pet: { ...item.pet, id: item.pet.id.toString() },
+    reporter: {
+      ...item.reporter,
+      id: item.reporter.id.toString(),
+      name: item.reporter.name || "Desconocido",
+    },
+  }));
   return new Response(JSON.stringify(output), {
     status: 200,
     headers: { "Content-Type": "application/json" },

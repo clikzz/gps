@@ -5,8 +5,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -31,11 +29,6 @@ model UserProfile {
 }
 
 model Pets {
-  id               BigInt            @id @default(autoincrement())
-  user_id          String            @db.Uuid
-  name             String
-  species          String
-  active           Boolean?          @default(true)
   id               BigInt            @id @default(autoincrement())
   user_id          String            @db.Uuid
   name             String
@@ -113,6 +106,8 @@ model MissingPet {
   reported_at DateTime    @default(now())
   pet         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
   reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@unique([pet_id, reporter_id])
 
   @@map("MissingPets")
 }

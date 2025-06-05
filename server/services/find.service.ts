@@ -68,6 +68,20 @@ export const listRecentMissingPets = async () => {
 };
 
 /**
+ * Lista reportes de mascotas desaparecidas del usuario autenticado.
+ */
+export const listMyMissingPets = async (userId: string) => {
+  return prisma.missingPet.findMany({
+    where: { reporter_id: userId },
+    include: {
+      pet: { select: { id: true, name: true } },
+      reporter: { select: { id: true, name: true } },
+    },
+    orderBy: { reported_at: "desc" },
+  });
+};
+
+/**
  * Listar mascotas del usuario autenticado.
  */
 export const findPetsByUser = async (userId: string) => {

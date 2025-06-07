@@ -3,11 +3,17 @@ name: Despliegue a produccion
 on:
   push:
     branches:
-      - main # Se ejecuta en cada push a la rama main
+      - main
+  workflow_dispatch:
 
 jobs:
   tests: # Job para ejecutar pruebas
     runs-on: ubuntu-latest # Crea un entorno virtual en Ubuntu
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
       - name: Checkout código # Clona el repositorio en el entorno virtual
         uses: actions/checkout@v4 # Usa una acción de GitHub
@@ -20,11 +26,18 @@ jobs:
       - name: Instalar dependencias # Instala las dependencias del proyecto
         run: npm install
 
+      - name: Crear .env
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env
+          echo "DATABASE_URL=$DATABASE_URL" >> .env
+          echo "DIRECT_URL=$DIRECT_URL" >> .env
+
       - name: Construir proyecto
         run: npm run build
 
       #- name: Ejecutar pruebas # Ejecuta las pruebas del proyecto
-        #run: npm test
+      #run: npm test
 
   # CUIDADO: Las conexiones SSH y OpenVPN pueden ser peligrosas si no se protegen correctamente.
   # Asegúrate de que todas las credenciales estén protegidas usando los secretos del repositorio.
@@ -36,22 +49,25 @@ jobs:
     needs: tests # Este job depende del job de pruebas, por lo que no se ejecutará si el job de pruebas falla
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY:      ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      DATABASE_URL:      ${{ secrets.DATABASE_URL }}
-      DIRECT_URL:   ${{ secrets.DIRECT_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
     steps:
       - name: Instalar dependencias (OpenVPN, SSH y sshpass)
         run: |
           sudo apt update -qq > /dev/null 2>&1
           sudo apt install -y -qq openvpn openvpn-systemd-resolved openssh-client sshpass
 
+      - name: Crear archivo de configuración OpenVPN # Crea el archivo de configuración de OpenVPN en memoria
+        run: echo "${{ secrets.VPN_CONFIG_FILE }}" > /dev/shm/face-ubb.ovpn
+
       - name: Conexion a la VPN de la UBB
         uses: kota65535/github-openvpn-connect-action@v3.1.0
         timeout-minutes: 2
         continue-on-error: false
         with:
-          config_file: .github/workflows/client.ovpn
+          config_file: /dev/shm/face-ubb.ovpn # Archivo de configuración de OpenVPN
           username: ${{ secrets.VPN_USERNAME }}
           password: ${{ secrets.VPN_PASSWORD }}
 
@@ -62,42 +78,32 @@ jobs:
 
       - name: Conexión SSH y Despliegue
         timeout-minutes: 3
-        # 1. Conexión SSH al servidor
-        # 2. Ir al directorio del proyecto
-        # 3. Actualizar el código fuente desde el repositorio remoto
-        # 4. Instalar dependencias del proyecto
-        # 5. Verificar el estado de pm2 y reiniciar el servicio si es necesario
-        # 6. Reiniciar el servicio de pm2
         run: |
           sshpass -p "${{ secrets.PROD_PASSWORD }}" ssh \
-            -q \
-            -o StrictHostKeyChecking=no \
-            -p ${{ secrets.PROD_PORT }} \
-            ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
-              set -euo pipefail
-              cd cicd/EICRV
-              echo "▶ Creando/actualizando .env…"
-              # Creamos el archivo .env con los valores que vienen como texto plano
-              # desde el runner.  Si existe, lo sobreescribimos.
-              cat > .env << EOF
-                NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-                NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-                DATABASE_URL=$DATABASE_URL
-                DIRECT_URL=$DIRECT_URL
-              EOF
-              chmod 600 .env
-              
-              echo "Actualizando código fuente..."
-              git fetch origin main
-              git reset --hard origin/main
-              echo "Instalando dependencias..."
-              npm ci
-              echo "Generando cliente"
-              if [ -f 'prisma/schema.prisma' ]; then
-              npx prisma generate
-              fi
-              echo "Buildeando aplicación"
-              npm run build
-              echo "Proceso PM2"
-              pm2 restart next-app || pm2 start ecosystem.config.js
+          -q \
+          -o StrictHostKeyChecking=no \
+          -p ${{ secrets.PROD_PORT }} \
+          ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
+          set -eo pipefail
+          cd cicd/gps
+
+          echo "▶ Creando/actualizando .env…"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" > .env
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env
+          echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env
+          echo "DIRECT_URL=${{ env.DIRECT_URL }}" >> .env
+          chmod 600 .env
+
+          echo "Actualizando código fuente…"
+          git fetch origin main
+          git reset --hard origin/main
+
+          echo "Instalando dependencias…"
+          npm ci
+
+          echo "Buildeando aplicación…"
+          npm run build
+
+          echo "Proceso PM2…"
+          pm2 restart next-app || pm2 start ecosystem.config.js
           EOF

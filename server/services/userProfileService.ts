@@ -5,11 +5,6 @@ export const getUserProfile = async (userId: string) => {
     where: { id: userId },
     include: {
       pets: true,
-      forums: true,
-      badges: true,
-      reviews: true,
-      lostPets: true,
-      marketplaceItems: true,
     },
   });
 };

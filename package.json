@@ -1,5 +1,8 @@
 {
   "private": true,
+    "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "scripts": {
     "dev": "next dev",
     "deploy": "prisma generate && prisma migrate deploy && next build",

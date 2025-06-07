@@ -5,11 +5,17 @@ import { authenticateUser } from "../middlewares/authMiddleware";
 
 export const fetchSubforums = async () => {
   const subs = await listSubforums();
-  return new Response(JSON.stringify(subs), {
+  const formatted = subs.map(sf => ({
+    ...sf,
+    id: sf.id.toString(),          
+  }));
+
+  return new Response(JSON.stringify(formatted), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
 };
+
 
 export const fetchTopics = async (req: Request) => {
   const { searchParams } = new URL(req.url);

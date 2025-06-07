@@ -68,6 +68,12 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
           </div>
         </div>
       ))}
+      <Link
+        href={`/forum/subforum/${subforumSlug}/new-topic`}
+        className="border rounded-full py-2 px-4 text-sm hover:bg-accent transition-colors"
+      >
+        Nuevo tema
+      </Link>
     </div>
   )
 }

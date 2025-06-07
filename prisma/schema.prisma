@@ -17,7 +17,7 @@ model UserProfile {
   email            String             @unique
   public_id        BigInt?            @default(autoincrement())
   menssageCount    Int                @default(0)
-  lastMessageAt    DateTime?
+  lastMessageAt    DateTime?          @map("lastMessageAt")
   marketplaceItems MarketplaceItems[]
   missingPets      MissingPet[]
   pets             Pets[]
@@ -102,9 +102,9 @@ model MissingPet {
   reporter_id String      @db.Uuid
   latitude    Float
   longitude   Float
-  photo_url   String?
   description String?
   reported_at DateTime    @default(now())
+  photo_urls  String[]
   pet         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
   reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
 

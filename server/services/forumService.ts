@@ -39,7 +39,7 @@ export const createTopic = async (
   userId: string,
   dto: { subforumId: number; title: string; content: string }
 ) => {
-  return prisma.$transaction(async tx => {
+  return prisma.$transaction(async (tx) => {
     const topic = await tx.topics.create({
       data: {
         userId,
@@ -50,16 +50,22 @@ export const createTopic = async (
     await tx.posts.create({
       data: { topicId: topic.id, userId, content: dto.content },
     });
-    await tx.userProfile.update({
+
+    const before = await tx.userProfile.findUnique({ where: { id: userId } });
+    console.log("userProfile antes de update:", before);
+
+    const updated = await tx.userProfile.update({
       where: { id: userId },
       data: {
         menssageCount: { increment: 1 },
         lastMessageAt: new Date(),
       },
     });
+    console.log("userProfile después de update:", updated);
     return topic;
   });
 };
+
 
 export const createPost = async (
   userId: string,
@@ -79,3 +85,5 @@ export const createPost = async (
     return post;
   });
 };
+
+

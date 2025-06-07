@@ -10,8 +10,9 @@ export function cn(...inputs: ClassValue[]) {
 // se usa en componentes que necesitan datos de la API como en el foro (:
 const BASE_URL =
   typeof window !== "undefined"
-    ? "" 
-    : process.env.NEXT_PUBLIC_BASE_URL; 
+    ? ""
+    : process.env.NEXT_PUBLIC_BASE_URL!;
+
 export async function fetcher<T>(path: string): Promise<T> {
   const url = path.startsWith("/") ? `${BASE_URL}${path}` : path;
   const res = await fetch(url, {

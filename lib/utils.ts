@@ -8,12 +8,18 @@ export function cn(...inputs: ClassValue[]) {
 // esta función se usa para hacer peticiones a la API
 // y manejar errores de forma más fácil
 // se usa en componentes que necesitan datos de la API como en el foro (:
-export async function fetcher<T>(url: string): Promise<T> {
-  const res = await fetch(url, { credentials: "include" });
+const BASE_URL =
+  typeof window !== "undefined"
+    ? "" 
+    : process.env.NEXT_PUBLIC_BASE_URL; 
+export async function fetcher<T>(path: string): Promise<T> {
+  const url = path.startsWith("/") ? `${BASE_URL}${path}` : path;
+  const res = await fetch(url, {
+    credentials: "include",
+  });
   if (!res.ok) {
-    const json = await res.json().catch(() => null);
-    const mensaje = json?.error || "Error al cargar datos";
-    throw new Error(mensaje);
+    const text = await res.text();
+    throw new Error(`Fetch error ${res.status}: ${text}`);
   }
-  return (await res.json()) as T;
+  return res.json() as Promise<T>;
 }

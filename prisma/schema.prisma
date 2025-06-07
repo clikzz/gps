@@ -17,16 +17,14 @@ model UserProfile {
   email            String             @unique
   public_id        BigInt?            @default(autoincrement())
   menssageCount    Int                @default(0)
+  lastMessageAt    DateTime?
   marketplaceItems MarketplaceItems[]
-  MissingPets      MissingPets[]
-  MissingPets      MissingPets[]
+  missingPets      MissingPet[]
   pets             Pets[]
   Posts            Posts[]
-  posts            Post[]
   reviews          Reviews[]
   TimelineEntries  TimelineEntries[]
   Topics           Topics[]
-  topics           Topic[]
 
   @@map("UserProfiles")
 }
@@ -43,8 +41,7 @@ model Pets {
   photo_url        String?
   sex              String?
   Medications      Medications[]
-  MissingPets      MissingPets[]
-  MissingPets      MissingPets[]
+  missingReports   MissingPet[]
   user             UserProfile       @relation(fields: [user_id], references: [id])
   TimelineEntries  TimelineEntries[]
   Vaccinations     Vaccinations[]
@@ -74,43 +71,6 @@ model Medications {
   @@map("Medications")
 }
 
-model Subforum {
-  id          BigInt  @id @default(autoincrement())
-  name        String  @unique
-  description String?
-  category    String
-  topics      Topic[]
-
-  @@map("Subforums")
-}
-
-model Topic {
-  id         BigInt      @id @default(autoincrement())
-  subforumId BigInt
-  userId     String      @db.Uuid
-  title      String
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  posts      Post[]
-  subforum   Subforum    @relation(fields: [subforumId], references: [id])
-  author     UserProfile @relation(fields: [userId], references: [id])
-
-  @@map("Topics")
-}
-
-model Post {
-  id        BigInt      @id @default(autoincrement())
-  topicId   BigInt
-  userId    String      @db.Uuid
-  content   String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  topic     Topic       @relation(fields: [topicId], references: [id])
-  author    UserProfile @relation(fields: [userId], references: [id])
-
-  @@map("Posts")
-}
-
 model Services {
   id             BigInt    @id @default(autoincrement())
   name           String?
@@ -136,6 +96,22 @@ model Reviews {
   @@map("Reviews")
 }
 
+model MissingPet {
+  id          BigInt      @id @default(autoincrement())
+  pet_id      BigInt
+  reporter_id String      @db.Uuid
+  latitude    Float
+  longitude   Float
+  photo_url   String?
+  description String?
+  reported_at DateTime    @default(now())
+  pet         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+  reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@unique([pet_id, reporter_id])
+  @@map("MissingPets")
+}
+
 model MarketplaceItems {
   id             BigInt      @id @default(autoincrement())
   user_id        String      @db.Uuid
@@ -150,6 +126,16 @@ model MarketplaceItems {
   user           UserProfile @relation(fields: [user_id], references: [id])
 
   @@map("MarketplaceItems")
+}
+
+model debug_logs {
+  id            Int       @id @default(autoincrement())
+  event_type    String?
+  user_id       String?   @db.Uuid
+  email         String?
+  error_message String?
+  details       Json?
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
 }
 
 model Milestones {
@@ -183,45 +169,27 @@ model TimelineEntryPhotos {
   TimelineEntries   TimelineEntries @relation(fields: [timeline_entry_id], references: [id], onDelete: Cascade)
 }
 
-model debug_logs {
-  id            Int       @id @default(autoincrement())
-  event_type    String?
-  user_id       String?   @db.Uuid
-  email         String?
-  error_message String?
-  details       Json?
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
-}
-
-model MissingPets {
-  id           BigInt      @id @default(autoincrement())
-  pet_id       BigInt
-  reporter_id  String      @db.Uuid
-  latitude     Float
-  longitude    Float
-  photo_url    String?
-  description  String?
-  reported_at  DateTime    @default(now())
-  Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
-  UserProfiles UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
-}
-
 model Posts {
   id           BigInt      @id @default(autoincrement())
   topicId      BigInt
   userId       String      @db.Uuid
   content      String
   createdAt    DateTime    @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime    @updatedAt
   Topics       Topics      @relation(fields: [topicId], references: [id])
   UserProfiles UserProfile @relation(fields: [userId], references: [id])
+
+  @@map("Posts")
 }
 
 model Subforums {
   id          BigInt   @id @default(autoincrement())
   name        String   @unique
   description String?
+  category    String
   Topics      Topics[]
+
+  @@map("Subforums")
 }
 
 model Topics {
@@ -230,21 +198,10 @@ model Topics {
   userId       String      @db.Uuid
   title        String
   createdAt    DateTime    @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime    @updatedAt
   Posts        Posts[]
   Subforums    Subforums   @relation(fields: [subforumId], references: [id])
   UserProfiles UserProfile @relation(fields: [userId], references: [id])
-}
 
-model MissingPets {
-  id           BigInt      @id @default(autoincrement())
-  pet_id       BigInt
-  reporter_id  String      @db.Uuid
-  latitude     Float
-  longitude    Float
-  photo_url    String?
-  description  String?
-  reported_at  DateTime    @default(now())
-  Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
-  UserProfiles UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+  @@map("Topics")
 }

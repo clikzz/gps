@@ -1,52 +1,128 @@
-
-"use client";
-
-import useSWR from "swr";
-import Link from "next/link";
-import { fetcher } from "@/lib/utils";
+import { ForumCategory } from "@/components/forum/forumCategory"
+import { fetcher } from "@/lib/utils"
 
 interface Subforum {
-  id: number;
-  name: string;
-  description?: string;
+  id: number
+  name: string
+  description: string
+  category: string
 }
 
-export default function ForumHomePage() {
-  const { data: subforums, error } = useSWR<Subforum[]>("/api/forum/subforums", fetcher);
+const defaultCategories = [
+  {
+    id: "1",
+    name: "Cuidado de Mascotas",
+    subforums: [
+      {
+        name: "Cuidados y Salud",
+        description: "Consejos sobre cuidados, salud y bienestar de nuestras mascotas.",
+        slug: "cuidados-salud",
+      },
+      {
+        name: "Razas y Características",
+        description: "Información sobre diferentes razas de mascotas y sus características.",
+        slug: "razas-caracteristicas",
+      },
+      {
+        name: "Ayuda",
+        description: "Espacio para solicitar ayuda con problemas específicos de tus mascotas.",
+        slug: "ayuda",
+      },
+    ],
+  },
+  {
+    id: "2",
+    name: "Asistencia / Informaciones",
+    subforums: [
+      {
+        name: "Preguntas frecuentes",
+        description: "Permite a los usuarios hacer preguntas y tener respuestas a través de mods.",
+        slug: "faq",
+      },
+      {
+        name: "Anuncios Técnicos",
+        description: "",
+        slug: "anuncios-tecnicos",
+      },
+    ],
+  },
+  {
+    id: "3",
+    name: "Comunidad",
+    subforums: [
+      {
+        name: "Presentaciones",
+        description: "Aqui los duenos se pueden hacer una presentacion de sus mascotas para conocerse",
+        slug: "presentaciones",
+      },
+      {
+        name: "La cafetería",
+        description: "Conversaciones sobre otros temas que no sean del foro.",
+        slug: "cafeteria",
+      },
+    ],
+  },
+]
 
-  if (error) {
-    return (
-      <div className="max-w-3xl mx-auto p-4">
-        <p className="text-red-500">Error al cargar subforos: {error.message}</p>
-      </div>
-    );
+async function getSubforums(): Promise<Subforum[]> {
+  try {
+    return await fetcher<Subforum[]>("/api/forum/subforums")
+  } catch (error) {
+    console.error("Error fetching subforums:", error)
+    return []
   }
-  if (!subforums) {
-    return (
-      <div className="max-w-3xl mx-auto p-4">
-        <p>Cargando subforos…</p>
-      </div>
-    );
+}
+
+async function getTopicsCount(subforumId: number) {
+  try {
+    const topics = await fetcher<any[]>(`/api/forum/topics?subforumId=${subforumId}`)
+    return topics.length
+  } catch (error) {
+    return 0
   }
+}
+
+export default async function ForumPage() {
+  const subforums = await getSubforums()
+
+  const categoriesWithData = await Promise.all(
+    defaultCategories.map(async (category) => {
+      const categorySubforums = await Promise.all(
+        category.subforums.map(async (defaultSub) => {
+          const dbSubforum = subforums.find(
+            (s) =>
+              s.name.toLowerCase().includes(defaultSub.name.toLowerCase().split(" ")[0]) ||
+              s.category === category.name,
+          )
+
+          const topicsCount = dbSubforum ? await getTopicsCount(dbSubforum.id) : 0
+
+          return {
+            id: dbSubforum?.id || 0,
+            name: defaultSub.name,
+            slug: defaultSub.slug,
+            description: defaultSub.description,
+            topicCount: topicsCount,
+            messageCount: 0, 
+            lastPost: null,
+          }
+        }),
+      )
+
+      return {
+        ...category,
+        subforums: categorySubforums,
+      }
+    }),
+  )
 
   return (
-    <div className="max-w-3xl mx-auto p-4 space-y-4">
-      <div className="border rounded-lg p-4">
-        <h1 className="text-2xl font-bold">Cuidado de Mascotas</h1>
-      </div>
-
-      <div className="space-y-3">
-        {subforums.map((sf) => (
-          <Link
-            key={sf.id}
-            href={`/protected/forum/${sf.id}`}
-            className="block border rounded-lg p-4 hover:shadow-sm transition"
-          >
-            <h2 className="text-lg font-semibold">{sf.name}</h2>
-            {sf.description && <p className="text-sm text-gray-600 mt-1">{sf.description}</p>}
-          </Link>
+    <div className="min-h-screen w-full">
+      <main className="w-full max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
+        {categoriesWithData.map((category) => (
+          <ForumCategory key={category.id} category={category} />
         ))}
-      </div>
+      </main>
     </div>
-  );
+  )
 }

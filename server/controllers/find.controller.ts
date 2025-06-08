@@ -17,28 +17,28 @@ export const reportMissingPet = async ( reporterId: string, body: any ) => {
       headers: { "Content-Type": "application/json" },
     });
   }
-  const { pet_id, latitude, longitude, photo_url, description } = parseResult.data;
+  const { pet_id, latitude, longitude, photo_urls = [], description } = parseResult.data;
 
   try {
-  const missing = await createMissingPet(reporterId, {
-    pet_id,
-    latitude,
-    longitude,
-    photo_url,
-    description,
-  });
+    const missing = await createMissingPet(reporterId, {
+      pet_id,
+      latitude,
+      longitude,
+      photo_urls,
+      description,
+    });
 
-  const output = {
-    ...missing,
-    id: missing.id.toString(),
-    pet_id: missing.pet_id.toString(),
-    reporter_id: missing.reporter_id.toString()
-  };
+    const output = {
+      ...missing,
+      id: missing.id.toString(),
+      pet_id: missing.pet_id.toString(),
+      reporter_id: missing.reporter_id.toString()
+    };
 
-  return new Response(JSON.stringify(output), {
-    status: 201,
-    headers: { "Content-Type": "application/json" },
-  });
+    return new Response(JSON.stringify(output), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err: any) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
@@ -70,8 +70,9 @@ export const fetchAllMissingPets = async () => {
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
     pet: {
-      ...item.pet,
       id: item.pet.id.toString(),
+      name: item.pet.name || "Sin nombre",
+      photo_url: item.pet.photo_url,
     },
     reporter: {
       ...item.reporter,
@@ -95,8 +96,9 @@ export const fetchRecentMissingPets = async () => {
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
     pet: {
-      ...item.pet,
       id: item.pet.id.toString(),
+      name: item.pet.name || "Sin nombre",
+      photo_url: item.pet.photo_url,
     },
     reporter: {
       ...item.reporter,
@@ -118,7 +120,11 @@ export const fetchMyMissingPets = async (userId: string) => {
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
-    pet: { ...item.pet, id: item.pet.id.toString() },
+    pet: { 
+      id: item.pet.id.toString(),
+      name: item.pet.name || "Sin nombre",
+      photo_url: item.pet.photo_url,
+    },
     reporter: {
       ...item.reporter,
       id: item.reporter.id.toString(),
@@ -135,9 +141,9 @@ export const fetchUserPets = async (userId: string) => {
   const pets = await findPetsByUser(userId);
 
   const output = pets.map((pet) => ({
-    ...pet,
     id: pet.id.toString(),
     name: pet.name || "Sin nombre",
+    photo_url: pet.photo_url,
   }));
 
   return new Response(JSON.stringify(output), {

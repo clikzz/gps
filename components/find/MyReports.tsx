@@ -14,7 +14,7 @@ interface MissingReport {
   photo_url: string | null;
   description?: string;
   reported_at: string;
-  pet: { id: string; name: string };
+  pet: { id: string; name: string; photo_url?: string };
   reporter: { id: string; name: string };
 }
 
@@ -61,14 +61,26 @@ export default function MyReportsModal({ isOpen, onClose }: MyReportsModalProps)
             <ul className="space-y-4">
               {myReports.map((r) => (
                 <Card key={r.id} className="border">
-                  <CardHeader className="flex items-center justify-between">
-                    <div>
-                      <p className="text-lg font-semibold">🐾 {r.pet.name}</p>
+                  <CardHeader className="flex items-center justify-between space-x-4">
+                    {/* Imagen */}
+                    {r.pet.photo_url && (
+                      <img
+                        src={r.pet.photo_url}
+                        alt={r.pet.name}
+                        className="w-12 h-12 rounded-full object-cover border"
+                      />
+                    )}
+
+                    {/* Resto */}
+                    <div className="flex-1 flex flex-col ml-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-lg font-semibold">🐾 {r.pet.name}</p>
+                        <Badge variant="secondary">Activo</Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {new Date(r.reported_at).toLocaleString()}
                       </p>
                     </div>
-                    <Badge variant="secondary">Activo</Badge>
                   </CardHeader>
 
                   <CardContent>

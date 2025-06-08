@@ -4,7 +4,7 @@ export interface MissingPetInput {
   pet_id: number;
   latitude: number;
   longitude: number;
-  photo_url?: string;
+  photo_urls?: string[];
   description?: string;
 }
 
@@ -21,7 +21,7 @@ export const createMissingPet = async (
       pet_id: data.pet_id,
       latitude: data.latitude,
       longitude: data.longitude,
-      photo_url: data.photo_url ?? null,
+      photo_urls: data.photo_urls ?? [],
       description: data.description,
     },
   });
@@ -34,7 +34,7 @@ export const listAllMissingPets = async () => {
   return prisma.missingPet.findMany({
     include: {
       pet: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, photo_url: true },
       },
       reporter: {
         select: { id: true, name: true },
@@ -57,7 +57,7 @@ export const listRecentMissingPets = async () => {
     },
     include: {
       pet: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, photo_url: true },
       },
       reporter: {
         select: { id: true, name: true },
@@ -74,7 +74,7 @@ export const listMyMissingPets = async (userId: string) => {
   return prisma.missingPet.findMany({
     where: { reporter_id: userId },
     include: {
-      pet: { select: { id: true, name: true } },
+      pet: { select: { id: true, name: true, photo_url: true } },
       reporter: { select: { id: true, name: true } },
     },
     orderBy: { reported_at: "desc" },

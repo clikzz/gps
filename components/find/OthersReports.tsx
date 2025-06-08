@@ -12,7 +12,7 @@ interface MissingReport {
   photo_url: string | null;
   description?: string;
   reported_at: string;
-  pet: { id: string; name: string };
+  pet: { id: string; name: string; photo_url?: string };
   reporter: { id: string; name: string };
 }
 
@@ -59,15 +59,30 @@ export default function OthersReportsModal({ isOpen, onClose }: OthersReportsMod
         ) : (
           <ul className="space-y-2 max-h-80 overflow-y-auto">
             {othersReports.map((r) => (
-              <li key={r.id} className="border-b pb-2">
-                <p className="font-semibold">🐾 {r.pet.name}</p>
-                <p className="text-xs text-gray-600">
-                  Reportado por: {r.reporter.name} •{' '}
-                  {new Date(r.reported_at).toLocaleString()}
-                </p>
-                {r.description && (
-                  <p className="text-sm mt-1">{r.description}</p>
+              <li key={r.id} className="border-b pb-2 flex items-start space-x-3">
+                {/* Foto de perfil */}
+                {r.pet.photo_url && (
+                  <img
+                    src={r.pet.photo_url}
+                    alt={r.pet.name}
+                    className="w-14 h-14 rounded-full object-cover border"
+                  />
                 )}
+
+                {/* Texto */}
+                <div className="flex-1">
+                  <p className="font-semibold flex items-center space-x-1">
+                    <span>🐾</span>
+                    <span>{r.pet.name}</span>
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    Reportado por: {r.reporter.name} •{' '}
+                    {new Date(r.reported_at).toLocaleString()}
+                  </p>
+                  {r.description && (
+                    <p className="text-sm mt-1">{r.description}</p>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

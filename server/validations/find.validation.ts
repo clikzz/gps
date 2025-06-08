@@ -23,11 +23,9 @@ export const reportMissingPetSchema = z.object({
     .refine((val) => val >= -180 && val <= 180, {
       message: "longitude debe estar entre -180 y 180",
     }),
-  photo_url: z
-    .string({
-      invalid_type_error: "photo_url debe ser un string",
-    })
-    .url("photo_url debe ser una URL válida")
+  photo_urls: z
+    .array(z.string().url("Cada URL debe ser válida"))
+    .max(3, "Máximo 3 fotos de respaldo")
     .optional(),
   description: z
     .string({

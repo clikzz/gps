@@ -21,8 +21,8 @@ interface ReportModalProps {
   onClose: () => void;
   onSubmit: (data: {
     pet_id: string;
-    file: File | null;
-    description: string;
+    description?: string;
+    photo_urls?: string[];
     location?: LatLng;
   }) => void;
   onPickLocation: () => void;
@@ -38,7 +38,7 @@ export default function ReportModal({
 }: ReportModalProps) {
   const [pets, setPets] = useState<Pet[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [description, setDescription] = useState<string>('');
   const [loadingPets, setLoadingPets] = useState(false);
 
@@ -60,17 +60,42 @@ export default function ReportModal({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const uploadAll = async (): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const file of files) {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("type", "find");
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      if (!res.ok) throw new Error("Error al subir foto de referencia");
+      const { url } = await res.json();
+      urls.push(url);
+    }
+    return urls;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPetId) {
       alert('Debes seleccionar una mascota.');
       return;
     }
 
+    let photo_urls: string[] = [];
+    if (files.length) {
+      try {
+        photo_urls = await uploadAll();
+      } catch (err) {
+        console.error(err);
+        alert("Error subiendo fotos de referencia");
+        return;
+      }
+    }
+
     onSubmit({
       pet_id: selectedPetId,
-      file,
-      description,
+      description: description || undefined,
+      photo_urls: photo_urls.length ? photo_urls : undefined,
       location: pickedLocation || undefined,
     });
   };
@@ -83,7 +108,7 @@ export default function ReportModal({
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {/* 1. Dropdown de mascotas */}
+            {/* Dropdown de mascotas */}
             <div>
               <Label htmlFor="pet-select">Selecciona tu mascota</Label>
               {loadingPets ? (
@@ -105,19 +130,23 @@ export default function ReportModal({
               )}
             </div>
 
-            {/* 2. Input de foto */}
+            {/* Input de foto */}
             <div>
               <Label htmlFor="photo-input">Foto de respaldo</Label>
               <Input
                 id="photo-input"
                 type="file"
                 accept="image/*"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                multiple
+                onChange={(e) => {
+                  const chosen = Array.from(e.target.files || []);
+                  setFiles(chosen.slice(0, 3)); // límite 3
+                }}
                 className="mt-1"
               />
             </div>
 
-            {/* 3. Descripción opcional */}
+            {/* Descripción opcional */}
             <div>
               <Label htmlFor="description">Descripción</Label>
               <textarea
@@ -130,7 +159,7 @@ export default function ReportModal({
               />
             </div>
 
-            {/* 4. Botón para marcar ubicación en mapa */}
+            {/* Botón para marcar ubicación en mapa */}
             <div>
               <Button
                 type="button"

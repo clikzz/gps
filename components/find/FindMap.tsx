@@ -25,7 +25,7 @@ interface MissingReport {
   photo_url: string;
   description?: string;
   reported_at: string;
-  pet: { id: string; name: string };
+  pet: { id: string; name: string; photo_url?: string };
   reporter: { id: string; name: string };
 }
 
@@ -61,8 +61,8 @@ export default function FindMap() {
 
   const handleSubmitReport = async (data: {
     pet_id: string;
-    file: File | null;
-    description: string;
+    description?: string;
+    photo_urls?: string[];
     location?: LatLng;
   }) => {
     if (!mapRef.current) {
@@ -70,7 +70,6 @@ export default function FindMap() {
       return;
     }
 
-    // Si el usuario marcó ubicación, la usamos; sino, tomamos el centro
     let lat: number, lng: number;
     if (data.location) {
       lat = data.location.lat;
@@ -81,23 +80,23 @@ export default function FindMap() {
       lng = center.lng;
     }
 
-    const formData = new FormData();
-    formData.append('pet_id', data.pet_id);
-    formData.append('latitude', String(lat));
-    formData.append('longitude', String(lng));
-    formData.append('description', data.description);
-    if (data.file) {
-      formData.append('file', data.file);
-    }
+    const payload = {
+      pet_id: data.pet_id,
+      latitude: lat,
+      longitude: lng,
+      photo_urls: data.photo_urls,
+      description: data.description,
+    };
 
     try {
       const res = await fetch('/api/find', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Error al enviar reporte: ${errorText}`);
+        const err = await res.json();
+        throw new Error(err.error || 'Error al enviar reporte');
       }
       setIsReportModalOpen(false);
       setPickedLocation(null);
@@ -108,22 +107,17 @@ export default function FindMap() {
     }
   };
 
-  // Cuando el usuario solicita “marcar en el mapa”
   const handlePickLocation = () => {
-    // Cerramos el modal para que el mapa quede clicable
     setIsReportModalOpen(false);
     setPickLocationMode(true);
     alert('Haz clic en el mapa para seleccionar la ubicación definitiva.');
   };
 
-  // Manejador de clics en el mapa
   const handleMapClick = (evt: any) => {
     if (!pickLocationMode) return;
-    // evt.lngLat contiene las coordenadas
     const [lng, lat] = evt.lngLat.toArray();
     setPickedLocation({ lat, lng });
     setPickLocationMode(false);
-    // Reabrimos el modal para que el usuario continúe
     setIsReportModalOpen(true);
   };
 
@@ -201,10 +195,15 @@ export default function FindMap() {
             anchor="bottom"
             onClick={() => setSelected(r)}
           >
-            <Dog
-              size={28}
-              className="text-yellow-900 cursor-pointer"
-            />
+            {r.pet.photo_url ? (
+              <img
+                src={r.pet.photo_url}
+                alt={r.pet.name}
+                className="w-12 h-12 rounded-full border-2 border-white shadow-lg cursor-pointer"
+              />
+            ) : (
+              <Dog size={28} className="text-yellow-900 cursor-pointer" />
+            )}
           </Marker>
         ))}
 
@@ -218,17 +217,30 @@ export default function FindMap() {
             anchor="top"
           >
             <div className="space-y-2">
-              <h3 className="font-bold">🐾 {selected.pet.name}</h3>
-              <p className="text-sm text-black">Reportado por: {selected.reporter.name}</p>
+              {/* Foto de perfil */}
+              {selected.pet.photo_url && (
+                <img
+                  src={selected.pet.photo_url}
+                  alt={selected.pet.name}
+                  className="w-16 h-16 object-cover rounded-full mx-auto"
+                />
+              )}
+              <h3 className="font-bold text-center">🐾 {selected.pet.name}</h3>
+              <p className="text-sm text-black text-center">
+                Reportado por: {selected.reporter.name}
+              </p>
+
+              {/* Fotos de respaldo */}
               <img
                 src={selected.photo_url}
-                alt={selected.pet.name}
+                alt={`${selected.pet.name} (reporte)`}
                 className="w-full h-24 object-cover rounded"
               />
+
               {selected.description && (
                 <p className="text-xs text-black">{selected.description}</p>
               )}
-              <p className="text-xs text-black">
+              <p className="text-xs text-black text-right">
                 {new Date(selected.reported_at).toLocaleString()}
               </p>
             </div>

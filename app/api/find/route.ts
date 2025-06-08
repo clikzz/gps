@@ -57,37 +57,15 @@ export async function POST(req: NextRequest) {
     return new NextResponse(body, { status: user.status, headers: user.headers });
   }
 
-  const formData = await req.formData();
-
-  const petIdRaw = formData.get('pet_id');
-  const latRaw = formData.get('latitude');
-  const lngRaw = formData.get('longitude');
-  const descriptionRaw = formData.get('description');
-
-  const pet_id = typeof petIdRaw === 'string' ? parseInt(petIdRaw, 10) : NaN;
-  const latitude = typeof latRaw === 'string' ? parseFloat(latRaw) : NaN;
-  const longitude = typeof lngRaw === 'string' ? parseFloat(lngRaw) : NaN;
-  const description = typeof descriptionRaw === 'string' ? descriptionRaw : undefined;
-
-  if (isNaN(pet_id) || isNaN(latitude) || isNaN(longitude)) {
+  let payload: any;
+  try {
+    payload = await req.json();
+  } catch {
     return new NextResponse(
-      JSON.stringify({
-        error: 'pet_id, latitude y longitude son obligatorios y deben ser números válidos',
-      }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: "JSON inválido" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
 
-  // por mientras
-  const photo_url = null;
-
-  const body = {
-    pet_id,
-    latitude,
-    longitude,
-    photo_url,
-    description,
-  };
-
-  return reportMissingPet(user.id, body);
+  return reportMissingPet(user.id, payload);
 }

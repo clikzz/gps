@@ -13,41 +13,21 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useUserProfile } from "@/stores/userProfile";
 import { useState } from "react";
+import { petSchema } from "@/server/validations/petsValidation";
 
-const FormSchema = z.object({
-  name: z.string().min(2).max(15),
-  species: z.enum([
-    "dog",
-    "cat",
-    "rabbit",
-    "hamster",
-    "turtle",
-    "bird",
-    "other",
-  ]),
-  active: z.boolean().optional(),
-  date_of_adoption: z
-    .string()
-    .optional()
-    .refine((date) => {
-      if (!date) return true;
-      const parsedDate = new Date(date);
-      return !isNaN(parsedDate.getTime());
-    }, "Invalid date format"),
-  date_of_birth: z
-    .string()
-    .optional()
-    .refine((date) => {
-      if (!date) return true;
-      const parsedDate = new Date(date);
-      return !isNaN(parsedDate.getTime());
-    }, "Invalid date format"),
-  fixed: z.boolean().optional(),
-  sex: z.enum(["male", "female", "unknown"]).optional(),
-  photo_url: z.string().optional(),
+const FormSchema = petSchema.omit({
+  id: true,
+  user_id: true,
 });
 
 const NewPetForm = () => {
@@ -59,7 +39,7 @@ const NewPetForm = () => {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       name: "",
-      species: "dog",
+      species: "other",
       active: true,
       date_of_adoption: "",
       date_of_birth: "",
@@ -155,6 +135,8 @@ const NewPetForm = () => {
 
     if (!response.ok) {
       const error = await response.json();
+      console.log("Error creating pet:", error);
+
       toast.error(error.message);
       return;
     }
@@ -178,6 +160,32 @@ const NewPetForm = () => {
     setImagePreview(null);
   };
 
+  // Opciones para los selects
+  const speciesOptions = [
+    { value: "dog", label: "Perro" },
+    { value: "cat", label: "Gato" },
+    { value: "rabbit", label: "Conejo" },
+    { value: "hamster", label: "Hámster" },
+    { value: "turtle", label: "Tortuga" },
+    { value: "bird", label: "Ave" },
+    { value: "fish", label: "Pez" },
+    { value: "guineaPig", label: "Cobaya" },
+    { value: "ferret", label: "Hurón" },
+    { value: "mouse", label: "Ratón" },
+    { value: "chinchilla", label: "Chinchilla" },
+    { value: "hedgehog", label: "Erizo" },
+    { value: "snake", label: "Serpiente" },
+    { value: "frog", label: "Rana" },
+    { value: "lizard", label: "Lagarto" },
+    { value: "other", label: "Otro" },
+  ];
+
+  const sexOptions = [
+    { value: "male", label: "Macho" },
+    { value: "female", label: "Hembra" },
+    { value: "unknown", label: "Desconocido" },
+  ];
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
@@ -187,7 +195,9 @@ const NewPetForm = () => {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nombre</FormLabel>
+                <FormLabel>
+                  Nombre <span className="text-red-500">(*)</span>
+                </FormLabel>
                 <FormControl>
                   <Input placeholder="Nombre" {...field} />
                 </FormControl>
@@ -201,10 +211,26 @@ const NewPetForm = () => {
             name="species"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Tipo de mascota</FormLabel>
-                <FormControl>
-                  <Input placeholder="Tipo de mascota" {...field} />
-                </FormControl>
+                <FormLabel>
+                  Tipo de mascota <span className="text-red-500">(*)</span>
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un tipo de mascota" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {speciesOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -212,43 +238,25 @@ const NewPetForm = () => {
 
           <FormItem>
             <FormLabel>Foto de la mascota</FormLabel>
-            <FormControl>
+            <FormControl className="flex items-center justify-center">
               <Input
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
-                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className=" file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border-none"
               />
             </FormControl>
             {imagePreview && (
-              <div className="mt-2">
+              <div className="flex items-center justify-center">
                 <img
                   src={imagePreview}
                   alt="Vista previa"
-                  className="w-32 h-32 object-cover rounded-lg border"
+                  className="w-16 h-16 object-cover rounded-lg border"
                 />
               </div>
             )}
             <FormMessage />
           </FormItem>
-
-          <FormField
-            control={form.control}
-            name="photo_url"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>O ingresa URL de la foto manualmente</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                    {...field}
-                    disabled={!!selectedFile}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           <FormField
             control={form.control}
@@ -280,20 +288,27 @@ const NewPetForm = () => {
 
           <FormField
             control={form.control}
-            name="fixed"
+            name="sex"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>¿Está esterilizado?</FormLabel>
-                <FormControl>
-                  <Input
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    ref={field.ref}
-                  />
-                </FormControl>
+                <FormLabel>Sexo</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona el sexo" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {sexOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -301,13 +316,20 @@ const NewPetForm = () => {
 
           <FormField
             control={form.control}
-            name="sex"
+            name="fixed"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sexo</FormLabel>
+              <FormItem className="flex flex-row items-center justify-center space-x-3 space-y-0">
                 <FormControl>
-                  <Input placeholder="Sexo" {...field} />
+                  <input
+                    type="checkbox"
+                    checked={field.value}
+                    onChange={field.onChange}
+                    className="mt-1"
+                  />
                 </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>¿Está esterilizado?</FormLabel>
+                </div>
                 <FormMessage />
               </FormItem>
             )}

@@ -118,6 +118,17 @@ export const updatePetById = async (
     });
   }
 
+  const parsedPet = petSchema.safeParse({
+    ...pet,
+  });
+
+  if (!parsedPet.success) {
+    return new Response(JSON.stringify(parsedPet.error), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const updatedPet = await putPetById({
     id: parseInt(petId),
     name,

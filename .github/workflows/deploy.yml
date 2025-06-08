@@ -3,7 +3,8 @@ name: Despliegue a produccion
 on:
   push:
     branches:
-      - alvaro
+      - main
+  workflow_dispatch:
 
 jobs:
   tests: # Job para ejecutar pruebas
@@ -94,8 +95,8 @@ jobs:
           chmod 600 .env
 
           echo "Actualizando código fuente…"
-          git fetch origin alvaro
-          git reset --hard origin/alvaro
+          git fetch origin main
+          git reset --hard origin/main
 
           echo "Instalando dependencias…"
           npm ci

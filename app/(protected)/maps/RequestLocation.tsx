@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { MapPin } from "lucide-react"
+import { MapPin, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
 interface RequestLocationProps {
@@ -17,7 +17,7 @@ const RequestLocation = ({ onLocationReceived }: RequestLocationProps) => {
 
     if (!navigator.geolocation) {
       toast.error("Error de geolocalización", {
-        description: "Su navegador actual no soporta la geolocalización.",
+        description: "La geolocalización no es soportada por este navegador.",
       })
       setLoading(false)
       return
@@ -29,9 +29,8 @@ const RequestLocation = ({ onLocationReceived }: RequestLocationProps) => {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         }
-
         toast.success("Ubicación obtenida", {
-          description: `Lat: ${newLocation.lat.toFixed(6)}, Lng: ${newLocation.lng.toFixed(6)}`,
+          description: "Cargando mapa...",
         })
 
         onLocationReceived(newLocation)
@@ -41,11 +40,11 @@ const RequestLocation = ({ onLocationReceived }: RequestLocationProps) => {
         if (err.code === 1) {
           toast.error("Permiso denegado", {
             description:
-              "Has denegado el permiso para acceder a tu ubicación. Por favor, habilita el acceso en la configuración de tu navegador.",
+              "Has denegado el permiso para acceder a tu ubicación. Haz clic en el botón para intentar de nuevo.",
           })
         } else if (err.code === 2) {
           toast.error("Ubicación no disponible", {
-            description: "Tu ubicación no está disponible en este momento. Inténtalo de nuevo más tarde.",
+            description: "Tu ubicación no está disponible en este momento. Inténtalo de nuevo.",
           })
         } else if (err.code === 3) {
           toast.error("Tiempo de espera agotado", {
@@ -59,17 +58,35 @@ const RequestLocation = ({ onLocationReceived }: RequestLocationProps) => {
 
         setLoading(false)
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      },
     )
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <Button onClick={requestLocation} disabled={loading} className="bg-purple-600 hover:bg-purple-700" size="lg">
-        <MapPin className="mr-2 h-5 w-5" />
-        {loading ? "Obteniendo ubicación..." : "Compartir mi ubicación"}
-      </Button>
-      <p className="text-sm text-gray-500 mt-2">Necesitamos tu ubicación para mostrarte servicios cercanos</p>
+    <div className="flex flex-col items-center space-y-4">
+      {loading ? (
+        <div className="flex flex-col items-center space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+          <p className="text-gray-600">Obteniendo tu ubicación...</p>
+          <p className="text-sm text-gray-500">Por favor, permite el acceso a tu ubicación</p>
+        </div>
+      ) : (
+        <Button onClick={requestLocation} className="bg-purple-600 hover:bg-purple-700" size="lg">
+          <MapPin className="mr-2 h-5 w-5" />
+          Permitir acceso a ubicación
+        </Button>
+      )}
+
+      <div className="text-xs text-gray-500 text-center max-w-sm">
+        <p>
+          Necesitamos tu ubicación para mostrarte servicios para mascotas cercanos como veterinarias, tiendas y
+          peluquerías.
+        </p>
+      </div>
     </div>
   )
 }

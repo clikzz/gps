@@ -13,8 +13,8 @@ function Pets() {
       <p className="text-sm text-gray-500 mb-4">
         Aquí puedes ver y gestionar tus mascotas.
       </p>
+      <NewPetCard />
       <div className="flex">
-        <NewPetCard />
         {pets && pets.length > 0 ? (
           <div className="flex">
             {pets.map((pet) => (

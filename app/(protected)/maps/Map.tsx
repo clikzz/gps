@@ -60,8 +60,6 @@ export default function Map({ userLocation }: MapProps) {
         dragPan={true}
         dragRotate={true}
         keyboard={true}
-        touchZoom={true}
-        touchRotate={true}
         reuseMaps={true}
         preserveDrawingBuffer={true}
       >

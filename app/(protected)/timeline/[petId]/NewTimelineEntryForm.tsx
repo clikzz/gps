@@ -4,13 +4,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { useState, useRef, forwardRef } from "react"; // Importamos forwardRef
+import { useState, useRef, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils"; // Importamos la utilidad cn para las clases
+import { cn } from "@/lib/utils";
 
-// --- INICIO: DEFINICIÓN LOCAL DEL COMPONENTE TEXTAREA ---
+// --- INICIO: DEFINICIÓN LOCAL DEL COMPONENTE TEXTAREA (sin cambios) ---
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
@@ -30,10 +30,20 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 Textarea.displayName = "Textarea"
 // --- FIN: DEFINICIÓN LOCAL DEL COMPONENTE TEXTAREA ---
 
+// --- CAMBIO 1: VALIDACIÓN DE FECHA EN ZOD ---
 const FormSchema = z.object({
   title: z.string().max(100, "El título es demasiado largo.").optional(),
   description: z.string().max(1000, "La descripción es demasiado larga.").optional(),
-  eventDate: z.string().refine((date) => date && date.trim() !== '', { message: "La fecha es requerida." }),
+  eventDate: z.string()
+    .refine((date) => date && date.trim() !== '', { message: "La fecha es requerida." })
+    .refine((date) => {
+        const inputDate = new Date(date);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // Permite seleccionar el día actual completo
+        return inputDate <= today;
+    }, {
+        message: "La fecha del evento no puede ser futura.",
+    }),
   photos: z.custom<FileList>().optional(),
 }).superRefine((data, ctx) => {
   const hasPhotos = data.photos && data.photos.length > 0;
@@ -45,7 +55,7 @@ const FormSchema = z.object({
       path: ['description'],
     });
   }
-  if (hasPhotos) {
+  if (data.photos && data.photos.length > 0) {
     if (data.photos![0].size > 5 * 1024 * 1024) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "El tamaño máximo es 5MB.", path: ['photos'] });
     }
@@ -65,10 +75,14 @@ interface NewTimelineEntryFormProps {
 export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEntryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // --- CAMBIO 2: OBTENER FECHA ACTUAL PARA EL FRONTEND ---
+  const today = new Date().toISOString().split("T")[0];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { title: "", description: "", eventDate: "" },
+    // --- CAMBIO 3: VALOR POR DEFECTO PARA LA FECHA ---
+    defaultValues: { title: "", description: "", eventDate: today },
   });
 
   async function onSubmit(data: FormValues) {
@@ -128,7 +142,12 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
         <FormField control={form.control} name="eventDate" render={({ field }) => (
             <FormItem>
               <FormLabel>Fecha del evento</FormLabel>
-              <FormControl><Input type="date" {...field} /></FormControl>
+              {/* --- CAMBIO 4: ATRIBUTO 'max' EN EL INPUT --- */}
+              <FormControl><Input type="date" {...field} max={today} /></FormControl>
+              {/* --- CAMBIO 5: TEXTO DE AYUDA VISUAL --- */}
+              <p className="text-xs text-muted-foreground pt-1">
+                Selecciona una fecha actual o pasada.
+              </p>
               <FormMessage />
             </FormItem>
           )}

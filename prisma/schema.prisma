@@ -72,13 +72,13 @@ model Medications {
 }
 
 model Services {
-  id             BigInt    @id @default(autoincrement())
-  name           String?
-  address        String?
-  hours          String?
-  contact_info   String?
-  average_rating Float?
-  reviews        Reviews[]
+  id          BigInt    @id @default(autoincrement())
+  name        String
+  category    String
+  description String
+  latitude    Float
+  longitude   Float
+  reviews     Reviews[]
 
   @@map("Services")
 }

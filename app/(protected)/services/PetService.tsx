@@ -63,6 +63,9 @@ export default function PetService({ userLocation }: PetServiceProps) {
     "mascotas",
     "clínica booster",
     "veterinaria booster",
+    "hospital veterinario",
+    "perro",
+    "gato",
   ]
 
   const fetchCustomServices = async () => {
@@ -145,6 +148,11 @@ export default function PetService({ userLocation }: PetServiceProps) {
               "petstore",
               "clínica",
               "booster",
+              "hospital veterinario",
+              "Hospital Veterinario",
+              "clinica veterinaria",
+              "perro",
+              "gato",
             ]
 
             const isPetRelated = petKeywords.some((kw) => placeName.includes(kw) || text.includes(kw))
@@ -226,7 +234,14 @@ export default function PetService({ userLocation }: PetServiceProps) {
     if (lowerText.includes("store") || lowerText.includes("shop") || lowerTerm.includes("tienda")) {
       return "Tienda de mascotas"
     }
+      if (lowerText.includes("clinic") || lowerText.includes("clinica")) {
+      return "Clínica veterinaria"
+    }
+    if (lowerText.includes("hospital")) {
+      return "Hospital veterinario"
+    }
     return "Servicio para mascotas"
+
   }
 
   const getServiceColor = (category: string, isCustom = false): string => {

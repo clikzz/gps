@@ -74,11 +74,11 @@ model Medications {
 model Services {
   id          BigInt    @id @default(autoincrement())
   name        String
+  category    String
+  description String
   latitude    Float
   longitude   Float
-  description String
-  category    String
-  reviews        Reviews[]
+  reviews     Reviews[]
 
   @@map("Services")
 }

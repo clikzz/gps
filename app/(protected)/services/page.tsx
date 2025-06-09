@@ -26,7 +26,7 @@ export default function MapsPage() {
       <div className="flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Solicitar Ubicación</CardTitle>
+            <CardTitle className="text-2xl text-center">Permitir Ubicación</CardTitle>
             <CardDescription className="text-center">
               Encuentra servicios para mascotas cerca de tu ubicación
             </CardDescription>
@@ -34,11 +34,6 @@ export default function MapsPage() {
           <CardContent className="space-y-6">
             <div className="text-center">
               <RequestLocation onLocationReceived={handleLocationReceived} />
-            </div>
-
-            <div className="text-xs text-gray-500 text-center">
-              <p>Necesitamos tu ubicación para mostrarte servicios cercanos.</p>
-              <p>El navegador solicitará permiso para acceder a tu ubicación.</p>
             </div>
           </CardContent>
         </Card>

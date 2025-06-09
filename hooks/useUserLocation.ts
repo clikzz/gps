@@ -6,9 +6,9 @@ export function useUserLocation() {
   const { position, setPosition } = useLocationStore();
 
   // Fallback a Concepción como ubicacion inicial
-  const fallback = { latitude: -36.82699, longitude: -73.04977, zoom: 13 };
+  const fallback = { latitude: -36.82699, longitude: -73.04977, zoom: 14 };
   const initial = position && (Date.now() - position.timestamp < 5 * 60 * 1000)
-    ? { latitude: position.latitude, longitude: position.longitude, zoom: 13 }
+    ? { latitude: position.latitude, longitude: position.longitude, zoom: 14 }
     : fallback;
 
   function onMapLoad(map: mapboxgl.Map) {
@@ -34,7 +34,7 @@ export function useUserLocation() {
         setPosition(pos);
         map.flyTo({ 
           center: [coords.longitude, coords.latitude], 
-          zoom: 13, 
+          zoom: 14, 
           essential: true 
         });
       },

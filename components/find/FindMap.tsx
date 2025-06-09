@@ -6,7 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Marker } from 'react-map-gl/mapbox';
 import { MissingReport } from '@/app/types/find';
 import { useUserLocation } from '@/hooks/useUserLocation';
-import { CircleUserRound, MapPinCheck } from 'lucide-react';
+import { Circle, MapPinCheck } from 'lucide-react';
 import ActionsMenu from '@/components/find/ActionsMenu';
 import ReportModal, { LatLng } from '@/components/find/ReportModal';
 import MyReports from '@/components/find/MyReports';
@@ -171,7 +171,7 @@ export default function FindMap() {
           longitude={initial.longitude}
           anchor="bottom"
         >
-          <CircleUserRound size={28} className="text-blue-500" />
+          <Circle size={22} className="text-blue-600" />
         </Marker>
 
         {/* Marcadores */}

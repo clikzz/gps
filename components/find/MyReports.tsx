@@ -1,22 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { MissingReport } from '@/app/types/find';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-interface MissingReport {
-  id: string;
-  pet_id: string;
-  reporter_id: string;
-  latitude: number;
-  longitude: number;
-  photo_url: string | null;
-  description?: string;
-  reported_at: string;
-  pet: { id: string; name: string; photo_url?: string };
-  reporter: { id: string; name: string };
-}
 
 interface MyReportsModalProps {
   isOpen: boolean;
@@ -60,20 +48,22 @@ export default function MyReportsModal({ isOpen, onClose }: MyReportsModalProps)
           ) : (
             <ul className="space-y-4">
               {myReports.map((r) => (
-                <Card key={r.id} className="border">
-                  <CardHeader className="flex items-center justify-between space-x-4">
-                    {/* Imagen */}
-                    {r.pet.photo_url && (
+                <Card key={r.id} className="border flex flex-row items-center space-x-3 p-4">
+                  <CardHeader className="flex items-center p-4 space-x-4">
+                    {r.pet.photo_url ? (
                       <img
                         src={r.pet.photo_url}
                         alt={r.pet.name}
-                        className="w-12 h-12 rounded-full object-cover border"
+                        className="w-28 h-28 rounded-full object-cover flex-shrink-0"
                       />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex-shrink-0" />
                     )}
+                  </CardHeader>
 
-                    {/* Resto */}
-                    <div className="flex-1 flex flex-col ml-2">
-                      <div className="flex items-center justify-between">
+                  <CardContent className="p-4 pt-0">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between space-x-4">
                         <p className="text-lg font-semibold">🐾 {r.pet.name}</p>
                         <Badge variant="secondary">Activo</Badge>
                       </div>
@@ -81,9 +71,6 @@ export default function MyReportsModal({ isOpen, onClose }: MyReportsModalProps)
                         {new Date(r.reported_at).toLocaleString()}
                       </p>
                     </div>
-                  </CardHeader>
-
-                  <CardContent>
                     {r.description ? (
                       <p className="text-sm">{r.description}</p>
                     ) : (

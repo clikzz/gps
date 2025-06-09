@@ -5,7 +5,6 @@ import dynamic from "next/dynamic"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { Marker, Popup, NavigationControl, FullscreenControl, ScaleControl } from "react-map-gl/mapbox"
 import { CircleUserRound } from "lucide-react"
-import { toast } from "sonner"
 import PetService from "./PetService"
 
 const MapGL = dynamic(() => import("react-map-gl/mapbox").then((mod) => mod.default), { ssr: false })
@@ -26,7 +25,9 @@ export default function Map({ userLocation }: MapProps) {
 
   const mapToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN_SERVICES || ""
 
-  console.log("Renderizando mapa con ubicación:", userLocation)
+  const toggleUserPopup = () => {
+    setShowUserPopup(!showUserPopup)
+  }
 
   if (!mapToken) {
     return (
@@ -49,11 +50,6 @@ export default function Map({ userLocation }: MapProps) {
         style={{ width: "100%", height: "100%" }}
         onLoad={() => {
           setMapLoaded(true)
-          toast.success("Mapa cargado correctamente")
-        }}
-        onError={(error) => {
-          console.error("Error del mapa:", error)
-          toast.error("Error al cargar el mapa")
         }}
         doubleClickZoom={true}
         scrollZoom={true}
@@ -66,12 +62,7 @@ export default function Map({ userLocation }: MapProps) {
         <NavigationControl position="top-right" />
         <FullscreenControl position="top-right" />
         <ScaleControl position="bottom-left" />
-        <Marker
-          latitude={userLocation.lat}
-          longitude={userLocation.lng}
-          anchor="bottom"
-          onClick={() => setShowUserPopup(true)}
-        >
+        <Marker latitude={userLocation.lat} longitude={userLocation.lng} anchor="bottom" onClick={toggleUserPopup}>
           <div className="cursor-pointer transform hover:scale-110 transition-transform">
             <div className="relative">
               <CircleUserRound
@@ -88,11 +79,12 @@ export default function Map({ userLocation }: MapProps) {
             longitude={userLocation.lng}
             onClose={() => setShowUserPopup(false)}
             closeOnClick={false}
+            closeButton={true}
             anchor="top"
             className="user-popup"
           >
-            <div className="p-4 space-y-3 min-w-[250px]">
-              <h3 className="font-bold text-purple-700 flex items-center text-base">📍 Tu ubicación actual</h3>
+            <div className="p-3 text-center">
+              <h3 className="font-bold text-purple-700 text-base mb-2">📍 Tu ubicación actual</h3>
               <div className="text-sm text-gray-600 space-y-2">
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
@@ -107,7 +99,7 @@ export default function Map({ userLocation }: MapProps) {
                   </div>
                 </div>
                 <div className="pt-2 border-t border-gray-200">
-                  <p className="text-xs text-gray-500">🐕 Buscando servicios para mascotas cercanos...</p>
+                  <p className="text-xs text-gray-500">Mostrando servicios para mascotas cercanos🐕</p>
                 </div>
               </div>
             </div>

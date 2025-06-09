@@ -6,10 +6,12 @@ import { useEffect } from "react"
 import RequestLocation from "./RequestLocation"
 import Map from "./Map"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import NewService from "./NewService"
 
 export default function MapsPage() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -52,28 +54,33 @@ export default function MapsPage() {
       }}
     >
       <div className="bg-black px-6 py-4 flex justify-between items-center">
-      <div>
-        <h1 className="text-xl font-semibold text-white">Servicios para Mascotas</h1>
-        <p className="text-sm text-gray-300">
-          Ubicación: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-        </p>
+        <div>
+          <h1 className="text-xl font-semibold text-white">Mapa de Servicios para Mascotas</h1>
+        </div>
+        <div className="flex gap-4">
+          <button
+            onClick={() => setLocation(null)}
+            className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Actualizar ubicación
+          </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Agregar Servicio
+          </button>
+        </div>
       </div>
-      <div className="flex gap-4">
-        <button
-          onClick={() => setLocation(null)}
-          className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-        >
-          Actualizar ubicación
-        </button>
-        <button
-          className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-        >
-          Agregar Servicio
-        </button>
-      </div>
-    </div>
       <div className="h-[calc(100%-80px)]">
         <Map userLocation={location} />
+        {showForm && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+              <NewService onServiceAdded={() => setShowForm(false)} onCancel={() => setShowForm(false)} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

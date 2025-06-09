@@ -72,13 +72,13 @@ model Medications {
 }
 
 model Services {
-  id             BigInt    @id @default(autoincrement())
-  name           String?
-  address        String?
-  hours          String?
-  contact_info   String?
-  average_rating Float?
-  reviews        Reviews[]
+  id          BigInt    @id @default(autoincrement())
+  name        String
+  category    String
+  description String
+  latitude    Float
+  longitude   Float
+  reviews     Reviews[]
 
   @@map("Services")
 }
@@ -102,9 +102,9 @@ model MissingPet {
   reporter_id String      @db.Uuid
   latitude    Float
   longitude   Float
-  photo_urls   String[]
   description String?
   reported_at DateTime    @default(now())
+  photo_urls  String[]
   pet         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
   reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
 

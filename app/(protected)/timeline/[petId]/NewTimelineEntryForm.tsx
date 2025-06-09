@@ -1,174 +1,165 @@
-
 "use client";
-import { useState, ChangeEvent, FormEvent } from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { toast } from "sonner";
+import { useState, useRef, forwardRef } from "react"; // Importamos forwardRef
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils"; // Importamos la utilidad cn para las clases
+
+// --- INICIO: DEFINICIÓN LOCAL DEL COMPONENTE TEXTAREA ---
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Textarea.displayName = "Textarea"
+// --- FIN: DEFINICIÓN LOCAL DEL COMPONENTE TEXTAREA ---
+
+const FormSchema = z.object({
+  title: z.string().max(100, "El título es demasiado largo.").optional(),
+  description: z.string().max(1000, "La descripción es demasiado larga.").optional(),
+  eventDate: z.string().refine((date) => date && date.trim() !== '', { message: "La fecha es requerida." }),
+  photos: z.custom<FileList>().optional(),
+}).superRefine((data, ctx) => {
+  const hasPhotos = data.photos && data.photos.length > 0;
+  const hasDescription = data.description && data.description.trim() !== '';
+  if (!hasPhotos && !hasDescription) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Debes proporcionar una descripción si no incluyes fotos.',
+      path: ['description'],
+    });
+  }
+  if (hasPhotos) {
+    if (data.photos![0].size > 5 * 1024 * 1024) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "El tamaño máximo es 5MB.", path: ['photos'] });
+    }
+    if (!["image/jpeg", "image/png"].includes(data.photos![0].type)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Solo se aceptan .jpg y .png.", path: ['photos'] });
+    }
+  }
+});
+
+type FormValues = z.infer<typeof FormSchema>;
 
 interface NewTimelineEntryFormProps {
   petId: string;
-  onSuccess: () => void; 
-}
-
-interface UploadApiResponse {
-  url: string;
-  type: string;
-  path: string;
-}
-
-
-interface TimelineEntryApiResponse {
-    id: string; 
-    pet_id: string; 
-    event_date: string; 
-    title?: string;
-    description?: string;
-    TimelineEntryPhotos: Array<{ id: string; photo_url: string; order: number | null }>;
+  onSuccess: () => void;
 }
 
 export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEntryFormProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [eventDate, setEventDate] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [title, setTitle] = useState<string>(''); 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (!['image/jpeg', 'image/png'].includes(file.type)) {
-        toast.error('Formato no válido. Solo JPEG/PNG.');
-        e.target.value = ''; setSelectedFile(null); return;
-      }
-      if (file.size > 5 * 1024 * 1024) { 
-        toast.error('Máximo 5MB por foto.');
-        e.target.value = ''; setSelectedFile(null); return;
-      }
-      setSelectedFile(file); setFormError(null);
-    } else {
-      setSelectedFile(null);
-    }
-  };
+  const form = useForm<FormValues>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: { title: "", description: "", eventDate: "" },
+  });
 
-  
-  const uploadPhotoToStorage = async (file: File): Promise<string | null> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('type', 'timeline_photo');
-    try {
-      const response = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Error al procesar respuesta de subida de Storage."}));
-        throw new Error(error.error || "Error al subir la imagen a Storage.");
-      }
-      const data: UploadApiResponse = await response.json();
-      return data.url;
-    } catch (error: any) {
-      console.error("Error en uploadPhotoToStorage:", error);
-      
-      throw error;
-    }
-  };
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!selectedFile) {
-      setFormError('Por favor, selecciona una foto.'); return;
-    }
-    if (!eventDate) {
-      setFormError('Por favor, selecciona una fecha para el recuerdo.'); return;
-    }
-    
-
-    setIsSubmitting(true); setFormError(null);
+  async function onSubmit(data: FormValues) {
+    setIsSubmitting(true);
+    toast.info("Creando nueva entrada...");
+    let uploadedUrls: string[] = [];
 
     try {
-      
-      const photoUrlFromServer = await uploadPhotoToStorage(selectedFile);
-
-      if (!photoUrlFromServer) {
-        
-        setIsSubmitting(false);
-        return;
+      if (data.photos && data.photos.length > 0) {
+        const formData = new FormData();
+        formData.append("file", data.photos[0]);
+        formData.append("type", "timeline_photo");
+        const uploadResponse = await fetch("/api/upload", { method: "POST", body: formData });
+        if (!uploadResponse.ok) throw new Error("Error al subir la imagen.");
+        const uploadResult = await uploadResponse.json();
+        uploadedUrls.push(uploadResult.url);
       }
 
-      console.log('Imagen subida con éxito a Supabase Storage. URL:', photoUrlFromServer);
-
-      
-      const timelineEntryDataToSave = {
-        photoUrl: photoUrlFromServer,
-        eventDate: eventDate,
-        description: description,
-        title: title, 
+      const entryPayload = {
+        title: data.title,
+        description: data.description,
+        eventDate: data.eventDate,
+        photoUrls: uploadedUrls,
       };
 
-      console.log("Enviando a API de BD:", `/api/timeline/${petId}/entries`, timelineEntryDataToSave);
-
-      
-      const dbResponse = await fetch(`/api/timeline/${petId}/entries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(timelineEntryDataToSave),
+      const entryResponse = await fetch(`/api/timeline/${petId}/entries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entryPayload),
       });
 
-      if (!dbResponse.ok) {
-        const errorData = await dbResponse.json().catch(() => ({ error: "Error desconocido del servidor al guardar en BD." }));
-        throw new Error(errorData.error || `Error al guardar la entrada del timeline en la BD (HTTP ${dbResponse.status})`);
-      }
+      if (!entryResponse.ok) throw new Error("Error al crear la entrada en el timeline.");
 
-      const newEntryFromDB: TimelineEntryApiResponse = await dbResponse.json();
-      console.log('Entrada guardada en BD y devuelta por la API:', newEntryFromDB);
+      toast.success("¡Recuerdo añadido con éxito!");
+      form.reset();
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      onSuccess();
 
-      toast.success('¡Recuerdo añadido al timeline!');
-      onSuccess(); 
-
-      
-      setSelectedFile(null);
-      setEventDate('');
-      setDescription('');
-      setTitle(''); 
-      const fileInput = document.getElementById('timeline-photo-upload-form-input') as HTMLInputElement | null;
-      if (fileInput) fileInput.value = '';
-
-    } catch (err: any) {
-      console.error("Error en handleSubmit:", err);
-      setFormError(err.message || 'Ocurrió un error al procesar el recuerdo.');
-      toast.error(err.message || 'Ocurrió un error al procesar el recuerdo.');
+    } catch (error: any) {
+      toast.error(error.message || "No se pudo crear la entrada.");
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit}>
-      {formError && <p style={{ color: 'red', marginBottom: '10px' }}>{formError}</p>}
-      {/* RF-005: Permitir añadir un título opcional */}
-      <div style={{ marginBottom: '10px' }}>
-        <label htmlFor="timeline-title-form-input">Título (opcional):</label>
-        <Input
-          type="text"
-          id="timeline-title-form-input"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          disabled={isSubmitting}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField control={form.control} name="title" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título (opcional)</FormLabel>
+              <FormControl><Input placeholder="Ej: Primer día en la playa" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-      <div style={{ marginBottom: '10px' }}>
-        <label htmlFor="timeline-photo-upload-form-input">Foto (JPEG/PNG, máx 5MB):</label>
-        <Input type="file" id="timeline-photo-upload-form-input" accept="image/jpeg, image/png" onChange={handleFileChange} disabled={isSubmitting} />
-      </div>
-      <div style={{ marginBottom: '10px' }}>
-        <label htmlFor="timeline-event-date-form-input">Fecha:</label>
-        <Input type="date" id="timeline-event-date-form-input" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required disabled={isSubmitting} />
-      </div>
-      <div style={{ marginBottom: '10px' }}>
-        <label htmlFor="timeline-description-form-input">Descripción:</label>
-        <textarea id="timeline-description-form-input" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} disabled={isSubmitting} style={{width: '100%', border:'1px solid #ccc', borderRadius:'4px', padding:'8px'}} />
-      </div>
-      <Button type="submit" disabled={isSubmitting || !selectedFile || !eventDate}>
-        {isSubmitting ? 'Guardando...' : 'Añadir Recuerdo'}
-      </Button>
-    </form>
+        <FormField control={form.control} name="eventDate" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Fecha del evento</FormLabel>
+              <FormControl><Input type="date" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField control={form.control} name="description" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descripción</FormLabel>
+              <FormControl><Textarea placeholder="Describe este momento especial..." {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField control={form.control} name="photos" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Foto (opcional)</FormLabel>
+              <FormControl>
+                <Input 
+                  type="file" 
+                  accept="image/jpeg, image/png"
+                  ref={fileInputRef}
+                  onChange={(e) => field.onChange(e.target.files && e.target.files.length > 0 ? e.target.files : undefined)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? "Guardando..." : "Guardar Recuerdo"}
+        </Button>
+      </form>
+    </Form>
   );
 }

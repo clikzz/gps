@@ -1,99 +1,42 @@
-
 "use client";
-import React, { useEffect, useState } from 'react';
 
-
-export interface TimelineEntryData {
-  id: string;                 
-  user_id: string;           
-  pet_id: string;             
-  title?: string | null;
-  description?: string | null;
-  event_date: string;        
-  created_at: string;
-  updated_at: string;
-  TimelineEntryPhotos: Array<{ 
-    id: string;              
-    timeline_entry_id: string;
-    photo_url: string;
-    order?: number | null;
-    created_at: string;
-  }>;
-  
-}
+import React from 'react';
+import { TimelineEntryWithPhotos } from '@/types/timeline';
 
 interface TimelineEntriesListProps {
-  petId: string;
-  
+  entries: TimelineEntryWithPhotos[];
 }
 
-export default function TimelineEntriesList({ petId }: TimelineEntriesListProps) {
-  const [entries, setEntries] = useState<TimelineEntryData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!petId) return;
-
-    const fetchEntries = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`/api/timeline/${petId}/entries`); 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Error al obtener las entradas del timeline (HTTP ${response.status})`);
-        }
-        const data: TimelineEntryData[] = await response.json();
-        setEntries(data);
-      } catch (err: any) {
-        console.error("Error fetching timeline entries:", err);
-        setError(err.message || 'Ocurrió un error al cargar los recuerdos.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEntries();
-  }, [petId]); 
-
-  if (isLoading) {
-    return <p style={{ marginTop: "20px" }}>Cargando recuerdos...</p>;
-  }
-
-  if (error) {
-    return <p style={{ marginTop: "20px", color: 'red' }}>Error al cargar recuerdos: {error}</p>;
-  }
-
+export default function TimelineEntriesList({ entries }: TimelineEntriesListProps) {
   return (
-    <div style={{marginTop: "20px", borderTop: "1px dashed #555", paddingTop: "20px"}}>
-      <h2>Recuerdos Guardados:</h2>
+    <div>
+      <h3 className="text-xl font-semibold mt-6 mb-4">Recuerdos</h3>
       {entries.length === 0 ? (
-        <p>Aún no hay recuerdos para esta mascota.</p>
+        <div className="text-center py-10 px-4 border border-dashed rounded-lg">
+          <p className="text-muted-foreground">Aún no hay recuerdos para esta mascota.</p>
+          <p className="text-sm text-muted-foreground/80">¡Añade el primero para empezar a construir su historia!</p>
+        </div>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <ul className="space-y-4 list-none p-0">
           {entries.map((entry) => (
-            <li key={entry.id} style={{ marginBottom: '20px', padding: '15px', border: '1px solid #444', borderRadius: '8px' }}>
-              {entry.title && <h4 style={{ marginTop: 0, marginBottom: '5px' }}>{entry.title}</h4>}
-              <p style={{ fontSize: '0.9em', color: '#aaa' }}>
-                Fecha: {new Date(entry.event_date).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })}
+            <li key={entry.id.toString()} className="p-4 border rounded-lg shadow-sm bg-card">
+              {entry.title && <h4 className="font-bold text-lg mb-1">{entry.title}</h4>}
+              <p className="text-xs text-muted-foreground mb-2">
+                {new Date(entry.event_date).toLocaleDateString('es-CL', {
+                  year: 'numeric', month: 'long', day: 'numeric'
+                })}
               </p>
-              {entry.description && <p>{entry.description}</p>}
-              <div>
-                {entry.TimelineEntryPhotos && entry.TimelineEntryPhotos.length > 0 ? (
-                  entry.TimelineEntryPhotos.map((photo) => ( 
-                    <img
-                      key={photo.id || photo.photo_url} 
-                      src={photo.photo_url}
-                      alt={entry.title || `Recuerdo del ${new Date(entry.event_date).toLocaleDateString()}`}
-                      style={{ maxWidth: '200px', maxHeight: '200px', marginRight: '10px', marginTop: '5px', borderRadius: '4px', border: '1px solid #555' }}
-                    />
-                  ))
-                ) : (
-                  <p style={{ fontStyle: 'italic' }}>(Entrada sin foto)</p>
-                )}
+              {entry.description && <p className="text-sm">{entry.description}</p>}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {entry.TimelineEntryPhotos?.map((photo) => (
+                  <img
+                    key={photo.id.toString()} 
+                    src={photo.photo_url}
+                    alt={entry.title || 'Foto del recuerdo'}
+                    className="w-24 h-24 object-cover rounded-md border"
+                  />
+                ))}
               </div>
-              {}
             </li>
           ))}
         </ul>

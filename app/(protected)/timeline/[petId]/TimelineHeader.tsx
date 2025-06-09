@@ -1,64 +1,38 @@
-
 "use client";
-import { useEffect, useState } from 'react';
 
-interface PetData {
-  id: string;
-  name: string;
-  photo_url?: string | null;
-}
+import { Pets as Pet } from '@prisma/client';
+import { calculateAge } from '@/utils/calculateAge';
+import { PawPrint } from 'lucide-react';
+import Image from 'next/image';
 
 interface PetTimelineHeaderProps {
-  petId: string;
+  petData: Pet;
 }
 
-export default function PetTimelineHeader({ petId }: PetTimelineHeaderProps) {
-  const [petData, setPetData] = useState<PetData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (petId) {
-      setIsLoading(true);
-      setError(null);
-      const fetchPetDetails = async () => {
-        try {
-          const response = await fetch(`/api/pets/${petId}`); 
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Error al cargar datos de la mascota: ${response.statusText}`);
-          }
-          const data: PetData = await response.json();
-          setPetData(data);
-        } catch (err: any) {
-          console.error("Error fetching pet details:", err);
-          setError(err.message || 'Ocurrió un error desconocido al cargar datos de la mascota.');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchPetDetails();
-    }
-  }, [petId]);
-
-  if (isLoading) return <p>Cargando información de la mascota...</p>;
-  if (error) return <p>Error al cargar información de la mascota: {error}</p>;
-  if (!petData) return <p>No se encontró la mascota.</p>;
+export default function PetTimelineHeader({ petData }: PetTimelineHeaderProps) {
+  const age = petData.date_of_birth ? calculateAge(petData.date_of_birth) : null;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #ccc', paddingBottom: '10px' }}>
+    <div className="flex items-center gap-4 p-4 border-b">
       {petData.photo_url ? (
-        <img
+        <Image
           src={petData.photo_url}
           alt={`Foto de ${petData.name}`}
-          style={{ width: '80px', height: '80px', borderRadius: '50%', marginRight: '20px', objectFit: 'cover' }}
+          width={80}
+          height={80}
+          className="rounded-full object-cover w-20 h-20 border-2"
         />
       ) : (
-        <div style={{ width: '80px', height: '80px', borderRadius: '50%', marginRight: '20px', backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize:'12px', textAlign:'center' }}>
-          Sin foto
+        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
+          <PawPrint className="w-10 h-10 text-muted-foreground" />
         </div>
       )}
-      <h1>Timeline de {petData.name}</h1>
+      <div>
+        <h1 className="text-2xl font-bold">Timeline de {petData.name}</h1>
+        <p className="text-md text-muted-foreground">
+          {age !== null ? `${age} años` : 'Edad no especificada'}
+        </p>
+      </div>
     </div>
   );
 }

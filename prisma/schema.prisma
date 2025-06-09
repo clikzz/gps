@@ -16,6 +16,8 @@ model UserProfile {
   avatar_url       String?
   email            String             @unique
   public_id        BigInt?            @default(autoincrement())
+  menssageCount    Int                @default(0)
+  lastMessageAt    DateTime?
   marketplaceItems MarketplaceItems[]
   MissingPets      MissingPets[]
   pets             Pets[]
@@ -118,14 +120,14 @@ model Milestones {
 }
 
 model TimelineEntries {
-  id                  String    @id @default(cuid())
+  id                  String                @id @default(cuid())
   user_id             String                @db.Uuid
   pet_id              BigInt
   title               String?
   description         String?
   event_date          DateTime
   created_at          DateTime              @default(now())
-  updated_at          DateTime  @updatedAt   
+  updated_at          DateTime              @updatedAt
   Pets                Pets                  @relation(fields: [pet_id], references: [id])
   UserProfiles        UserProfile           @relation(fields: [user_id], references: [id])
   TimelineEntryPhotos TimelineEntryPhotos[]
@@ -133,7 +135,7 @@ model TimelineEntries {
 }
 
 model TimelineEntryPhotos {
-  id                  String    @id @default(cuid())
+  id                String          @id @default(cuid())
   timeline_entry_id String
   photo_url         String
   order             Int?
@@ -157,11 +159,13 @@ model MissingPets {
   reporter_id  String      @db.Uuid
   latitude     Float
   longitude    Float
-  photo_url    String?
   description  String?
   reported_at  DateTime    @default(now())
+  photo_urls   String[]
   Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
   UserProfiles UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@unique([pet_id, reporter_id])
 }
 
 model Posts {
@@ -179,6 +183,7 @@ model Subforums {
   id          BigInt   @id @default(autoincrement())
   name        String   @unique
   description String?
+  category    String
   Topics      Topics[]
 }
 

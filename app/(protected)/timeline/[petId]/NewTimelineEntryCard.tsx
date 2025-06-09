@@ -1,6 +1,7 @@
+"use client";
 
 import React from "react";
-import { Card } from "@/components/ui/card"; 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import NewTimelineEntryForm from "./NewTimelineEntryForm";
 
 interface NewTimelineEntryCardProps {
@@ -10,12 +11,16 @@ interface NewTimelineEntryCardProps {
 
 export default function NewTimelineEntryCard({ petId, onEntrySaved }: NewTimelineEntryCardProps) {
   return (
-    <Card className="w-full p-4 mt-4 mb-6"> {/* Clases de ejemplo, ajusta según tu UI */}
-      <h2 className="font-bold text-xl mb-3">Añadir Nuevo Recuerdo al Timeline</h2>
-      <p className="text-sm text-gray-600 mb-4">
-        Sube una foto, selecciona una fecha y añade una descripción para documentar un momento de tu mascota.
-      </p>
-      <NewTimelineEntryForm petId={petId} onSuccess={onEntrySaved} />
+    <Card className="w-full mt-6">
+      <CardHeader>
+        <CardTitle>Añadir Nuevo Recuerdo</CardTitle>
+        <CardDescription>
+          Documenta un momento especial de tu mascota.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <NewTimelineEntryForm petId={petId} onSuccess={onEntrySaved} />
+      </CardContent>
     </Card>
   );
 }

@@ -16,8 +16,10 @@ model UserProfile {
   avatar_url       String?
   email            String             @unique
   public_id        BigInt?            @default(autoincrement())
+  menssageCount    Int                @default(0)
+  lastMessageAt    DateTime?
   marketplaceItems MarketplaceItems[]
-  MissingPets      MissingPets[]
+  missingPets      MissingPet[]
   pets             Pets[]
   Posts            Posts[]
   reviews          Reviews[]
@@ -39,7 +41,7 @@ model Pets {
   photo_url        String?
   sex              String?
   Medications      Medications[]
-  MissingPets      MissingPets[]
+  missingReports   MissingPet[]
   user             UserProfile       @relation(fields: [user_id], references: [id])
   TimelineEntries  TimelineEntries[]
   Vaccinations     Vaccinations[]
@@ -70,13 +72,13 @@ model Medications {
 }
 
 model Services {
-  id             BigInt    @id @default(autoincrement())
-  name           String?
-  address        String?
-  hours          String?
-  contact_info   String?
-  average_rating Float?
-  reviews        Reviews[]
+  id          BigInt    @id @default(autoincrement())
+  name        String
+  category    String
+  description String
+  latitude    Float
+  longitude   Float
+  reviews     Reviews[]
 
   @@map("Services")
 }
@@ -94,6 +96,22 @@ model Reviews {
   @@map("Reviews")
 }
 
+model MissingPet {
+  id          BigInt      @id @default(autoincrement())
+  pet_id      BigInt
+  reporter_id String      @db.Uuid
+  latitude    Float
+  longitude   Float
+  description String?
+  reported_at DateTime    @default(now())
+  photo_urls  String[]
+  pet         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+  reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@unique([pet_id, reporter_id])
+  @@map("MissingPets")
+}
+
 model MarketplaceItems {
   id             BigInt      @id @default(autoincrement())
   user_id        String      @db.Uuid
@@ -108,6 +126,16 @@ model MarketplaceItems {
   user           UserProfile @relation(fields: [user_id], references: [id])
 
   @@map("MarketplaceItems")
+}
+
+model debug_logs {
+  id            Int       @id @default(autoincrement())
+  event_type    String?
+  user_id       String?   @db.Uuid
+  email         String?
+  error_message String?
+  details       Json?
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
 }
 
 model Milestones {
@@ -141,29 +169,6 @@ model TimelineEntryPhotos {
   TimelineEntries   TimelineEntries @relation(fields: [timeline_entry_id], references: [id], onDelete: Cascade)
 }
 
-model debug_logs {
-  id            Int       @id @default(autoincrement())
-  event_type    String?
-  user_id       String?   @db.Uuid
-  email         String?
-  error_message String?
-  details       Json?
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
-}
-
-model MissingPets {
-  id           BigInt      @id @default(autoincrement())
-  pet_id       BigInt
-  reporter_id  String      @db.Uuid
-  latitude     Float
-  longitude    Float
-  photo_url    String?
-  description  String?
-  reported_at  DateTime    @default(now())
-  Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
-  UserProfiles UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
-}
-
 model Posts {
   id           BigInt      @id @default(autoincrement())
   topicId      BigInt
@@ -179,6 +184,7 @@ model Subforums {
   id          BigInt   @id @default(autoincrement())
   name        String   @unique
   description String?
+  category    String
   Topics      Topics[]
 }
 

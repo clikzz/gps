@@ -20,6 +20,7 @@ model UserProfile {
   lastMessageAt    DateTime?          @map("lastMessageAt")
   marketplaceItems MarketplaceItems[]
   missingPets      MissingPet[]
+  missingPets      MissingPet[]
   pets             Pets[]
   Posts            Posts[]
   reviews          Reviews[]
@@ -41,6 +42,7 @@ model Pets {
   photo_url        String?
   sex              String?
   Medications      Medications[]
+  missingReports   MissingPet[]
   missingReports   MissingPet[]
   user             UserProfile       @relation(fields: [user_id], references: [id])
   TimelineEntries  TimelineEntries[]
@@ -72,13 +74,13 @@ model Medications {
 }
 
 model Services {
-  id             BigInt    @id @default(autoincrement())
-  name           String?
-  address        String?
-  hours          String?
-  contact_info   String?
-  average_rating Float?
-  reviews        Reviews[]
+  id          BigInt    @id @default(autoincrement())
+  name        String
+  category    String
+  description String
+  latitude    Float
+  longitude   Float
+  reviews     Reviews[]
 
   @@map("Services")
 }
@@ -112,6 +114,22 @@ model MissingPet {
   @@map("MissingPets")
 }
 
+model MissingPet {
+  id          BigInt      @id @default(autoincrement())
+  pet_id      BigInt
+  reporter_id String      @db.Uuid
+  latitude    Float
+  longitude   Float
+  description String?
+  reported_at DateTime    @default(now())
+  photo_urls  String[]
+  pet         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+  reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@unique([pet_id, reporter_id])
+  @@map("MissingPets")
+}
+
 model MarketplaceItems {
   id             BigInt      @id @default(autoincrement())
   user_id        String      @db.Uuid
@@ -126,6 +144,16 @@ model MarketplaceItems {
   user           UserProfile @relation(fields: [user_id], references: [id])
 
   @@map("MarketplaceItems")
+}
+
+model debug_logs {
+  id            Int       @id @default(autoincrement())
+  event_type    String?
+  user_id       String?   @db.Uuid
+  email         String?
+  error_message String?
+  details       Json?
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
 }
 
 model debug_logs {
@@ -186,6 +214,7 @@ model Subforums {
   id          BigInt   @id @default(autoincrement())
   name        String   @unique
   description String?
+  category    String
   category    String
   Topics      Topics[]
 

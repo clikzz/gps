@@ -60,7 +60,6 @@ export default function OthersReportsModal({ isOpen, onClose }: OthersReportsMod
           <ul className="space-y-2 max-h-80 overflow-y-auto">
             {othersReports.map((r) => (
               <li key={r.id} className="border-b pb-2 flex items-start space-x-3">
-                {/* Foto de perfil */}
                 {r.pet.photo_url && (
                   <img
                     src={r.pet.photo_url}
@@ -69,7 +68,6 @@ export default function OthersReportsModal({ isOpen, onClose }: OthersReportsMod
                   />
                 )}
 
-                {/* Texto */}
                 <div className="flex-1">
                   <p className="font-semibold flex items-center space-x-1">
                     <span>🐾</span>

@@ -3,9 +3,9 @@
 import { z } from 'zod';
 
 export const NewTimelineEntrySchema = z.object({
-  title: z.string().max(100, 'El título no puede exceder los 100 caracteres.').optional(),
+  title: z.string().max(50, 'El título no puede exceder los 50 caracteres.').optional(),
   
-  description: z.string().max(1000, 'La descripción es demasiado larga.').optional(),
+  description: z.string().max(200, 'La descripción no puede exceder los 200 caracteres.').optional(),
   
   eventDate: z.string()
     .refine((date) => date && !isNaN(new Date(date).getTime()), {
@@ -14,7 +14,6 @@ export const NewTimelineEntrySchema = z.object({
     .refine((date) => {
       const inputDate = new Date(date);
       const today = new Date();
-      // Ignoramos la hora para la comparación, permitiendo el día de hoy.
       today.setHours(23, 59, 59, 999); 
       return inputDate <= today;
     }, {
@@ -31,7 +30,7 @@ export const NewTimelineEntrySchema = z.object({
   if (!hasPhotos && !hasDescription) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'Debes proporcionar una descripción si no incluyes fotos.',
+      message: 'Debes proporcionar una descripción si no incluyes fotos o cargar al menos una foto.',
       path: ['description'],
     });
   }

@@ -10,6 +10,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+// Importar el esquema de validación desde el archivo global
+import { NewTimelineEntrySchema } from '@/server/validations/timelineValidation';
+
 // --- INICIO: DEFINICIÓN LOCAL DEL COMPONENTE TEXTAREA (sin cambios) ---
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
@@ -30,42 +33,54 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 Textarea.displayName = "Textarea"
 // --- FIN: DEFINICIÓN LOCAL DEL COMPONENTE TEXTAREA ---
 
-// --- CAMBIO 1: VALIDACIÓN DE FECHA EN ZOD ---
-const FormSchema = z.object({
-  title: z.string().max(100, "El título es demasiado largo.").optional(),
-  description: z.string().max(1000, "La descripción es demasiado larga.").optional(),
-  eventDate: z.string()
-    .refine((date) => date && date.trim() !== '', { message: "La fecha es requerida." })
-    .refine((date) => {
-        const inputDate = new Date(date);
-        const today = new Date();
-        today.setHours(23, 59, 59, 999); // Permite seleccionar el día actual completo
-        return inputDate <= today;
-    }, {
-        message: "La fecha del evento no puede ser futura.",
-    }),
+// --- INICIO: ESQUEMA DE VALIDACIÓN ZOD COMBINADO PARA EL CLIENTE ---
+
+// 1. Define un esquema para los campos específicos del cliente (como 'photos')
+const ClientSpecificSchema = z.object({
   photos: z.custom<FileList>().optional(),
-}).superRefine((data, ctx) => {
-  const hasPhotos = data.photos && data.photos.length > 0;
-  const hasDescription = data.description && data.description.trim() !== '';
-  if (!hasPhotos && !hasDescription) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Debes proporcionar una descripción si no incluyes fotos.',
-      path: ['description'],
-    });
-  }
-  if (data.photos && data.photos.length > 0) {
-    if (data.photos![0].size > 5 * 1024 * 1024) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "El tamaño máximo es 5MB.", path: ['photos'] });
-    }
-    if (!["image/jpeg", "image/png"].includes(data.photos![0].type)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Solo se aceptan .jpg y .png.", path: ['photos'] });
-    }
-  }
 });
 
-type FormValues = z.infer<typeof FormSchema>;
+// 2. Combina el esquema del servidor con el esquema específico del cliente
+// Utilizamos z.intersection para combinar los esquemas, asegurando que ambos se apliquen.
+// Esto nos da un ZodObject al que podemos aplicar nuestro superRefine local.
+const CombinedClientSchema = z.intersection(NewTimelineEntrySchema, ClientSpecificSchema)
+  .superRefine((data, ctx) => {
+    // Los campos de NewTimelineEntrySchema ya están validados por NewTimelineEntrySchema.
+    // Aquí solo necesitamos añadir las validaciones que involucran 'photos'
+    // o validaciones cruzadas que el servidor no pueda o deba manejar.
+
+    // Aseguramos el tipo de 'data' para evitar el error de 'any'
+    type CombinedClientDataType = z.infer<typeof NewTimelineEntrySchema> & z.infer<typeof ClientSpecificSchema>;
+    const clientData = data as CombinedClientDataType; 
+
+    const hasPhotos = clientData.photos && clientData.photos.length > 0;
+    const hasDescription = clientData.description && clientData.description.trim() !== '';
+
+    // Re-aplicamos la validación cruzada para dar feedback temprano al usuario.
+    // Esto es importante si el usuario borra la descripción después de cargar una foto, por ejemplo.
+    if (!hasPhotos && !hasDescription) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Debes proporcionar una descripción si no incluyes fotos o cargar al menos una foto.',
+        path: ['description'],
+      });
+    }
+    
+    // Validaciones de foto (tamaño y tipo) que son exclusivas del cliente
+    if (hasPhotos) {
+      if (clientData.photos![0].size > 5 * 1024 * 1024) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "El tamaño máximo es 5MB.", path: ['photos'] });
+      }
+      if (!["image/jpeg", "image/png"].includes(clientData.photos![0].type)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Solo se aceptan .jpg y .png.", path: ['photos'] });
+      }
+    }
+  });
+// --- FIN: ESQUEMA DE VALIDACIÓN ZOD COMBINADO PARA EL CLIENTE ---
+
+
+// La inferencia del tipo ahora se hace del esquema combinado local
+type FormValues = z.infer<typeof CombinedClientSchema>;
 
 interface NewTimelineEntryFormProps {
   petId: string;
@@ -76,12 +91,11 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // --- CAMBIO 2: OBTENER FECHA ACTUAL PARA EL FRONTEND ---
   const today = new Date().toISOString().split("T")[0];
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(FormSchema),
-    // --- CAMBIO 3: VALOR POR DEFECTO PARA LA FECHA ---
+    // Usamos el esquema combinado para el resolver
+    resolver: zodResolver(CombinedClientSchema),
     defaultValues: { title: "", description: "", eventDate: today },
   });
 
@@ -96,17 +110,23 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
         formData.append("file", data.photos[0]);
         formData.append("type", "timeline_photo");
         const uploadResponse = await fetch("/api/upload", { method: "POST", body: formData });
-        if (!uploadResponse.ok) throw new Error("Error al subir la imagen.");
+        if (!uploadResponse.ok) {
+          const uploadErrorData = await uploadResponse.json();
+          throw new Error(uploadErrorData.error || "Error al subir la imagen.");
+        }
         const uploadResult = await uploadResponse.json();
         uploadedUrls.push(uploadResult.url);
       }
 
-      const entryPayload = {
+      // Se construye el payload solo con los campos que el backend espera,
+      // que son los validados por NewTimelineEntrySchema.
+      // Aseguramos que 'data' cumple con el esquema del servidor para el payload.
+      const entryPayload = NewTimelineEntrySchema.parse({
         title: data.title,
         description: data.description,
         eventDate: data.eventDate,
         photoUrls: uploadedUrls,
-      };
+      });
 
       const entryResponse = await fetch(`/api/timeline/${petId}/entries`, {
         method: "POST",
@@ -114,7 +134,10 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
         body: JSON.stringify(entryPayload),
       });
 
-      if (!entryResponse.ok) throw new Error("Error al crear la entrada en el timeline.");
+      if (!entryResponse.ok) {
+        const errorData = await entryResponse.json();
+        throw new Error(errorData.error || "Error al crear la entrada en el timeline.");
+      }
 
       toast.success("¡Recuerdo añadido con éxito!");
       form.reset();
@@ -122,6 +145,7 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
       onSuccess();
 
     } catch (error: any) {
+      console.error("[NewTimelineEntryForm] Error al enviar el formulario:", error);
       toast.error(error.message || "No se pudo crear la entrada.");
     } finally {
       setIsSubmitting(false);
@@ -142,9 +166,7 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
         <FormField control={form.control} name="eventDate" render={({ field }) => (
             <FormItem>
               <FormLabel>Fecha del evento</FormLabel>
-              {/* --- CAMBIO 4: ATRIBUTO 'max' EN EL INPUT --- */}
               <FormControl><Input type="date" {...field} max={today} /></FormControl>
-              {/* --- CAMBIO 5: TEXTO DE AYUDA VISUAL --- */}
               <p className="text-xs text-muted-foreground pt-1">
                 Selecciona una fecha actual o pasada.
               </p>

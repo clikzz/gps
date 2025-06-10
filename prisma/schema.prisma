@@ -16,6 +16,8 @@ model UserProfile {
   avatar_url       String?
   email            String             @unique
   public_id        BigInt?            @default(autoincrement())
+  menssageCount    Int                @default(0)
+  lastMessageAt    DateTime?
   marketplaceItems MarketplaceItems[]
   MissingPets      MissingPets[]
   pets             Pets[]
@@ -70,13 +72,13 @@ model Medications {
 }
 
 model Services {
-  id             BigInt    @id @default(autoincrement())
-  name           String?
-  address        String?
-  hours          String?
-  contact_info   String?
-  average_rating Float?
-  reviews        Reviews[]
+  id          BigInt    @id @default(autoincrement())
+  name        String
+  category    String
+  description String
+  latitude    Float
+  longitude   Float
+  reviews     Reviews[]
 
   @@map("Services")
 }
@@ -157,11 +159,13 @@ model MissingPets {
   reporter_id  String      @db.Uuid
   latitude     Float
   longitude    Float
-  photo_url    String?
   description  String?
   reported_at  DateTime    @default(now())
+  photo_urls   String[]
   Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
   UserProfiles UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@unique([pet_id, reporter_id])
 }
 
 model Posts {
@@ -179,6 +183,7 @@ model Subforums {
   id          BigInt   @id @default(autoincrement())
   name        String   @unique
   description String?
+  category    String
   Topics      Topics[]
 }
 

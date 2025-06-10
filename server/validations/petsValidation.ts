@@ -45,6 +45,7 @@ export const petSchema = z.object({
       invalid_type_error: "La fecha de adopción debe ser una cadena de texto",
     })
     .optional()
+    .nullable()
     .refine((date) => {
       if (!date || date === "") return true;
       const parsedDate = new Date(date);
@@ -55,6 +56,7 @@ export const petSchema = z.object({
       invalid_type_error: "La fecha de nacimiento debe ser una cadena de texto",
     })
     .optional()
+    .nullable()
     .refine((date) => {
       if (!date || date === "") return true;
       const parsedDate = new Date(date);

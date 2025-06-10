@@ -31,6 +31,10 @@ export function EditPetDrawer({
     }
   };
 
+  const handleFormSuccess = () => {
+    handleClose();
+  };
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerTrigger asChild>
@@ -41,25 +45,30 @@ export function EditPetDrawer({
       <DrawerContent>
         <div className="mx-auto w-full max-w-sm">
           <DrawerHeader className="flex flex-col items-center justify-center">
-            <DrawerTitle className="text-center">
-              Detalles de {pet.name}
-            </DrawerTitle>
+            <DrawerTitle className="text-center">Editar {pet.name}</DrawerTitle>
             <DrawerDescription>
               Modifica los datos asociados a tu mascota
             </DrawerDescription>
           </DrawerHeader>
-          <div className="flex items-center justify-center flex-col">
-            <div className="overflow-hidden rounded-full w-[150px] h-[150px]">
-              <Image
-                src={pet.photo_url || "/placeholder.png"}
-                alt={pet.name}
-                width={150}
-                height={150}
-                className="object-cover w-full h-full"
-              />
+
+          {/* Mueve el scroll aquí */}
+          <div className="overflow-y-auto max-h-[50vh] px-4">
+            <div className="flex flex-col items-center justify-center">
+              <div className="overflow-hidden rounded-full w-[150px] h-[150px] mb-4">
+                <Image
+                  src={pet.photo_url || "/placeholder.png"}
+                  alt={pet.name}
+                  width={150}
+                  height={150}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <div className="w-full">
+                <EditPetForm pet={pet} onSuccess={handleFormSuccess} />
+              </div>
             </div>
-            <EditPetForm />
           </div>
+
           <DrawerFooter>
             <DrawerClose asChild>
               <Button variant="outline">Cancelar</Button>

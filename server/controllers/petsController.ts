@@ -6,6 +6,7 @@ import {
 } from "../services/petsService";
 import { Pets as Pet } from "@prisma/client";
 import { petSchema } from "@/server/validations/petsValidation";
+import { date } from "zod";
 
 export const fetchPets = async (userId: string) => {
   const pets = await getPets(userId);
@@ -111,6 +112,8 @@ export const updatePetById = async (
 ) => {
   const pet = await getPetById(parseInt(petId));
 
+  console.log("Pet fetched for update:", pet);
+
   if (!pet) {
     return new Response(JSON.stringify({ error: "Pet not found" }), {
       status: 404,
@@ -118,9 +121,27 @@ export const updatePetById = async (
     });
   }
 
+  const petData = {
+    name,
+    species,
+    active,
+    date_of_adoption,
+    date_of_birth,
+    fixed,
+    sex,
+    photo_url,
+    user_id: pet.user_id,
+  };
+
+  console.log("Pet data before validation:", petData);
+
   const parsedPet = petSchema.safeParse({
-    ...pet,
+    ...petData,
+    id: petId, // Include id for validation
+    user_id: pet.user_id, // Include user_id for validation
   });
+
+  console.log("Parsed pet data:", parsedPet);
 
   if (!parsedPet.success) {
     return new Response(JSON.stringify(parsedPet.error), {

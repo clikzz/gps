@@ -14,6 +14,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
     steps:
       - name: Checkout código # Clona el repositorio en el entorno virtual
         uses: actions/checkout@v4 # Usa una acción de GitHub
@@ -32,6 +33,7 @@ jobs:
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env
           echo "DATABASE_URL=$DATABASE_URL" >> .env
           echo "DIRECT_URL=$DIRECT_URL" >> .env
+          echo "NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN" >> .env
 
       - name: Construir proyecto
         run: npm run build
@@ -53,6 +55,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
     steps:
       - name: Instalar dependencias (OpenVPN, SSH y sshpass)
         run: |
@@ -92,6 +95,7 @@ jobs:
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env
           echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env
           echo "DIRECT_URL=${{ env.DIRECT_URL }}" >> .env
+          echo "NEXT_PUBLIC_MAPBOX_TOKEN=${{ env.NEXT_PUBLIC_MAPBOX_TOKEN }}" >> .env
           chmod 600 .env
 
           echo "Actualizando código fuente…"

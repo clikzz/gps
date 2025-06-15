@@ -21,10 +21,15 @@ export const fetchTopics = async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const sf = searchParams.get("subforumId");
   const subforumId = sf && !isNaN(+sf) ? Number(sf) : undefined;
+
+  console.log("DEBUG subforumId:", subforumId);
+
   const topics = await listTopics(subforumId);
+  console.log("DEBUG topics encontrados:", topics.length); 
+  
   const formatted = topics.map((t) => ({
     id: Number(t.id),
-    ssubforumId: Number(t.subforumId),
+    subforumId: Number(t.subforumId),
     title: t.title,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
@@ -85,7 +90,7 @@ export const addTopic = async (req: Request) => {
     const dto = createTopicSchema.parse(body);
     const topic = await createTopic(user.id, dto);
     const formatted = {
-      id: Number(topic.id),        
+      id: Number(topic.id),
       subforumId: Number(topic.subforumId),
       userId: topic.userId,
       title: topic.title,

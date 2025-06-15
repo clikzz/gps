@@ -84,7 +84,10 @@ async function getSubforums(): Promise<Subforum[]> {
 
 async function getTopicsAndPostsData(subforumId: number) {
   try {
-    const topics = await fetcher<any[]>(`/api/forum/topics?subforumId=${subforumId}`)
+    console.log("Fetching topics for subforum:", subforumId);
+    const topics = await fetcher<any[]>(`/api/forum/topics?subforumId=${subforumId}`);
+    console.log("Topics result:", topics);
+
 
     const topicsCount = topics.length
     const postsCount = topics.reduce((sum, t) => sum + (t.postsCount || 0), 0)
@@ -121,10 +124,8 @@ export default async function ForumPage() {
         category.subforums.map(async (defaultSub) => {
           const dbSubforum = subforums.find(
             (s) =>
-              s.name.toLowerCase().includes(defaultSub.name.toLowerCase().split(" ")[0]) ||
-              s.category === category.name,
+              s.name.trim().toLowerCase() === defaultSub.name.trim().toLowerCase()
           )
-
 
           if (!dbSubforum) {
             return {
@@ -145,9 +146,9 @@ export default async function ForumPage() {
             name: defaultSub.name,
             slug: defaultSub.slug,
             description: defaultSub.description,
-            topicCount: dbSubforum.topicCount,
-            messageCount: dbSubforum.messageCount,
-            lastPost: dbSubforum.lastPost,
+            topicCount: topicsCount,
+            messageCount: postsCount,
+            lastPost: lastPost,
           }
         }),
       )

@@ -8,7 +8,7 @@ export const listSubforums = async () => {
 };
 
 export const listTopics = async (subforumId?: number): Promise<(Topics & { author: UserProfile; postsCount: number; Subforums: { name: string; category: string } })[]> => {
-  const where = subforumId ? { subforumId } : {};
+  const where = subforumId !== undefined ? { subforumId: BigInt(subforumId) } : {};
   
   const topics = await prisma.topics.findMany({
     where,

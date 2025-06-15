@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import PetTimelineHeader from './TimelineHeader';
 import NewTimelineEntryCard from './NewTimelineEntryCard';
 import TimelineEntriesList from './TimelineEntriesList';
-import { TimelineEntryWithPhotos } from '@/types/timeline';
+import { TimelineEntryWithPhotos } from '@/app/types/timeline';
 import { Pets as Pet } from "@prisma/client";
 
 const fetcher = (url: string) => fetch(url).then((res) => {

@@ -1,5 +1,5 @@
 import prisma from '@/lib/db';
-import { NewTimelineEntryPayload } from '@/types/timeline';
+import { NewTimelineEntryPayload } from '@/app/types/timeline';
 
 
 export async function getTimelineEntriesByPetId(petId: bigint) {

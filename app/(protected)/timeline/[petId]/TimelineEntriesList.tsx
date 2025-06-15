@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { TimelineEntryWithPhotos } from "@/types/timeline";
+import { TimelineEntryWithPhotos } from "@/app/types/timeline";
 
 interface TimelineEntriesListProps {
   entries: TimelineEntryWithPhotos[];

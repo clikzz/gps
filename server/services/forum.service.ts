@@ -9,13 +9,13 @@ export const listSubforums = async () => {
 
 export const listTopics = async (subforumId?: number): Promise<(Topics & { author: UserProfile; postsCount: number; Subforums: { name: string; category: string } })[]> => {
   const where = subforumId !== undefined ? { subforumId: BigInt(subforumId) } : {};
-  
+
   const topics = await prisma.topics.findMany({
     where,
     include: {
-      UserProfiles: true,                
-      Posts: { select: { id: true } }, 
-      Subforums: true,  
+      UserProfiles: true,
+      Posts: { select: { id: true } },
+      Subforums: true,
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -42,6 +42,14 @@ export const createTopic = async (
   dto: { subforumId: number; title: string; content: string }
 ) => {
   return prisma.$transaction(async (tx) => {
+    const profile = await tx.userProfile.findUnique({ where: { id: userId } });
+
+    if (profile?.lastMessageAt) {
+      const secondsSinceLast = (Date.now() - new Date(profile.lastMessageAt).getTime()) / 1000;
+      if (secondsSinceLast < 120) {
+        throw new Error("Debes esperar 120 segundos entre publicaciones.");
+      }
+    }
     const topic = await tx.topics.create({
       data: {
         userId,
@@ -52,28 +60,30 @@ export const createTopic = async (
     await tx.posts.create({
       data: { topicId: topic.id, userId, content: dto.content },
     });
-
-    const before = await tx.userProfile.findUnique({ where: { id: userId } });
-    console.log("userProfile antes de update:", before);
-
-    const updated = await tx.userProfile.update({
+    await tx.userProfile.update({
       where: { id: userId },
       data: {
         menssageCount: { increment: 1 },
         lastMessageAt: new Date(),
       },
     });
-    console.log("userProfile después de update:", updated);
+
     return topic;
   });
 };
-
 
 export const createPost = async (
   userId: string,
   dto: { topicId: number; content: string }
 ) => {
   return prisma.$transaction(async tx => {
+    const profile = await tx.userProfile.findUnique({ where: { id: userId } });
+    if (profile?.lastMessageAt) {
+      const secondsSinceLast = (Date.now() - new Date(profile.lastMessageAt).getTime()) / 1000;
+      if (secondsSinceLast < 120) {
+        throw new Error("Debes esperar 120 segundos entre publicaciones.");
+      }
+    }
     const post = await tx.posts.create({
       data: { topicId: dto.topicId, userId, content: dto.content },
     });

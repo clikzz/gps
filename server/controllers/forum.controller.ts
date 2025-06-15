@@ -22,10 +22,7 @@ export const fetchTopics = async (req: Request) => {
   const sf = searchParams.get("subforumId");
   const subforumId = sf && !isNaN(+sf) ? Number(sf) : undefined;
 
-  console.log("DEBUG subforumId:", subforumId);
-
   const topics = await listTopics(subforumId);
-  console.log("DEBUG topics encontrados:", topics.length); 
   
   const formatted = topics.map((t) => ({
     id: Number(t.id),
@@ -103,18 +100,25 @@ export const addTopic = async (req: Request) => {
       headers: { "Content-Type": "application/json" },
     })
   } catch (err) {
-    if (err instanceof ZodError) {
-      return new Response(
-        JSON.stringify({ errors: err.errors }),
-        { status: 422, headers: { "Content-Type": "application/json" } }
-      )
-    }
-    console.error("Error en addTopic:", err);
+  if (err instanceof ZodError) {
     return new Response(
-      JSON.stringify({ error: "Error interno" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    )
+      JSON.stringify({ errors: err.errors }),
+      { status: 422, headers: { "Content-Type": "application/json" } }
+    );
   }
+  if (err instanceof Error && err.message.includes("120 segundos")) {
+    return new Response(
+      JSON.stringify({ error: err.message }),
+      { status: 429, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  console.error("Error en addPost:", err);
+  return new Response(
+    JSON.stringify({ error: "Error interno" }),
+    { status: 500, headers: { "Content-Type": "application/json" } }
+  );
+}
 }
 
 
@@ -141,17 +145,23 @@ export const addPost = async (req: Request) => {
       headers: { "Content-Type": "application/json" },
     })
   } catch (err) {
-    if (err instanceof ZodError) {
-      return new Response(
-        JSON.stringify({ errors: err.errors }),
-        { status: 422, headers: { "Content-Type": "application/json" } }
-      )
-    }
-    console.error("Error en addPost:", err);
+  if (err instanceof ZodError) {
     return new Response(
-      JSON.stringify({ error: "Error interno" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    )
+      JSON.stringify({ errors: err.errors }),
+      { status: 422, headers: { "Content-Type": "application/json" } }
+    );
   }
+  if (err instanceof Error && err.message.includes("120 segundos")) {
+    return new Response(
+      JSON.stringify({ error: err.message }),
+      { status: 429, headers: { "Content-Type": "application/json" } }
+    );
+  }
+  console.error("Error en addPost:", err);
+  return new Response(
+    JSON.stringify({ error: "Error interno" }),
+    { status: 500, headers: { "Content-Type": "application/json" } }
+  );
+}
 }
 

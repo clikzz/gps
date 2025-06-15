@@ -33,12 +33,14 @@ interface Topic {
 
 async function getTopic(topicId: number): Promise<Topic | null> {
   try {
-    const topics = await fetcher<Topic[]>("/api/forum/topics")
-    return topics.find((t) => t.id === topicId) || null
+    const topics = await fetcher<Topic[]>("/api/forum/topics");
+    return topics.find((t) => parseInt(String(t.id)) === topicId) || null;
   } catch (error) {
-    return null
+    console.error("Error fetching topic:", error);
+    return null;
   }
 }
+
 
 async function getPosts(topicId: number): Promise<Post[]> {
   try {
@@ -66,8 +68,8 @@ export default async function TopicPage({ params }: TopicPageProps) {
   }
 
   const posts = await getPosts(topicId)
-  const mainPost = posts[0]
-  const replies = posts.slice(1)
+  const mainPost = posts.length > 0 ? posts[0] : null;
+  const replies = posts.length > 1 ? posts.slice(1) : [];
 
   return (
     <div className="h-full w-full">
@@ -82,8 +84,8 @@ export default async function TopicPage({ params }: TopicPageProps) {
           <span className="truncate">{topic.title}</span>
         </div>
 
-        <TopicDetail topic={topic} mainPost={mainPost} />
-
+        {mainPost && <TopicDetail topic={topic} mainPost={mainPost} />}
+        <h2 className="text-2xl font-bold">Respuestas</h2>
         <ReplyList replies={replies} />
 
         <ReplyForm topicId={topicId} />

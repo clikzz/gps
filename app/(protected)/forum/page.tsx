@@ -6,6 +6,15 @@ interface Subforum {
   name: string
   description: string
   category: string
+  topicCount: number
+  messageCount: number
+  lastPost: {
+    date: string
+    author: {
+      name: string
+      id: string
+    }
+  } | null
 }
 
 const defaultCategories = [
@@ -73,14 +82,35 @@ async function getSubforums(): Promise<Subforum[]> {
   }
 }
 
-async function getTopicsCount(subforumId: number) {
+async function getTopicsAndPostsData(subforumId: number) {
   try {
     const topics = await fetcher<any[]>(`/api/forum/topics?subforumId=${subforumId}`)
-    return topics.length
+
+    const topicsCount = topics.length
+    const postsCount = topics.reduce((sum, t) => sum + (t.postsCount || 0), 0)
+
+    const latest = topics
+      .flatMap(t => ({
+        updatedAt: new Date(t.updatedAt),
+        author: t.author,
+      }))
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0]
+
+    return {
+      topicsCount,
+      postsCount,
+      lastPost: latest
+        ? {
+          date: latest.updatedAt.toLocaleString(),
+          author: latest.author,
+        }
+        : null,
+    }
   } catch (error) {
-    return 0
+    return { topicsCount: 0, postsCount: 0, lastPost: null }
   }
 }
+
 
 export default async function ForumPage() {
   const subforums = await getSubforums()
@@ -95,16 +125,29 @@ export default async function ForumPage() {
               s.category === category.name,
           )
 
-          const topicsCount = dbSubforum ? await getTopicsCount(dbSubforum.id) : 0
+
+          if (!dbSubforum) {
+            return {
+              id: 0,
+              name: defaultSub.name,
+              slug: defaultSub.slug,
+              description: defaultSub.description,
+              topicCount: 0,
+              messageCount: 0,
+              lastPost: null,
+            }
+          }
+
+          const { topicsCount, postsCount, lastPost } = await getTopicsAndPostsData(dbSubforum.id)
 
           return {
-            id: dbSubforum?.id || 0,
+            id: dbSubforum.id,
             name: defaultSub.name,
             slug: defaultSub.slug,
             description: defaultSub.description,
-            topicCount: topicsCount,
-            messageCount: 0, 
-            lastPost: null,
+            topicCount: dbSubforum.topicCount,
+            messageCount: dbSubforum.messageCount,
+            lastPost: dbSubforum.lastPost,
           }
         }),
       )

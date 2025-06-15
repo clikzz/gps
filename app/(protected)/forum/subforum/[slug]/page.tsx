@@ -61,7 +61,8 @@ export default async function SubforumPage({ params }: SubforumPageProps) {
   }
 
   const subforums = await getSubforums()
-  const subforum = subforums.find((s) => s.name.toLowerCase().includes(subforumName.toLowerCase().split(" ")[0]))
+  const subforum = subforums.find((s) =>
+  s.name.toLowerCase() === subforumName.toLowerCase())
 
   const topics = subforum ? await getTopics(subforum.id) : []
 

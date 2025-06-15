@@ -44,8 +44,6 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
 
             <div className="flex lg:block lg:col-span-2 xl:col-span-1 gap-4 lg:gap-0">
               <div className="text-center">
-                <div className="text-sm text-muted-foreground">Temas</div>
-                <div className="font-medium">1</div>
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 import { ZodError } from "zod";
 import { listSubforums, listTopics, listPosts, createTopic, createPost } from "../services/forum.service";
-import { createTopicSchema, createPostSchema } from "../validations/forumValidation";
+import { createTopicSchema, createPostSchema } from "../validations/forum.validation";
 import { authenticateUser } from "../middlewares/authMiddleware";
 
 export const fetchSubforums = async () => {
@@ -20,11 +20,11 @@ export const fetchSubforums = async () => {
 export const fetchTopics = async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const sf = searchParams.get("subforumId");
-  const subforumId = sf ? parseInt(sf) : undefined;
+  const subforumId = sf && !isNaN(+sf) ? Number(sf) : undefined;
   const topics = await listTopics(subforumId);
   const formatted = topics.map((t) => ({
-    id: t.id.toString(),
-    subforumId: t.subforumId.toString(),
+    id: Number(t.id),
+    ssubforumId: Number(t.subforumId),
     title: t.title,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
@@ -33,6 +33,10 @@ export const fetchTopics = async (req: Request) => {
       id: t.author.id,
       name: t.author.name,
       menssageCount: t.author.menssageCount,
+    },
+    Subforums: {
+      name: t.Subforums.name,
+      category: t.Subforums.category,
     },
   }))
 
@@ -52,12 +56,25 @@ export const fetchPosts = async (req: Request) => {
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
+
   const posts = await listPosts(+tid);
-  return new Response(JSON.stringify(posts), {
+
+  const formatted = posts.map(p => ({
+    id: p.id.toString(),
+    content: p.content,
+    createdAt: p.createdAt.toISOString(),
+    author: {
+      id: p.author.id,
+      name: p.author.name,
+      menssageCount: p.author.menssageCount,
+    },
+  }));
+
+  return new Response(JSON.stringify(formatted), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
-}
+};
 
 export const addTopic = async (req: Request) => {
   const user = await authenticateUser(req);

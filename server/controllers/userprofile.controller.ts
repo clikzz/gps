@@ -1,7 +1,7 @@
 import {
   getUserProfile,
   updateUserProfile,
-} from "@/server/services/userProfileService";
+} from "@/server/services/userprofile.service";
 import { Pets as Pet } from "@prisma/client";
 
 export const fetchUserProfile = async (userId: string) => {

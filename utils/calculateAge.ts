@@ -1,9 +1,7 @@
 export function calculateAge(birthDate: Date | string): number {
-  // Ensure birthDate is a Date object
   const birthDateObj =
     birthDate instanceof Date ? birthDate : new Date(birthDate);
 
-  // Check if date is valid
   if (isNaN(birthDateObj.getTime())) {
     throw new Error("Invalid birth date provided");
   }

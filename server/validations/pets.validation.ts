@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const petSchema = z.object({
   id: z.string().optional(),
-  user_id: z.string(),
+  user_id: z.string().optional(),
   name: z
     .string({
       required_error: "El nombre es requerido",
@@ -41,27 +41,17 @@ export const petSchema = z.object({
     })
     .optional(),
   date_of_adoption: z
-    .string({
-      invalid_type_error: "La fecha de adopción debe ser una cadena de texto",
+    .date({
+      invalid_type_error: "La fecha de adopción debe ser una fecha válida",
     })
     .optional()
-    .nullable()
-    .refine((date) => {
-      if (!date || date === "") return true;
-      const parsedDate = new Date(date);
-      return !isNaN(parsedDate.getTime());
-    }, "Formato de fecha inválido"),
+    .nullable(),
   date_of_birth: z
-    .string({
-      invalid_type_error: "La fecha de nacimiento debe ser una cadena de texto",
+    .date({
+      invalid_type_error: "La fecha de nacimiento debe ser una fecha válida",
     })
     .optional()
-    .nullable()
-    .refine((date) => {
-      if (!date || date === "") return true;
-      const parsedDate = new Date(date);
-      return !isNaN(parsedDate.getTime());
-    }, "Formato de fecha inválido"),
+    .nullable(),
   fixed: z
     .boolean({
       invalid_type_error: "Esta opción debe ser verdadero o falso",
@@ -75,6 +65,12 @@ export const petSchema = z.object({
   photo_url: z
     .string({
       invalid_type_error: "La URL de la imagen debe ser un string",
+    })
+    .nullable(),
+
+  is_lost: z
+    .boolean({
+      invalid_type_error: "Esta opción debe ser verdadero o falso",
     })
     .optional(),
 });

@@ -3,20 +3,12 @@ import {
   getPetById,
   createPet,
   putPetById,
-} from "../services/petsService";
-import { Pets as Pet } from "@prisma/client";
-import { petSchema } from "@/server/validations/petsValidation";
-import { date } from "zod";
+} from "../services/pets.service";
+import { petSchema } from "@/server/validations/pets.validation";
 
 export const fetchPets = async (userId: string) => {
   const pets = await getPets(userId);
-  console.log(pets);
-
-  const formattedPets = pets.map((pet: Pet) => ({
-    ...pet,
-    id: pet.id.toString(),
-  }));
-  return new Response(JSON.stringify(formattedPets), {
+  return new Response(JSON.stringify(pets), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
@@ -43,6 +35,10 @@ export const addPet = async ({
   const parsedPet = petSchema.safeParse({
     ...pet,
     user_id: user.id,
+    date_of_adoption: pet.date_of_adoption
+      ? new Date(pet.date_of_adoption)
+      : undefined,
+    date_of_birth: pet.date_of_birth ? new Date(pet.date_of_birth) : undefined,
   });
 
   if (!parsedPet.success) {
@@ -56,17 +52,17 @@ export const addPet = async ({
     user,
     pet,
   });
+
   const formattedPet = {
     ...newPet,
     id: newPet.id.toString(),
   };
+
   return new Response(JSON.stringify(formattedPet), {
     status: 201,
     headers: { "Content-Type": "application/json" },
   });
 };
-
-// BY ID
 
 export const fetchPetById = async (petId: string) => {
   const pet = await getPetById(parseInt(petId));
@@ -112,8 +108,6 @@ export const updatePetById = async (
 ) => {
   const pet = await getPetById(parseInt(petId));
 
-  console.log("Pet fetched for update:", pet);
-
   if (!pet) {
     return new Response(JSON.stringify({ error: "Pet not found" }), {
       status: 404,
@@ -133,15 +127,15 @@ export const updatePetById = async (
     user_id: pet.user_id,
   };
 
-  console.log("Pet data before validation:", petData);
+  console.log("Updating pet with data:", petData);
 
   const parsedPet = petSchema.safeParse({
     ...petData,
-    id: petId, // Include id for validation
-    user_id: pet.user_id, // Include user_id for validation
+    date_of_adoption: pet.date_of_adoption
+      ? new Date(pet.date_of_adoption)
+      : undefined,
+    date_of_birth: pet.date_of_birth ? new Date(pet.date_of_birth) : undefined,
   });
-
-  console.log("Parsed pet data:", parsedPet);
 
   if (!parsedPet.success) {
     return new Response(JSON.stringify(parsedPet.error), {
@@ -161,6 +155,9 @@ export const updatePetById = async (
     sex,
     photo_url,
   });
+
+  console.log("Updated pet:", updatedPet);
+
   if (!updatedPet) {
     return new Response(JSON.stringify({ error: "Failed to update pet" }), {
       status: 500,

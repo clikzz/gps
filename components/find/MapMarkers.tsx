@@ -1,7 +1,7 @@
-import React from 'react';
-import { MissingReport } from '@/app/types/find';
-import { Marker } from 'react-map-gl/mapbox';
-import { Dog } from 'lucide-react';
+import React from "react";
+import { MissingReport } from "@/types/find";
+import { Marker } from "react-map-gl/mapbox";
+import { Dog } from "lucide-react";
 
 interface MapMarkersProps {
   reports: MissingReport[];

@@ -80,3 +80,12 @@ export const putPetById = async ({
     },
   });
 };
+
+export const softDeletePetById = async (id: number) => {
+  return await prisma.pets.update({
+    where: { id },
+    data: {
+      deleted: true,
+    },
+  });
+};

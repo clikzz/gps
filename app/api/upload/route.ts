@@ -145,8 +145,6 @@ export async function DELETE(req: NextRequest) {
 
     const { url: imageUrl } = await req.json();
 
-    console.log("Received image URL for deletion:", imageUrl);
-
     if (!imageUrl) {
       return NextResponse.json(
         { error: "Image URL is required" },
@@ -166,8 +164,6 @@ export async function DELETE(req: NextRequest) {
     }
 
     const filePath = imageUrl.substring(pathIndex + pathPrefix.length);
-
-    console.log("Extracted file path for deletion:", filePath);
 
     //const folder = filePath.split("/")[0];
     //if (

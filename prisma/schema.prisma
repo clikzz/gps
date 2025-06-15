@@ -41,6 +41,7 @@ model Pets {
   photo_url        String?
   sex              String?
   is_lost          Boolean?    @default(false)
+  deleted          Boolean?    @default(false)
   user             UserProfile @relation(fields: [user_id], references: [id])
 
   @@map("Pets")

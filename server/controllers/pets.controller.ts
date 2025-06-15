@@ -3,6 +3,7 @@ import {
   getPetById,
   createPet,
   putPetById,
+  softDeletePetById,
 } from "../services/pets.service";
 import { petSchema } from "@/server/validations/pets.validation";
 
@@ -104,13 +105,21 @@ export const updatePetById = async (
     fixed: boolean;
     sex: string;
     photo_url: string;
-  }
+  },
+  userId: string
 ) => {
   const pet = await getPetById(parseInt(petId));
 
   if (!pet) {
     return new Response(JSON.stringify({ error: "Pet not found" }), {
       status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  if (pet.user_id !== userId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 403,
       headers: { "Content-Type": "application/json" },
     });
   }
@@ -126,8 +135,6 @@ export const updatePetById = async (
     photo_url,
     user_id: pet.user_id,
   };
-
-  console.log("Updating pet with data:", petData);
 
   const parsedPet = petSchema.safeParse({
     ...petData,
@@ -156,8 +163,6 @@ export const updatePetById = async (
     photo_url,
   });
 
-  console.log("Updated pet:", updatedPet);
-
   if (!updatedPet) {
     return new Response(JSON.stringify({ error: "Failed to update pet" }), {
       status: 500,
@@ -169,6 +174,37 @@ export const updatePetById = async (
     id: updatedPet.id.toString(),
   };
   return new Response(JSON.stringify(formattedPet), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+};
+
+export const deletePetById = async (petId: string, user_id: string) => {
+  const pet = await getPetById(parseInt(petId));
+
+  if (!pet) {
+    return new Response(JSON.stringify({ error: "Pet not found" }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  if (pet.user_id !== user_id) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const deletedPet = await softDeletePetById(parseInt(petId));
+  if (!deletedPet) {
+    return new Response(JSON.stringify({ error: "Failed to delete pet" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify({ message: "Pet deleted successfully" }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });

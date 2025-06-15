@@ -3,9 +3,9 @@ import {
   addPet,
   fetchPetById,
   updatePetById,
+  deletePetById,
 } from "@/server/controllers/pets.controller";
 import { authenticateUser } from "@/server/middlewares/auth.middleware";
-import exp from "constants";
 
 export async function GET(req: Request) {
   const user = await authenticateUser(req);
@@ -58,5 +58,21 @@ export async function PUT(req: Request) {
     });
   }
 
-  return updatePetById(pet.id, pet);
+  return updatePetById(pet.id, pet, user.id);
+}
+
+export async function DELETE(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+
+  const url = new URL(req.url);
+  const id = url.searchParams.get("id");
+
+  if (!id) {
+    return new Response(JSON.stringify({ error: "Invalid pet ID" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  return deletePetById(id, user.id);
 }

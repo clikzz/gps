@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 // Importar el esquema de validación desde el archivo global
-import { NewTimelineEntrySchema } from '@/server/validations/timelineValidation';
+import { NewTimelineEntrySchema } from '@/server/validations/timeline.validation';
 
 // --- INICIO: DEFINICIÓN LOCAL DEL COMPONENTE TEXTAREA (sin cambios) ---
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}

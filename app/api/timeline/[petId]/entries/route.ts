@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { authenticateUser } from '@/server/middlewares/authMiddleware';
-import * as timelineController from '@/server/controllers/timelineController';
+import * as timelineController from '@/server/controllers/timeline.controller';
 
 
 export async function GET(request: NextRequest, { params }: { params: any }) {

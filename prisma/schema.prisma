@@ -17,7 +17,7 @@ model UserProfile {
   email            String             @unique
   public_id        BigInt?            @default(autoincrement())
   menssageCount    Int                @default(0)
-  lastMessageAt    DateTime?
+  lastMessageAt    DateTime?          @map("lastMessageAt")
   marketplaceItems MarketplaceItems[]
   missingPets      MissingPet[]
   pets             Pets[]
@@ -30,21 +30,18 @@ model UserProfile {
 }
 
 model Pets {
-  id               BigInt            @id @default(autoincrement())
-  user_id          String            @db.Uuid
+  id               BigInt      @id @default(autoincrement())
+  user_id          String      @db.Uuid
   name             String
   species          String
-  active           Boolean?          @default(true)
+  active           Boolean?    @default(true)
   date_of_adoption DateTime?
   date_of_birth    DateTime?
   fixed            Boolean?
   photo_url        String?
   sex              String?
-  Medications      Medications[]
-  missingReports   MissingPet[]
-  user             UserProfile       @relation(fields: [user_id], references: [id])
-  TimelineEntries  TimelineEntries[]
-  Vaccinations     Vaccinations[]
+  is_lost          Boolean?    @default(false)
+  user             UserProfile @relation(fields: [user_id], references: [id])
 
   @@map("Pets")
 }
@@ -55,7 +52,6 @@ model Vaccinations {
   type             String?
   application_date DateTime?
   next_dose_date   DateTime?
-  pet              Pets      @relation(fields: [pet_id], references: [id])
 
   @@map("Vaccinations")
 }
@@ -66,7 +62,6 @@ model Medications {
   name     String?
   dose     String?
   duration String?
-  pet      Pets    @relation(fields: [pet_id], references: [id])
 
   @@map("Medications")
 }
@@ -105,7 +100,6 @@ model MissingPet {
   description String?
   reported_at DateTime    @default(now())
   photo_urls  String[]
-  pet         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
   reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
 
   @@unique([pet_id, reporter_id])
@@ -154,7 +148,6 @@ model TimelineEntries {
   event_date          DateTime
   created_at          DateTime              @default(now())
   updated_at          DateTime
-  Pets                Pets                  @relation(fields: [pet_id], references: [id])
   UserProfiles        UserProfile           @relation(fields: [user_id], references: [id])
   TimelineEntryPhotos TimelineEntryPhotos[]
   Milestones          Milestones[]          @relation("MilestoneToTimelineEntry")
@@ -175,9 +168,11 @@ model Posts {
   userId       String      @db.Uuid
   content      String
   createdAt    DateTime    @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime    @updatedAt
   Topics       Topics      @relation(fields: [topicId], references: [id])
   UserProfiles UserProfile @relation(fields: [userId], references: [id])
+
+  @@map("Posts")
 }
 
 model Subforums {
@@ -186,6 +181,8 @@ model Subforums {
   description String?
   category    String
   Topics      Topics[]
+
+  @@map("Subforums")
 }
 
 model Topics {
@@ -194,8 +191,10 @@ model Topics {
   userId       String      @db.Uuid
   title        String
   createdAt    DateTime    @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime    @updatedAt
   Posts        Posts[]
   Subforums    Subforums   @relation(fields: [subforumId], references: [id])
   UserProfiles UserProfile @relation(fields: [userId], references: [id])
+
+  @@map("Topics")
 }

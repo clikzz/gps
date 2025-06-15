@@ -1,10 +1,10 @@
 "use client";
 
+import React, { useEffect, useState, useRef, forwardRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { useState, useRef, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -17,56 +17,36 @@ import { NewTimelineEntrySchema } from '@/server/validations/timelineValidation'
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, ...props }, ref) => {
-    return (
-      <textarea
-        className={cn(
-          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        )}
-        ref={ref}
-        {...props}
-      />
-    )
-  }
-)
-Textarea.displayName = "Textarea"
+  ({ className, ...props }, ref) => (
+    <textarea
+      className={cn(
+        "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      ref={ref}
+      {...props}
+    />
+  )
+);
+Textarea.displayName = "Textarea";
 // --- FIN: DEFINICIÓN LOCAL DEL COMPONENTE TEXTAREA ---
 
 // --- INICIO: ESQUEMA DE VALIDACIÓN ZOD COMBINADO PARA EL CLIENTE ---
-
-// 1. Define un esquema para los campos específicos del cliente (como 'photos')
 const ClientSpecificSchema = z.object({
   photos: z.custom<FileList>().optional(),
 });
 
-// 2. Combina el esquema del servidor con el esquema específico del cliente
-// Utilizamos z.intersection para combinar los esquemas, asegurando que ambos se apliquen.
-// Esto nos da un ZodObject al que podemos aplicar nuestro superRefine local.
 const CombinedClientSchema = z.intersection(NewTimelineEntrySchema, ClientSpecificSchema)
   .superRefine((data, ctx) => {
-    // Los campos de NewTimelineEntrySchema ya están validados por NewTimelineEntrySchema.
-    // Aquí solo necesitamos añadir las validaciones que involucran 'photos'
-    // o validaciones cruzadas que el servidor no pueda o deba manejar.
-
-    // Aseguramos el tipo de 'data' para evitar el error de 'any'
     type CombinedClientDataType = z.infer<typeof NewTimelineEntrySchema> & z.infer<typeof ClientSpecificSchema>;
-    const clientData = data as CombinedClientDataType; 
+    const clientData = data as CombinedClientDataType;
 
     const hasPhotos = clientData.photos && clientData.photos.length > 0;
     const hasDescription = clientData.description && clientData.description.trim() !== '';
 
-    // Re-aplicamos la validación cruzada para dar feedback temprano al usuario.
-    // Esto es importante si el usuario borra la descripción después de cargar una foto, por ejemplo.
     if (!hasPhotos && !hasDescription) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Debes proporcionar una descripción si no incluyes fotos o cargar al menos una foto.',
-        path: ['description'],
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Debes proporcionar una descripción si no incluyes fotos o cargar al menos una foto.', path: ['description'] });
     }
-    
-    // Validaciones de foto (tamaño y tipo) que son exclusivas del cliente
     if (hasPhotos) {
       if (clientData.photos![0].size > 5 * 1024 * 1024) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "El tamaño máximo es 5MB.", path: ['photos'] });
@@ -78,8 +58,6 @@ const CombinedClientSchema = z.intersection(NewTimelineEntrySchema, ClientSpecif
   });
 // --- FIN: ESQUEMA DE VALIDACIÓN ZOD COMBINADO PARA EL CLIENTE ---
 
-
-// La inferencia del tipo ahora se hace del esquema combinado local
 type FormValues = z.infer<typeof CombinedClientSchema>;
 
 interface NewTimelineEntryFormProps {
@@ -87,17 +65,36 @@ interface NewTimelineEntryFormProps {
   onSuccess: () => void;
 }
 
+interface Milestone { id: string; name: string; icon_url?: string; }
+
 export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEntryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
   const today = new Date().toISOString().split("T")[0];
 
   const form = useForm<FormValues>({
-    // Usamos el esquema combinado para el resolver
     resolver: zodResolver(CombinedClientSchema),
     defaultValues: { title: "", description: "", eventDate: today },
   });
+
+  useEffect(() => {
+    fetch('/api/milestones')
+      .then(res => res.json())
+      .then(setMilestones)
+      .catch(console.error);
+  }, []);
+
+  function toggleMilestone(id: string) {
+    setSelected(prev =>
+      prev.includes(id)
+        ? prev.filter(x => x !== id)
+        : prev.length < 4
+        ? [...prev, id]
+        : prev
+    );
+  }
 
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
@@ -118,14 +115,12 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
         uploadedUrls.push(uploadResult.url);
       }
 
-      // Se construye el payload solo con los campos que el backend espera,
-      // que son los validados por NewTimelineEntrySchema.
-      // Aseguramos que 'data' cumple con el esquema del servidor para el payload.
       const entryPayload = NewTimelineEntrySchema.parse({
         title: data.title,
         description: data.description,
         eventDate: data.eventDate,
         photoUrls: uploadedUrls,
+        milestoneIds: selected, // <-- enviamos los IDs de hitos seleccionados
       });
 
       const entryResponse = await fetch(`/api/timeline/${petId}/entries`, {
@@ -142,8 +137,8 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
       toast.success("¡Recuerdo añadido con éxito!");
       form.reset();
       if (fileInputRef.current) fileInputRef.current.value = "";
+      setSelected([]); // reset selección de hitos
       onSuccess();
-
     } catch (error: any) {
       console.error("[NewTimelineEntryForm] Error al enviar el formulario:", error);
       toast.error(error.message || "No se pudo crear la entrada.");
@@ -156,47 +151,67 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField control={form.control} name="title" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Título (opcional)</FormLabel>
-              <FormControl><Input placeholder="Ej: Primer día en la playa" {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormItem>
+            <FormLabel>Título (opcional)</FormLabel>
+            <FormControl><Input placeholder="Ej: Primer día en la playa" {...field} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
         <FormField control={form.control} name="eventDate" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Fecha del evento</FormLabel>
-              <FormControl><Input type="date" {...field} max={today} /></FormControl>
-              <p className="text-xs text-muted-foreground pt-1">
-                Selecciona una fecha actual o pasada.
-              </p>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormItem>
+            <FormLabel>Fecha del evento</FormLabel>
+            <FormControl><Input type="date" {...field} max={today} /></FormControl>
+            <p className="text-xs text-muted-foreground pt-1">
+              Selecciona una fecha actual o pasada.
+            </p>
+            <FormMessage />
+          </FormItem>
+        )} />
+
         <FormField control={form.control} name="description" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descripción</FormLabel>
-              <FormControl><Textarea placeholder="Describe este momento especial..." {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormItem>
+            <FormLabel>Descripción</FormLabel>
+            <FormControl><Textarea placeholder="Describe este momento especial..." {...field} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
         <FormField control={form.control} name="photos" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Foto (opcional)</FormLabel>
-              <FormControl>
-                <Input 
-                  type="file" 
-                  accept="image/jpeg, image/png"
-                  ref={fileInputRef}
-                  onChange={(e) => field.onChange(e.target.files && e.target.files.length > 0 ? e.target.files : undefined)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormItem>
+            <FormLabel>Foto (opcional)</FormLabel>
+            <FormControl>
+              <Input
+                type="file"
+                accept="image/jpeg, image/png"
+                ref={fileInputRef}
+                onChange={e => field.onChange(e.target.files && e.target.files.length > 0 ? e.target.files : undefined)}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        {/* Selección de hitos */}
+        <div>
+          <FormLabel>Hitos (máx. 4)</FormLabel>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {milestones.map(m => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => toggleMilestone(m.id)}
+                className={cn(
+                  "px-3 py-1 border rounded",
+                  selected.includes(m.id) && "bg-primary text-primary-foreground"
+                )}
+              >
+                {m.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "Guardando..." : "Guardar Recuerdo"}
         </Button>

@@ -1,14 +1,14 @@
-import { TimelineEntries, TimelineEntryPhotos } from '@prisma/client';
+import { TimelineEntries, TimelineEntryPhotos, Milestones as Milestone } from '@prisma/client';
 
 export type TimelineEntryWithPhotos = TimelineEntries & {
   TimelineEntryPhotos: TimelineEntryPhotos[];
+  Milestones: Milestone[]; 
 };
 
 export interface NewTimelineEntryPayload {
   title?: string;
   description?: string;
   eventDate: string;
-  // Añadimos el '?' para indicar que este campo es opcional.
-  // Ahora coincide con el esquema de validación de Zod.
-  photoUrls?: string[]; 
+  photoUrls?: string[];
+  milestoneIds?: string[];       
 }

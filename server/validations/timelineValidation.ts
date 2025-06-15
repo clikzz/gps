@@ -22,6 +22,8 @@ export const NewTimelineEntrySchema = z.object({
   
   photoUrls: z.array(z.string().url('Cada foto debe tener una URL válida.')).optional(),
 
+  milestoneIds: z.array(z.string()).max(4, 'Máximo 4 hitos por recuerdo.').optional(),
+
 }).superRefine((data, ctx) => {
   // RF-006: La descripción es obligatoria si no hay fotos.
   const hasPhotos = data.photoUrls && data.photoUrls.length > 0;

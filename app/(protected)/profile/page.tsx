@@ -1,144 +1,92 @@
 "use client"
 
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
 import { Upload, Save, Trash2, ArrowLeft, AlertCircle, RefreshCw } from "lucide-react"
-import { useRouter } from "next/navigation"
-
-interface UserProfile {
-  id: string
-  name: string | null
-  avatar_url: string | null
-  email: string
-  public_id: string | undefined
-  menssageCount: number
-}
+import { useProfileImageUpload } from "@/hooks/useProfileImageUpload"
+import { toast } from "sonner"
+import { useUserProfile } from "@/stores/userProfile"
 
 export default function ProfileConfigPage() {
   const router = useRouter()
-
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const { user, setUser } = useUserProfile()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
   const [name, setName] = useState("")
-  const [avatarFile, setAvatarFile] = useState<File | null>(null)
-  const [avatarPreview, setAvatarPreview] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const {
+    selectedFile,
+    isUploading: isUploadingAvatar,
+    imagePreview,
+    handleFileChange,
+    uploadImage,
+    resetImage,
+    setImagePreview,
+  } = useProfileImageUpload()
 
   useEffect(() => {
     fetchProfile()
   }, [])
 
   useEffect(() => {
-    if (profile) {
-      console.log("Profile loaded:", profile)
-      setName(profile.name || "")
-      setAvatarPreview(profile.avatar_url || "")
+    if (user) {
+      setName(user.name || "")
+      setImagePreview(user.avatar_url || "")
     }
-  }, [profile])
+  }, [user, setImagePreview])
 
   const fetchProfile = async () => {
     try {
       setLoading(true)
       setError(null)
-
       const response = await fetch("/api/profile", {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       })
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`)
-      }
-
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
       const profileData = await response.json()
-
-      if (profileData.error) {
-        throw new Error(profileData.error)
-      }
-
-      console.log("Profile data received:", profileData)
-      setProfile(profileData)
+      setUser(profileData)
     } catch (error) {
-      console.error("Error fetching profile:", error)
       setError(error instanceof Error ? error.message : "Error desconocido")
+      toast.error(error instanceof Error ? error.message : "Error desconocido")
     } finally {
       setLoading(false)
     }
   }
 
-  const updateProfile = async (updatedData: Partial<UserProfile>) => {
+  const updateProfile = async (updatedData: Partial<typeof user>) => {
     try {
       const updatePayload = {
-        name: updatedData.name !== undefined ? updatedData.name : profile?.name,
-        email: profile?.email || "",
-        avatar_url: updatedData.avatar_url !== undefined ? updatedData.avatar_url : profile?.avatar_url,
+        name: updatedData.name !== undefined ? updatedData.name : user?.name,
+        email: user?.email || "",
+        avatar_url: updatedData.avatar_url !== undefined ? updatedData.avatar_url : user?.avatar_url,
       }
-
-      console.log("Updating profile with:", updatePayload)
-
       const response = await fetch("/api/profile", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatePayload),
       })
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`)
-      }
-
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`)
       const updatedProfile = await response.json()
-
-      if (updatedProfile.error) {
-        throw new Error(updatedProfile.error)
-      }
-
-      console.log("Profile updated:", updatedProfile)
-      setProfile(updatedProfile)
+      setUser(updatedProfile)
       return true
     } catch (error) {
-      console.error("Error updating profile:", error)
       setError(error instanceof Error ? error.message : "Error al actualizar perfil")
+      toast.error(error instanceof Error ? error.message : "Error al actualizar perfil")
       return false
     }
   }
 
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        alert("Por favor selecciona un archivo de imagen válido")
-        return
-      }
-
-      if (file.size > 2 * 1024 * 1024) {
-        alert("La imagen debe ser menor a 2MB")
-        return
-      }
-
-      setAvatarFile(file)
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setAvatarPreview(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
   const handleRemoveAvatar = async () => {
-    if (!profile?.avatar_url) return
+    if (!user?.avatar_url) return
 
     setIsDeleting(true)
     try {
@@ -148,53 +96,38 @@ export default function ProfileConfigPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          url: profile.avatar_url,
+          url: user.avatar_url,
         }),
       })
 
       if (response.ok) {
-        setAvatarPreview("")
-        setAvatarFile(null)
+        resetImage()
         const success = await updateProfile({ avatar_url: null })
         if (success) {
-          alert("Avatar eliminado correctamente")
+          toast.success("Avatar eliminado correctamente")
         }
       } else {
         throw new Error("Error al eliminar la imagen")
       }
     } catch (error) {
-      console.error("Error removing avatar:", error)
-      alert("Error al eliminar la imagen")
+      toast.error("Error al eliminar la imagen")
     } finally {
       setIsDeleting(false)
     }
   }
 
   const handleSave = async () => {
-    if (!profile) return
+    if (!user) return
 
     setIsLoading(true)
     try {
-      let avatarUrl = profile.avatar_url
+      let avatarUrl = user.avatar_url
 
-      if (avatarFile) {
-        console.log("Uploading new avatar...")
-
-        const formData = new FormData()
-        formData.append("file", avatarFile)
-        formData.append("type", "profile")
-
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        })
-
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json()
+      if (selectedFile) {
+        const uploadResult = await uploadImage()
+        if (uploadResult.url) {
           avatarUrl = uploadResult.url
-          console.log("Avatar uploaded:", uploadResult)
-
-          if (profile.avatar_url && profile.avatar_url !== avatarUrl) {
+          if (user.avatar_url && user.avatar_url !== avatarUrl) {
             try {
               await fetch("/api/upload", {
                 method: "DELETE",
@@ -202,35 +135,30 @@ export default function ProfileConfigPage() {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  url: profile.avatar_url,
+                  url: user.avatar_url,
                 }),
               })
-              console.log("Old avatar deleted")
-            } catch (error) {
-              console.error("Error deleting old avatar:", error)
-            }
+            } catch {}
           }
         } else {
-          const errorData = await uploadResponse.json()
-          throw new Error(errorData.error || "Error al subir la imagen")
+          throw new Error(uploadResult.error || "Error al subir la imagen")
         }
       }
 
-      console.log("Updating profile...")
       const success = await updateProfile({
         name: name.trim() || null,
         avatar_url: avatarUrl,
       })
 
       if (success) {
-        alert("Perfil actualizado correctamente")
-        setAvatarFile(null)
+        toast.success("Perfil actualizado correctamente")
+        resetImage()
+        fetchProfile()
       } else {
         throw new Error("Error al actualizar el perfil")
       }
     } catch (error) {
-      console.error("Error in handleSave:", error)
-      alert(error instanceof Error ? error.message : "Error al actualizar el perfil")
+      toast.error(error instanceof Error ? error.message : "Error al actualizar el perfil")
     } finally {
       setIsLoading(false)
     }
@@ -268,7 +196,7 @@ export default function ProfileConfigPage() {
     )
   }
 
-  if (!profile) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -280,25 +208,21 @@ export default function ProfileConfigPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div>
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
-          <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver
-          </Button>
 
           <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold">Configuración del Perfil</h1>
-              <Button variant="outline" size="sm" onClick={fetchProfile}>
+              <Button variant="outline" size="sm" onClick={fetchProfile} className="ml-5">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Recargar
               </Button>
-            </div>
-
-            <div className="mb-4 p-3 bg-blue-50 rounded text-xs">
-              <strong>Debug:</strong> ID: {profile.id}, Email: {profile.email}, Name: {profile.name || "null"}
+              <Button variant="outline" size="sm" onClick={() => router.back()} className="ml-5">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver
+              </Button>
             </div>
 
             <Tabs defaultValue="profile" className="w-full">
@@ -312,9 +236,9 @@ export default function ProfileConfigPage() {
                   <Label className="text-base font-semibold">Foto de Perfil</Label>
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-24 bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
-                      {avatarPreview ? (
+                      {imagePreview ? (
                         <img
-                          src={avatarPreview || "/placeholder.svg"}
+                          src={imagePreview || "/placeholder.svg"}
                           alt="Preview"
                           className="w-full h-full object-cover"
                         />
@@ -329,11 +253,12 @@ export default function ProfileConfigPage() {
                           variant="outline"
                           onClick={() => fileInputRef.current?.click()}
                           className="flex items-center gap-2"
+                          disabled={isUploadingAvatar}
                         >
                           <Upload className="w-4 h-4" />
-                          Subir Imagen
+                          {isUploadingAvatar ? "Subiendo..." : "Subir Imagen"}
                         </Button>
-                        {profile.avatar_url && (
+                        {user.avatar_url && (
                           <Button
                             type="button"
                             variant="outline"
@@ -352,7 +277,7 @@ export default function ProfileConfigPage() {
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
-                      onChange={handleAvatarChange}
+                      onChange={handleFileChange}
                       className="hidden"
                     />
                   </div>
@@ -372,10 +297,10 @@ export default function ProfileConfigPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" value={profile.email} disabled className="bg-muted" />
+                  <Input id="email" value={user.email} disabled className="bg-muted" />
                 </div>
 
-                <Button onClick={handleSave} disabled={isLoading} className="w-full">
+                <Button onClick={handleSave} disabled={isLoading || isUploadingAvatar} className="w-full">
                   <Save className="w-4 h-4 mr-2" />
                   {isLoading ? "Guardando..." : "Guardar Cambios"}
                 </Button>

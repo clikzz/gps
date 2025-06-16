@@ -10,75 +10,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { User, Settings, LogOut, ChevronDown } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ProfilePreview } from "./ProfilePreview"
 import { signOutAction } from "@/app/actions"
+import { useUserProfile } from "@/stores/userProfile"
 
-interface UserProfile {
-  id: string
-  name: string | null
-  avatar_url: string | null
-  email: string
-  public_id: string | undefined
-  menssageCount: number
-}
-
-interface ProfileDropdownProps {
-  user: UserProfile
-}
-
-export function ProfileDropdown({ user: initialUser }: ProfileDropdownProps) {
+export function ProfileDropdown() {
   const router = useRouter()
+  const { user } = useUserProfile()
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchCompleteProfile()
-  }, [])
-
-  const fetchCompleteProfile = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch("/api/profile")
-
-      if (response.ok) {
-        const profileData = await response.json()
-        if (!profileData.error) {
-          setProfile(profileData)
-        } else {
-          setProfile(initialUser)
-        }
-      } else {
-        setProfile(initialUser)
-      }
-    } catch (error) {
-      console.error("Error fetching complete profile:", error)
-      setProfile(initialUser)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const currentProfile = profile || initialUser
-
-  const displayName = currentProfile?.name || (currentProfile?.email ? currentProfile.email.split("@")[0] : "Usuario")
-
-  const handleViewProfile = () => {
-    if (currentProfile) {
-      setIsPreviewOpen(true)
-    }
-  }
-
-  const handleSettings = () => {
-    router.push("/profile")
-  }
-
-  const handleSignOut = async () => {
-    await signOutAction()
-  }
-
-  if (!currentProfile) {
+  if (!user) {
     return (
       <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">
         <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
@@ -91,15 +33,23 @@ export function ProfileDropdown({ user: initialUser }: ProfileDropdownProps) {
     )
   }
 
+  const displayName = user.name || (user.email ? user.email.split("@")[0] : "Usuario")
+
+  const handleViewProfile = () => setIsPreviewOpen(true)
+  const handleSettings = () => router.push("/profile")
+  const handleSignOut = async () => {
+    await signOutAction()
+  }
+
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">
             <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
-              {currentProfile.avatar_url ? (
+              {user.avatar_url ? (
                 <img
-                  src={currentProfile.avatar_url || "/placeholder.svg"}
+                  src={user.avatar_url || "/placeholder.svg"}
                   alt="Avatar"
                   className="w-full h-full object-cover"
                 />
@@ -108,8 +58,8 @@ export function ProfileDropdown({ user: initialUser }: ProfileDropdownProps) {
               )}
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-sm font-medium">Hola, {loading ? "..." : displayName}</span>
-              <span className="text-xs text-muted-foreground">{currentProfile.email}</span>
+              <span className="text-sm font-medium">Hola, {displayName}</span>
+              <span className="text-xs text-muted-foreground">{user.email}</span>
             </div>
             <ChevronDown className="w-4 h-4" />
           </Button>
@@ -135,11 +85,11 @@ export function ProfileDropdown({ user: initialUser }: ProfileDropdownProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {isPreviewOpen && currentProfile && (
+      {isPreviewOpen && user && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsPreviewOpen(false)} />
           <div className="relative z-10">
-            <ProfilePreview user={currentProfile} onClose={() => setIsPreviewOpen(false)} />
+            <ProfilePreview user={user} onClose={() => setIsPreviewOpen(false)} />
           </div>
         </div>
       )}

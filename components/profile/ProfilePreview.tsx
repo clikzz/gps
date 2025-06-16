@@ -5,23 +5,15 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Settings, User, X } from "lucide-react"
 import { Badge } from "./Badge"
 import { useRouter } from "next/navigation"
-
-interface UserProfile {
-  id: string
-  name: string | null
-  avatar_url: string | null
-  email: string
-  public_id: string | undefined
-  menssageCount: number
-}
+import { useUserProfile } from "@/stores/userProfile"
 
 interface ProfilePreviewProps {
-  user: UserProfile | null
   onClose: () => void
 }
 
-export function ProfilePreview({ user, onClose }: ProfilePreviewProps) {
+export function ProfilePreview({ onClose }: ProfilePreviewProps) {
   const router = useRouter()
+  const { user } = useUserProfile()
 
   if (!user) {
     return (
@@ -37,6 +29,7 @@ export function ProfilePreview({ user, onClose }: ProfilePreviewProps) {
   }
 
   const displayName = user.name || (user.email ? user.email.split("@")[0] : "Usuario")
+  const tag = user.tag ? `#${user.tag}` : ""
 
   // insignias de ejemplo
   const exampleBadges = [
@@ -58,7 +51,9 @@ export function ProfilePreview({ user, onClose }: ProfilePreviewProps) {
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <div className="flex items-center gap-2">
           <User className="w-5 h-5" />
-          <h2 className="text-xl font-bold">{displayName}</h2>
+          <h2 className="text-xl font-bold">
+            {displayName} {tag && <span className="text-muted-foreground">{tag}</span>}
+          </h2>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={handleSettings}>

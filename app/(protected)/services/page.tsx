@@ -3,10 +3,10 @@
 import { useState } from "react"
 import { createPortal } from "react-dom"
 import { useEffect } from "react"
-import RequestLocation from "./RequestLocation"
-import Map from "./Map"
+import RequestLocation from "@/components/services/RequestLocation"
+import Map from "@/components/services/Map"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import NewService from "./NewService"
+import NewService from "@/components/services/NewService"
 
 export default function MapsPage() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)

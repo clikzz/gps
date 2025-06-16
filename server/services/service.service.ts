@@ -1,5 +1,5 @@
 import prisma from "@/lib/db"
-import type { CreateServiceInput, GetServicesInput } from "../validations/serviceValidation"
+import type { CreateServiceInput, GetServicesInput } from "../validations/service.validation"
 import type { Services } from "@prisma/client"
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {

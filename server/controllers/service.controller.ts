@@ -1,6 +1,6 @@
-import { createService, getServices, getServiceById, updateService, deleteService } from "../services/serviceService"
+import { createService, getServices, getServiceById, updateService, deleteService } from "../services/service.service"
 import type { Services as Service } from "@prisma/client"
-import type { ServiceCategory } from "../validations/serviceValidation"
+import type { ServiceCategory } from "../validations/service.validation"
 
 export const fetchServices = async (filters: {
   latitude?: string | null

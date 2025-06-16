@@ -1,6 +1,6 @@
-import { fetchServices, addService } from "@/server/controllers/serviceController"
-import { authenticateUser } from "@/server/middlewares/authMiddleware"
-import { createServiceSchema } from "@/server/validations/serviceValidation"
+import { fetchServices, addService } from "@/server/controllers/service.controller"
+import { authenticateUser } from "@/server/middlewares/auth.middleware"
+import { createServiceSchema } from "@/server/validations/service.validation"
 
 export async function GET(req: Request) {
   const user = await authenticateUser(req)

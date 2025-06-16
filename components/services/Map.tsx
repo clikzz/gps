@@ -5,7 +5,7 @@ import dynamic from "next/dynamic"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { Marker, Popup, NavigationControl, FullscreenControl, ScaleControl } from "react-map-gl/mapbox"
 import { CircleUserRound } from "lucide-react"
-import PetService from "./PetService"
+import PetService from "@/components/services/PetService"
 
 const MapGL = dynamic(() => import("react-map-gl/mapbox").then((mod) => mod.default), { ssr: false })
 

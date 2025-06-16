@@ -7,6 +7,6 @@ export interface MissingReport {
   photo_urls?: string[];
   description?: string;
   reported_at: string;
-  pet: { id: string; name: string; photo_url?: string };
+  Pets: { id: string; name: string; photo_url?: string };
   reporter: { id: string; name: string };
 }

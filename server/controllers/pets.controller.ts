@@ -56,7 +56,7 @@ export const addPet = async ({
     });
 
     if (newPet instanceof Response) {
-      return newPet; // If createPet returns a Response, return it directly
+      return newPet;
     }
 
     if (!newPet) {

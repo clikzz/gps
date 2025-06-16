@@ -85,7 +85,7 @@ export const listMyMissingPets = async (userId: string) => {
  * Listar mascotas del usuario autenticado.
  */
 export const findPetsByUser = async (userId: string) => {
-  return prisma.pets.findMany({
+  return prisma.pet.findMany({
     where: { user_id: userId },
     orderBy: { name: "asc" },
   });

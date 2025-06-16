@@ -1,14 +1,14 @@
-import { 
-  createMissingPet, 
-  listRecentMissingPets, 
-  listAllMissingPets, 
+import {
+  createMissingPet,
+  listRecentMissingPets,
+  listAllMissingPets,
   findPetsByUser,
-  listMyMissingPets
+  listMyMissingPets,
 } from "@/server/services/find.service";
 import { Prisma } from "@prisma/client";
 import { reportMissingPetSchema } from "@/server/validations/find.validation";
 
-export const reportMissingPet = async ( reporterId: string, body: any ) => {
+export const reportMissingPet = async (reporterId: string, body: any) => {
   const parseResult = reportMissingPetSchema.safeParse(body);
   if (!parseResult.success) {
     const formatted = parseResult.error.format();
@@ -17,7 +17,13 @@ export const reportMissingPet = async ( reporterId: string, body: any ) => {
       headers: { "Content-Type": "application/json" },
     });
   }
-  const { pet_id, latitude, longitude, photo_urls = [], description } = parseResult.data;
+  const {
+    pet_id,
+    latitude,
+    longitude,
+    photo_urls = [],
+    description,
+  } = parseResult.data;
 
   try {
     const missing = await createMissingPet(reporterId, {
@@ -32,7 +38,7 @@ export const reportMissingPet = async ( reporterId: string, body: any ) => {
       ...missing,
       id: missing.id.toString(),
       pet_id: missing.pet_id.toString(),
-      reporter_id: missing.reporter_id.toString()
+      reporter_id: missing.reporter_id.toString(),
     };
 
     return new Response(JSON.stringify(output), {
@@ -48,16 +54,18 @@ export const reportMissingPet = async ( reporterId: string, body: any ) => {
       err.meta?.target.includes("reporter_id")
     ) {
       return new Response(
-        JSON.stringify({ error: "Ya has reportado esta mascota anteriormente." }),
+        JSON.stringify({
+          error: "Ya has reportado esta mascota anteriormente.",
+        }),
         { status: 409, headers: { "Content-Type": "application/json" } }
       );
     }
 
     console.error(err);
-    return new Response(
-      JSON.stringify({ error: "Error al crear reporte." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Error al crear reporte." }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 
@@ -85,7 +93,7 @@ export const fetchAllMissingPets = async () => {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
-}
+};
 
 export const fetchRecentMissingPets = async () => {
   const list = await listRecentMissingPets();
@@ -120,7 +128,7 @@ export const fetchMyMissingPets = async (userId: string) => {
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
-    pet: { 
+    pet: {
       id: item.pet.id.toString(),
       name: item.pet.name || "Sin nombre",
       photo_url: item.pet.photo_url,
@@ -150,4 +158,4 @@ export const fetchUserPets = async (userId: string) => {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
-}
+};

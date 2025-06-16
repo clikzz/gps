@@ -2,13 +2,12 @@ import {
   getUserProfile,
   updateUserProfile,
 } from "@/server/services/userprofile.service";
-import { Pets as Pet } from "@prisma/client";
+import type { Pet } from "@prisma/client";
 
 export const fetchUserProfile = async (userId: string) => {
   const profile = await getUserProfile(userId);
   const userProfile = {
     ...profile,
-    public_id: profile?.public_id ? profile.public_id.toString() : undefined,
     pets: profile?.pets.map((pet: Pet) => ({
       ...pet,
       id: pet.id.toString(),

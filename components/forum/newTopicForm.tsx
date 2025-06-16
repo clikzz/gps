@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,13 +29,10 @@ export function NewTopicForm({ subforumSlug, subforumId }: NewTopicFormProps) {
     }
 
     setIsSubmitting(true)
-
     try {
-      const response = await fetch("/api/forum/topics", {
+      const res = await fetch("/api/forum/topics", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           subforumId,
@@ -45,16 +41,23 @@ export function NewTopicForm({ subforumSlug, subforumId }: NewTopicFormProps) {
         }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || "Error al crear el tema")
+      if (res.status === 429) {
+        const { error: msg } = (await res.json().catch(() => ({}))) as { error?: string }
+        setError(msg || "Debes esperar 2 minutos antes de crear otro tema.")
+        return
+      }
+
+      if (!res.ok) {
+        const { error: msg } = (await res.json().catch(() => ({}))) as { error?: string }
+        setError(msg || "Error al crear el tema.")
+        return
       }
 
       router.push(`/forum/subforum/${subforumSlug}`)
       router.refresh()
-    } catch (error) {
-      console.error("Error creating topic:", error)
-      setError(error instanceof Error ? error.message : "Error al crear el tema")
+    } catch (err) {
+      console.error("Error creating topic:", err)
+      setError("Error al crear el tema.")
     } finally {
       setIsSubmitting(false)
     }
@@ -67,7 +70,11 @@ export function NewTopicForm({ subforumSlug, subforumId }: NewTopicFormProps) {
   return (
     <div className="w-full">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && <div className="border border-red-200 bg-red-50 text-red-700 px-4 py-3 rounded">{error}</div>}
+        {error && (
+          <div className="border border-red-200 bg-red-50 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="title">Título del tema</Label>
@@ -78,7 +85,6 @@ export function NewTopicForm({ subforumSlug, subforumId }: NewTopicFormProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={isSubmitting}
-            className="text-base"
             required
           />
         </div>
@@ -92,25 +98,22 @@ export function NewTopicForm({ subforumSlug, subforumId }: NewTopicFormProps) {
             onChange={(e) => setContent(e.target.value)}
             rows={12}
             disabled={isSubmitting}
-            className="text-base resize-none"
             required
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-end gap-4">
+        <div className="flex justify-end gap-4">
           <Button
             type="button"
             variant="outline"
             onClick={handleCancel}
             disabled={isSubmitting}
-            className="w-full sm:w-auto"
           >
             Cancelar
           </Button>
           <Button
             type="submit"
             disabled={isSubmitting || !title.trim() || !content.trim()}
-            className="w-full sm:w-auto"
           >
             {isSubmitting ? "Creando tema..." : "Crear tema"}
           </Button>

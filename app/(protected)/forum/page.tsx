@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { ForumCategory } from "@/components/forum/forumCategory"
 import { fetcher } from "@/lib/utils"
 

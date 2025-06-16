@@ -26,7 +26,12 @@ export default function PetTimelinePage() {
     data: petDetails, 
     error: petError, 
     isLoading: isLoadingPet 
-  } = useSWR<Pet>(petId ? `/api/pets/${petId}` : null, fetcher);
+  } = useSWR<Pet>(
+    petId
+      ? `/api/pets?mode=id&id=${petId}`
+      : null,
+    fetcher
+  );
 
   const { 
     data: entries, 

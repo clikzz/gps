@@ -30,19 +30,20 @@ model UserProfile {
 }
 
 model Pets {
-  id               BigInt      @id @default(autoincrement())
-  user_id          String      @db.Uuid
+  id               BigInt       @id @default(autoincrement())
+  user_id          String       @db.Uuid
   name             String
   species          String
-  active           Boolean?    @default(true)
+  active           Boolean?     @default(true)
   date_of_adoption DateTime?
   date_of_birth    DateTime?
   fixed            Boolean?
   photo_url        String?
   sex              String?
-  is_lost          Boolean?    @default(false)
-  deleted          Boolean?    @default(false)
-  user             UserProfile @relation(fields: [user_id], references: [id])
+  is_lost          Boolean?     @default(false)
+  deleted          Boolean?     @default(false)
+  MissingPets      MissingPet[]
+  user             UserProfile  @relation(fields: [user_id], references: [id])
 
   @@map("Pets")
 }
@@ -101,6 +102,7 @@ model MissingPet {
   description String?
   reported_at DateTime    @default(now())
   photo_urls  String[]
+  Pets        Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
   reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
 
   @@unique([pet_id, reporter_id])

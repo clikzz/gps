@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { authenticateUser } from '@/server/middlewares/authMiddleware';
+import { authenticateUser } from '@/server/middlewares/auth.middleware';
 import * as timelineController from '@/server/controllers/timeline.controller';
 
 

@@ -19,7 +19,7 @@ model UserProfile {
   menssageCount    Int                @default(0)
   lastMessageAt    DateTime?
   marketplaceItems MarketplaceItems[]
-  MissingPets      MissingPets[]
+  missingPets      MissingPet[]
   pets             Pets[]
   Posts            Posts[]
   reviews          Reviews[]
@@ -92,6 +92,21 @@ model Reviews {
   @@map("Reviews")
 }
 
+model MissingPet {
+  id          BigInt      @id @default(autoincrement())
+  pet_id      BigInt
+  reporter_id String      @db.Uuid
+  latitude    Float
+  longitude   Float
+  description String?
+  reported_at DateTime    @default(now())
+  photo_urls  String[]
+  reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+
+  @@unique([pet_id, reporter_id])
+  @@map("MissingPets")
+}
+
 model MarketplaceItems {
   id             BigInt      @id @default(autoincrement())
   user_id        String      @db.Uuid
@@ -106,6 +121,16 @@ model MarketplaceItems {
   user           UserProfile @relation(fields: [user_id], references: [id])
 
   @@map("MarketplaceItems")
+}
+
+model debug_logs {
+  id            Int       @id @default(autoincrement())
+  event_type    String?
+  user_id       String?   @db.Uuid
+  email         String?
+  error_message String?
+  details       Json?
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
 }
 
 model Milestones {
@@ -136,30 +161,6 @@ model TimelineEntryPhotos {
   order             Int?
   created_at        DateTime        @default(now())
   TimelineEntries   TimelineEntries @relation(fields: [timeline_entry_id], references: [id], onDelete: Cascade)
-}
-
-model debug_logs {
-  id            Int       @id @default(autoincrement())
-  event_type    String?
-  user_id       String?   @db.Uuid
-  email         String?
-  error_message String?
-  details       Json?
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
-}
-
-model MissingPets {
-  id           BigInt      @id @default(autoincrement())
-  pet_id       BigInt
-  reporter_id  String      @db.Uuid
-  latitude     Float
-  longitude    Float
-  description  String?
-  reported_at  DateTime    @default(now())
-  photo_urls   String[]
-  UserProfiles UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
-
-  @@unique([pet_id, reporter_id])
 }
 
 model Posts {

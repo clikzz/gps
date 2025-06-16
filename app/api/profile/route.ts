@@ -1,8 +1,8 @@
 import {
   fetchUserProfile,
   modifyUserProfile,
-} from "@/server/controllers/userProfileController";
-import { authenticateUser } from "@/server/middlewares/authMiddleware";
+} from "@/server/controllers/userprofile.controller";
+import { authenticateUser } from "@/server/middlewares/auth.middleware";
 
 export async function GET(req: Request) {
   const user = await authenticateUser(req);

@@ -67,3 +67,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.mapboxgl-popup-tip {
+  display: none !important;
+}

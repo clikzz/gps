@@ -234,52 +234,54 @@ export default function ProfileConfigPage() {
               <TabsContent value="profile" className="space-y-6 mt-6">
                 <div className="space-y-4">
                   <Label className="text-base font-semibold">Foto de Perfil</Label>
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-24 bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
-                      {imagePreview ? (
-                        <img
-                          src={imagePreview || "/placeholder.svg"}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-2xl">👤</span>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="flex items-center gap-2"
-                          disabled={isUploadingAvatar}
-                        >
-                          <Upload className="w-4 h-4" />
-                          {isUploadingAvatar ? "Subiendo..." : "Subir Imagen"}
-                        </Button>
-                        {user.avatar_url && (
+                  <div className="w-full flex justify-center">
+                    <div className="flex items-center gap-4">
+                      <div className="w-32 h-32 bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
+                        {imagePreview ? (
+                          <img
+                            src={imagePreview || "/placeholder.svg"}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-2xl">👤</span>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={handleRemoveAvatar}
-                            disabled={isDeleting}
-                            className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex items-center gap-2"
+                            disabled={isUploadingAvatar}
                           >
-                            <Trash2 className="w-4 h-4" />
-                            {isDeleting ? "Eliminando..." : "Eliminar"}
+                            <Upload className="w-4 h-4" />
+                            {isUploadingAvatar ? "Subiendo..." : "Subir Imagen"}
                           </Button>
-                        )}
+                          {user.avatar_url && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleRemoveAvatar}
+                              disabled={isDeleting}
+                              className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              {isDeleting ? "Eliminando..." : "Eliminar"}
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máximo 2MB.</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máximo 2MB.</p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
                     </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
                   </div>
                 </div>
 

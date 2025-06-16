@@ -66,26 +66,26 @@ export function ProfilePreview({ onClose }: ProfilePreviewProps) {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="flex gap-6">
-          <div className="flex-shrink-0">
-            <div className="w-32 h-40 border-2 border-dashed border-border rounded-lg flex items-center justify-center overflow-hidden bg-muted">
-              {user.avatar_url ? (
-                <img src={user.avatar_url || "/placeholder.svg"} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-6xl text-muted-foreground">👤</div>
-              )}
-            </div>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Insignias</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {exampleBadges.map((badge) => (
-                <Badge key={badge.id} name={badge.name} icon={badge.icon} description={badge.description} />
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">Insignias de ejemplo</p>
-          </div>
-        </div>
+<div className="flex gap-6 items-center">
+  <div className="flex-shrink-0">
+    <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center overflow-hidden bg-muted">
+      {user.avatar_url ? (
+        <img src={user.avatar_url || "/placeholder.svg"} alt="Avatar" className="w-full h-full object-cover" />
+      ) : (
+        <div className="text-6xl text-muted-foreground">👤</div>
+      )}
+    </div>
+  </div>
+  <div className="flex-1">
+    <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Insignias</h3>
+    <div className="grid grid-cols-3 gap-3">
+      {exampleBadges.map((badge) => (
+        <Badge key={badge.id} name={badge.name} icon={badge.icon} description={badge.description} />
+      ))}
+    </div>
+    <p className="text-xs text-muted-foreground mt-2">Insignias de ejemplo</p>
+  </div>
+</div>
         <div className="pt-4 border-t">
           <Card>
             <CardContent className="p-4">

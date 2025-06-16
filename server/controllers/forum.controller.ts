@@ -1,7 +1,7 @@
 import { ZodError } from "zod";
 import { listSubforums, listTopics, listPosts, createTopic, createPost } from "../services/forum.service";
 import { createTopicSchema, createPostSchema } from "../validations/forum.validation";
-import { authenticateUser } from "../middlewares/authMiddleware";
+import { authenticateUser } from "../middlewares/auth.middleware";
 
 export const fetchSubforums = async () => {
   const subs = await listSubforums();
@@ -26,10 +26,10 @@ export const fetchTopics = async (req: Request) => {
   
   const formatted = topics.map((t) => ({
     id: Number(t.id),
-    subforumId: Number(t.subforumId),
+    subforumId: Number(t.subforum_id),
     title: t.title,
-    createdAt: t.createdAt.toISOString(),
-    updatedAt: t.updatedAt.toISOString(),
+    createdAt: t.created_at.toISOString(),
+    updatedAt: t.updated_at.toISOString(),
     postsCount: t.postsCount,
     author: {
       id: t.author.id,
@@ -64,7 +64,7 @@ export const fetchPosts = async (req: Request) => {
   const formatted = posts.map(p => ({
     id: p.id.toString(),
     content: p.content,
-    createdAt: p.createdAt.toISOString(),
+    createdAt: p.created_at.toISOString(),
     author: {
       id: p.author.id,
       name: p.author.name,
@@ -88,11 +88,11 @@ export const addTopic = async (req: Request) => {
     const topic = await createTopic(user.id, dto);
     const formatted = {
       id: Number(topic.id),
-      subforumId: Number(topic.subforumId),
-      userId: topic.userId,
+      subforumId: Number(topic.subforum_id),
+      userId: topic.user_id,
       title: topic.title,
-      createdAt: topic.createdAt.toISOString(),
-      updatedAt: topic.updatedAt.toISOString(),
+      createdAt: topic.created_at.toISOString(),
+      updatedAt: topic.updated_at.toISOString(),
     }
 
     return new Response(JSON.stringify(formatted), {
@@ -133,11 +133,11 @@ export const addPost = async (req: Request) => {
 
     const formatted = {
       id: post.id.toString(),
-      topicId: post.topicId.toString(),
-      userId: post.userId,
+      topicId: post.topic_id.toString(),
+      userId: post.user_id,
       content: post.content,
-      createdAt: post.createdAt.toISOString(),
-      updatedAt: post.updatedAt.toISOString(),
+      createdAt: post.created_at.toISOString(),
+      updatedAt: post.updated_at.toISOString(),
     }
 
     return new Response(JSON.stringify(formatted), {

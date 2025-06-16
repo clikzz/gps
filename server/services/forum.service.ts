@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { Topics, Posts, UserProfile } from "@prisma/client";
+import { Topics, Posts, users } from "@prisma/client";
 
 export const listSubforums = async () => {
   return prisma.subforums.findMany({
@@ -7,33 +7,33 @@ export const listSubforums = async () => {
   });
 };
 
-export const listTopics = async (subforumId?: number): Promise<(Topics & { author: UserProfile; postsCount: number; Subforums: { name: string; category: string } })[]> => {
-  const where = subforumId !== undefined ? { subforumId: BigInt(subforumId) } : {};
+export const listTopics = async (subforumId?: number): Promise<(Topics & { author: users; postsCount: number; Subforums: { name: string; category: string } })[]> => {
+  const where = subforumId !== undefined ? { subforum_id: subforumId } : {};
 
   const topics = await prisma.topics.findMany({
     where,
     include: {
-      UserProfiles: true,
+      users: true,
       Posts: { select: { id: true } },
       Subforums: true,
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: { updated_at: "desc" },
   });
 
   return topics.map(t => ({
     ...t,
     postsCount: t.Posts.length,
-    author: t.UserProfiles,
+    author: t.users,
   }));
 };
 
-export const listPosts = async (topicId: number): Promise<(Posts & { author: UserProfile })[]> => {
+export const listPosts = async (topicId: number): Promise<(Posts & { author: users })[]> => {
   return prisma.posts.findMany({
-    where: { topicId },
-    include: { UserProfiles: true },
-    orderBy: { createdAt: "asc" },
+    where: { topic_id: topicId },
+    include: { users: true },
+    orderBy: { created_at: "asc" },
   }).then(posts =>
-    posts.map(p => ({ ...p, author: p.UserProfiles }))
+    posts.map(p => ({ ...p, author: p.users }))
   );
 };
 
@@ -42,7 +42,7 @@ export const createTopic = async (
   dto: { subforumId: number; title: string; content: string }
 ) => {
   return prisma.$transaction(async (tx) => {
-    const profile = await tx.userProfile.findUnique({ where: { id: userId } });
+    const profile = await tx.users.findUnique({ where: { id: userId } });
 
     if (profile?.lastMessageAt) {
       const secondsSinceLast = (Date.now() - new Date(profile.lastMessageAt).getTime()) / 1000;
@@ -52,15 +52,15 @@ export const createTopic = async (
     }
     const topic = await tx.topics.create({
       data: {
-        userId,
-        subforumId: dto.subforumId,
+        user_id: userId,
+        subforum_id: dto.subforumId,
         title: dto.title,
       },
     });
     await tx.posts.create({
-      data: { topicId: topic.id, userId, content: dto.content },
+      data: { topic_id: topic.id, user_id: userId, content: dto.content },
     });
-    await tx.userProfile.update({
+    await tx.users.update({
       where: { id: userId },
       data: {
         menssageCount: { increment: 1 },
@@ -77,7 +77,7 @@ export const createPost = async (
   dto: { topicId: number; content: string }
 ) => {
   return prisma.$transaction(async tx => {
-    const profile = await tx.userProfile.findUnique({ where: { id: userId } });
+    const profile = await tx.users.findUnique({ where: { id: userId } });
     if (profile?.lastMessageAt) {
       const secondsSinceLast = (Date.now() - new Date(profile.lastMessageAt).getTime()) / 1000;
       if (secondsSinceLast < 120) {
@@ -85,9 +85,9 @@ export const createPost = async (
       }
     }
     const post = await tx.posts.create({
-      data: { topicId: dto.topicId, userId, content: dto.content },
+      data: { topic_id: dto.topicId, user_id: userId, content: dto.content },
     });
-    await tx.userProfile.update({
+    await tx.users.update({
       where: { id: userId },
       data: {
         menssageCount: { increment: 1 },

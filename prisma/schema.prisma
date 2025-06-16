@@ -77,7 +77,7 @@ model Posts {
   content    String
   created_at DateTime @default(now())
   topic_id   BigInt
-  updated_at DateTime
+  updated_at DateTime @updatedAt
   user_id    String   @db.Uuid
   Topics     Topics   @relation(fields: [topic_id], references: [id], onDelete: Cascade)
   users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -141,7 +141,7 @@ model Topics {
   title       String
   created_at  DateTime  @default(now())
   subforum_id BigInt
-  updated_at  DateTime
+  updated_at  DateTime  @updatedAt
   user_id     String    @db.Uuid
   Posts       Posts[]
   Subforums   Subforums @relation(fields: [subforum_id], references: [id], onDelete: Cascade)
@@ -175,6 +175,8 @@ model users {
   avatar_url       String?
   created_at       DateTime           @default(now())
   tag              Int                @unique @default(autoincrement())
+  menssageCount    Int                @default(0)
+  lastMessageAt    DateTime?          @map("lastMessageAt")
   MarketplaceItems MarketplaceItems[]
   MissingPets      MissingPets[]
   Pets             Pets[]

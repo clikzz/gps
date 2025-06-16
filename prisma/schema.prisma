@@ -30,21 +30,19 @@ model UserProfile {
 }
 
 model Pets {
-  id               BigInt            @id @default(autoincrement())
-  user_id          String            @db.Uuid
+  id               BigInt      @id @default(autoincrement())
+  user_id          String      @db.Uuid
   name             String
   species          String
-  active           Boolean?          @default(true)
+  active           Boolean?    @default(true)
   date_of_adoption DateTime?
   date_of_birth    DateTime?
   fixed            Boolean?
   photo_url        String?
   sex              String?
-  Medications      Medications[]
-  MissingPets      MissingPets[]
-  user             UserProfile       @relation(fields: [user_id], references: [id])
-  TimelineEntries  TimelineEntries[]
-  Vaccinations     Vaccinations[]
+  is_lost          Boolean?    @default(false)
+  deleted          Boolean?    @default(false)
+  user             UserProfile @relation(fields: [user_id], references: [id])
 
   @@map("Pets")
 }
@@ -55,7 +53,6 @@ model Vaccinations {
   type             String?
   application_date DateTime?
   next_dose_date   DateTime?
-  pet              Pets      @relation(fields: [pet_id], references: [id])
 
   @@map("Vaccinations")
 }
@@ -66,7 +63,6 @@ model Medications {
   name     String?
   dose     String?
   duration String?
-  pet      Pets    @relation(fields: [pet_id], references: [id])
 
   @@map("Medications")
 }
@@ -128,7 +124,6 @@ model TimelineEntries {
   event_date          DateTime
   created_at          DateTime              @default(now())
   updated_at          DateTime
-  Pets                Pets                  @relation(fields: [pet_id], references: [id])
   UserProfiles        UserProfile           @relation(fields: [user_id], references: [id])
   TimelineEntryPhotos TimelineEntryPhotos[]
   Milestones          Milestones[]          @relation("MilestoneToTimelineEntry")
@@ -162,7 +157,6 @@ model MissingPets {
   description  String?
   reported_at  DateTime    @default(now())
   photo_urls   String[]
-  Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
   UserProfiles UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
 
   @@unique([pet_id, reporter_id])

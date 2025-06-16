@@ -9,6 +9,8 @@ interface MapMarkersProps {
 }
 
 export default function MapMarkers({ reports, onSelect }: MapMarkersProps) {
+  console.log(reports);
+
   return (
     <>
       {reports.map((r) => (
@@ -19,10 +21,10 @@ export default function MapMarkers({ reports, onSelect }: MapMarkersProps) {
           anchor="bottom"
           onClick={() => onSelect(r)}
         >
-          {r.pet.photo_url ? (
+          {r.Pets.photo_url ? (
             <img
-              src={r.pet.photo_url}
-              alt={r.pet.name}
+              src={r.Pets.photo_url}
+              alt={r.Pets.name}
               className="w-14 h-14 rounded-full border-2 border-white shadow-lg cursor-pointer"
             />
           ) : (

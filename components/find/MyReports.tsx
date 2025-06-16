@@ -62,10 +62,10 @@ export default function MyReportsModal({
                   className="border flex flex-row items-center space-x-3 p-4"
                 >
                   <CardHeader className="flex items-center p-4 space-x-4">
-                    {r.pet.photo_url ? (
+                    {r.Pets.photo_url ? (
                       <img
-                        src={r.pet.photo_url}
-                        alt={r.pet.name}
+                        src={r.Pets.photo_url}
+                        alt={r.Pets.name}
                         className="w-28 h-28 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
@@ -76,7 +76,9 @@ export default function MyReportsModal({
                   <CardContent className="p-4 pt-0">
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center justify-between space-x-4">
-                        <p className="text-lg font-semibold">🐾 {r.pet.name}</p>
+                        <p className="text-lg font-semibold">
+                          🐾 {r.Pets.name}
+                        </p>
                         <Badge variant="secondary">Activo</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">

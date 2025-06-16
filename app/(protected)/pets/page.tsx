@@ -12,10 +12,12 @@ import PetsStats from "@/components/pets/PetsStats";
 import PetsTable from "@/components/pets/PetsTable";
 
 function Pets() {
-  const pets = useUserProfile((state) => state?.user?.pets);
+  const pets = useUserProfile((state) => state?.user?.Pets);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [selectedPet] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  console.log(pets);
 
   return (
     <motion.div

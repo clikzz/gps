@@ -36,10 +36,10 @@ export const handleDeletePhoto = async (pet: Pet) => {
     }
     const updatedPet = await responseDB.json();
     if (user) {
-      const updatedPets = user.pets.map((p) =>
+      const updatedPets = user.Pets.map((p) =>
         p.id === pet.id ? updatedPet : p
       );
-      useUserProfile.getState().setUser({ ...user, pets: updatedPets });
+      useUserProfile.getState().setUser({ ...user, Pets: updatedPets });
     }
     pet.photo_url = null;
     toast.success("Foto de la mascota eliminada correctamente");
@@ -62,8 +62,8 @@ export const handleSoftDelete = async (pet: Pet) => {
     });
 
     if (response.ok) {
-      const updatedPets = user.pets.filter((p) => p.id !== pet.id);
-      useUserProfile.getState().setUser({ ...user, pets: updatedPets });
+      const updatedPets = user.Pets.filter((p) => p.id !== pet.id);
+      useUserProfile.getState().setUser({ ...user, Pets: updatedPets });
       if (useActivePet.getState().activePet?.id === pet.id) {
         const activePet = updatedPets[0];
         if (!activePet) {
@@ -100,10 +100,10 @@ export const handleDisablePet = async (pet: Pet) => {
 
     if (response.ok) {
       const updatedPet = await response.json();
-      const updatedPets = user.pets.map((p) =>
+      const updatedPets = user.Pets.map((p) =>
         p.id === pet.id ? updatedPet : p
       );
-      useUserProfile.getState().setUser({ ...user, pets: updatedPets });
+      useUserProfile.getState().setUser({ ...user, Pets: updatedPets });
       toast.success("Mascota marcada como fallecida correctamente");
     } else {
       toast.error("Error al marcar la mascota como fallecida");

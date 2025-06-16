@@ -15,7 +15,7 @@ export const createMissingPet = async (
   reporterId: string,
   data: MissingPetInput
 ) => {
-  return prisma.missingPet.create({
+  return prisma.missingPets.create({
     data: {
       reporter_id: reporterId,
       pet_id: data.pet_id,
@@ -31,18 +31,18 @@ export const createMissingPet = async (
  * Listar todos los reportes de mascotas desaparecidas.
  */
 export const listAllMissingPets = async () => {
-  return prisma.missingPet.findMany({
+  return prisma.missingPets.findMany({
     include: {
-      pet: {
+      Pets: {
         select: { id: true, name: true, photo_url: true },
       },
-      reporter: {
+      users: {
         select: { id: true, name: true },
       },
     },
     orderBy: { reported_at: "desc" },
   });
-}
+};
 
 /**
  * Lista reportes del último mes para mostrar en el mapa.
@@ -51,15 +51,15 @@ export const listRecentMissingPets = async () => {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-  return prisma.missingPet.findMany({
+  return prisma.missingPets.findMany({
     where: {
       reported_at: { gte: oneMonthAgo },
     },
     include: {
-      pet: {
+      Pets: {
         select: { id: true, name: true, photo_url: true },
       },
-      reporter: {
+      users: {
         select: { id: true, name: true },
       },
     },
@@ -71,11 +71,11 @@ export const listRecentMissingPets = async () => {
  * Lista reportes de mascotas desaparecidas del usuario autenticado.
  */
 export const listMyMissingPets = async (userId: string) => {
-  return prisma.missingPet.findMany({
+  return prisma.missingPets.findMany({
     where: { reporter_id: userId },
     include: {
-      pet: { select: { id: true, name: true, photo_url: true } },
-      reporter: { select: { id: true, name: true } },
+      Pets: { select: { id: true, name: true, photo_url: true } },
+      users: { select: { id: true, name: true } },
     },
     orderBy: { reported_at: "desc" },
   });
@@ -85,7 +85,7 @@ export const listMyMissingPets = async (userId: string) => {
  * Listar mascotas del usuario autenticado.
  */
 export const findPetsByUser = async (userId: string) => {
-  return prisma.pet.findMany({
+  return prisma.pets.findMany({
     where: { user_id: userId },
     orderBy: { name: "asc" },
   });

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useUserProfile } from "@/stores/userProfile";
 import useSWR from "swr";
-import PetSelector from "./PetSelector";
+import PetSelector from "../../../components/home/PetSelector";
 import { useActivePet } from "@/stores/activePet";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());

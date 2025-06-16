@@ -49,20 +49,40 @@ export const addPet = async ({
     });
   }
 
-  const newPet = await createPet({
-    user,
-    pet,
-  });
+  try {
+    const newPet = await createPet({
+      user,
+      pet,
+    });
 
-  const formattedPet = {
-    ...newPet,
-    id: newPet.id.toString(),
-  };
+    if (newPet instanceof Response) {
+      return newPet; // If createPet returns a Response, return it directly
+    }
 
-  return new Response(JSON.stringify(formattedPet), {
-    status: 201,
-    headers: { "Content-Type": "application/json" },
-  });
+    if (!newPet) {
+      return new Response(JSON.stringify({ error: "Failed to create pet" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    const formattedPet = {
+      ...newPet,
+      id: newPet.id.toString(),
+    };
+
+    return new Response(JSON.stringify(formattedPet), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.log("Errorrrrrrr creating pet:", error);
+
+    console.error("Error creating pet:", error);
+    return new Response(JSON.stringify({ error: error }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };
 
 export const fetchPetById = async (petId: string) => {

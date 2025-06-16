@@ -14,8 +14,7 @@ import PetsTable from "@/components/pets/PetsTable";
 function Pets() {
   const pets = useUserProfile((state) => state?.user?.pets);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const isMobile = useMediaQuery("(max-width: 640px)");
-  const [selectedPet, setSelectedPet] = useState<any>(null);
+  const [selectedPet] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   return (
@@ -56,7 +55,6 @@ function Pets() {
           <p className="text-lg text-muted-foreground text-center mb-6">
             No tienes mascotas registradas.
           </p>
-          <NewPetDrawer />
         </motion.div>
       )}
 

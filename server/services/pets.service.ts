@@ -30,6 +30,27 @@ export const createPet = async ({
     photo_url?: string;
   };
 }) => {
+  const activePetsCount = await prisma.pets.count({
+    where: {
+      user_id: user.id,
+      active: true,
+      deleted: false,
+    },
+  });
+
+  if (activePetsCount >= 10) {
+    return new Response(
+      JSON.stringify({
+        error:
+          "Solo puedes tener 10 mascotas activas, elimina una e inténtalo nuevamente",
+      }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
   return await prisma.pets.create({
     data: {
       user_id: user.id,

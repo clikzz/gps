@@ -30,6 +30,8 @@ function PetsTable() {
     setIsDrawerOpen(true);
   };
 
+  console.log("table", pets);
+
   return (
     <div className={`${isDesktop ? "col-span-3" : "col-span-1"}`}>
       <motion.div

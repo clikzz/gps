@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 
 interface FindActionsMenuProps {
   onReportClick: () => void;
@@ -24,7 +24,11 @@ export default function FindActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="secondary" size="sm" className="flex items-center gap-1">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="flex items-center gap-1"
+        >
           <Menu className="h-6 w-6" />
         </Button>
       </DropdownMenuTrigger>

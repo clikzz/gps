@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { translateSpecies } from "@/utils/translateSpecies";
 
 function PetsStats() {
-  const pets = useUserProfile((state) => state?.user?.pets);
+  const pets = useUserProfile((state) => state?.user?.Pets);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isMobile = useMediaQuery("(max-width: 640px)");
 

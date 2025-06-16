@@ -8,7 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 function PetSelector() {
-  const pets = useUserProfile((state) => state.user?.pets);
+  const pets = useUserProfile((state) => state.user?.Pets);
   const setActivePet = useActivePet((state) => state.setActivePet);
 
   const containerVariants = {

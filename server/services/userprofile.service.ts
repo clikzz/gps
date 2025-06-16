@@ -1,10 +1,10 @@
 import prisma from "@/lib/db";
 
 export const getUserProfile = async (userId: string) => {
-  return await prisma.userProfile.findUnique({
+  return await prisma.users.findUnique({
     where: { id: userId },
     include: {
-      pets: {
+      Pets: {
         where: {
           deleted: false,
         },
@@ -21,7 +21,7 @@ export const updateUserProfile = async (
     avatar_url,
   }: { name: string; email: string; avatar_url: string }
 ) => {
-  return await prisma.userProfile.update({
+  return await prisma.users.update({
     where: { id: userId },
     data: { name, email, avatar_url },
   });

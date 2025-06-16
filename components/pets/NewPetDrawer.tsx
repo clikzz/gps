@@ -28,7 +28,7 @@ export function NewPetDrawer() {
               Ingresa los datos asociados a tu nueva mascota
             </DrawerDescription>
           </DrawerHeader>
-          <div className="p-4 pb-0">
+          <div className="overflow-y-auto max-h-[50vh] px-4">
             <NewPetForm />
           </div>
           <DrawerFooter>

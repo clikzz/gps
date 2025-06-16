@@ -44,11 +44,8 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.log("Auth error:", authError);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    console.log("User authenticated:", user.id);
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -126,6 +123,73 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("Upload error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { url: imageUrl } = await req.json();
+
+    if (!imageUrl) {
+      return NextResponse.json(
+        { error: "Image URL is required" },
+        { status: 400 }
+      );
+    }
+
+    const bucketName = "images";
+    const pathPrefix = `/storage/v1/object/public/${bucketName}/`;
+    const pathIndex = imageUrl.indexOf(pathPrefix);
+
+    if (pathIndex === -1) {
+      return NextResponse.json(
+        { error: "Invalid Supabase image URL" },
+        { status: 400 }
+      );
+    }
+
+    const filePath = imageUrl.substring(pathIndex + pathPrefix.length);
+
+    //const folder = filePath.split("/")[0];
+    //if (
+    //  !Object.values(UPLOAD_CONFIGS).some((config) => config.folder === folder)
+    //) {
+    //  return NextResponse.json(
+    //    { error: "Cannot delete files from this folder type" },
+    //    { status: 403 }
+    //  );
+    //}
+
+    const { error: deleteError } = await supabase.storage
+      .from(bucketName)
+      .remove([filePath]);
+
+    if (deleteError) {
+      console.error("Supabase delete error:", deleteError);
+      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+    }
+
+    return NextResponse.json(
+      { message: "Image deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Delete image error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

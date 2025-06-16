@@ -15,16 +15,36 @@ export const createMissingPet = async (
   reporterId: string,
   data: MissingPetInput
 ) => {
-  return prisma.missingPet.create({
-    data: {
-      reporter_id: reporterId,
-      pet_id: data.pet_id,
-      latitude: data.latitude,
-      longitude: data.longitude,
-      photo_urls: data.photo_urls ?? [],
-      description: data.description,
-    },
+  return prisma.$transaction(async (tx) => {
+    const missing = await prisma.missingPet.create({
+      data: {
+        reporter_id: reporterId,
+        pet_id: data.pet_id,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        photo_urls: data.photo_urls ?? [],
+        description: data.description,
+      },
+    });
+
+    await tx.pets.update({
+      where: { id: data.pet_id },
+      data: { is_lost: true },
+    });
+
+    return missing;
   });
+};
+
+/**
+ * Marca una mascota como encontrada. Solo el usuario que reportó la desaparición puede marcarla como encontrada.
+ */
+export const markPetAsFound = async (petId: number, userId: string) => {
+  const result = await prisma.pets.updateMany({
+    where: { id: petId, user_id: userId },
+    data: { is_lost: false },
+  });
+  return result.count > 0;
 };
 
 /**

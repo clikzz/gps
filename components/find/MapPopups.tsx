@@ -8,18 +8,26 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface ReportPopupProps {
   selected: MissingReport | null;
+  userId: string;
   photoIndex: number;
   setPhotoIndex: (i: number) => void;
   onClose: () => void;
 }
 
-export default function ReportPopup({ selected, photoIndex, setPhotoIndex, onClose }: ReportPopupProps) {
+export default function ReportPopup({ selected, userId, photoIndex, setPhotoIndex, onClose }: ReportPopupProps) {
   useEffect(() => {
     setPhotoIndex(0);
   }, [selected]);
 
   if (!selected) return null;
 
+  const isReporter = userId !== '' && selected.reporter_id === userId;
+
+  async function handleMarkAsFound() {
+    await fetch(`/api/find?mode=found&pet=${selected.pet_id}`, {
+      method: 'PUT',
+  });
+  }
 
   return (
     <Popup

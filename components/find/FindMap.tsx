@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import { useUser } from '@supabase/auth-helpers-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Marker } from 'react-map-gl/mapbox';
 import { MissingReport } from '@/app/types/find';
@@ -22,6 +23,9 @@ const Map = dynamic(
 export default function FindMap() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const { initial, error, onMapLoad } = useUserLocation();
+
+  const user = useUser();
+  const userId = user?.id || '';
 
   const [reports, setReports] = useState<MissingReport[]>([]);
   const [selected, setSelected] = useState<MissingReport | null>(null);
@@ -183,6 +187,7 @@ export default function FindMap() {
         {/* Popup */}
         <ReportPopup
           selected={selected}
+          userId={userId}
           photoIndex={photoIndex}
           setPhotoIndex={setPhotoIndex}
           onClose={() => setSelected(null)}

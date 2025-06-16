@@ -3,7 +3,8 @@ import {
   listRecentMissingPets, 
   listAllMissingPets, 
   findPetsByUser,
-  listMyMissingPets
+  listMyMissingPets,
+  markPetAsFound
 } from "@/server/services/find.service";
 import { Prisma } from "@prisma/client";
 import { reportMissingPetSchema } from "@/server/validations/find.validation";
@@ -61,6 +62,23 @@ export const reportMissingPet = async ( reporterId: string, body: any ) => {
   }
 };
 
+export const reportPetFound = async (
+  userId: string,
+  petId: number
+) => {
+  const ok = await markPetAsFound(petId, userId)
+  if (!ok) {
+    return new Response(
+      JSON.stringify({ error: "No tienes permiso o mascota no existe" }),
+      { status: 403, headers: { "Content-Type": "application/json" } }
+    )
+  }
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  })
+};
+
 export const fetchAllMissingPets = async () => {
   const list = await listAllMissingPets();
 
@@ -85,7 +103,7 @@ export const fetchAllMissingPets = async () => {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
-}
+};
 
 export const fetchRecentMissingPets = async () => {
   const list = await listRecentMissingPets();

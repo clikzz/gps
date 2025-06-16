@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import { Popup } from 'react-map-gl/mapbox';
-import { MissingReport } from '@/app/types/find';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import React, { useEffect } from "react";
+import { Popup } from "react-map-gl/mapbox";
+import { MissingReport } from "@/types/find";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 interface ReportPopupProps {
   selected: MissingReport | null;
@@ -13,13 +13,17 @@ interface ReportPopupProps {
   onClose: () => void;
 }
 
-export default function ReportPopup({ selected, photoIndex, setPhotoIndex, onClose }: ReportPopupProps) {
+export default function ReportPopup({
+  selected,
+  photoIndex,
+  setPhotoIndex,
+  onClose,
+}: ReportPopupProps) {
   useEffect(() => {
     setPhotoIndex(0);
   }, [selected]);
 
   if (!selected) return null;
-
 
   return (
     <Popup
@@ -50,9 +54,7 @@ export default function ReportPopup({ selected, photoIndex, setPhotoIndex, onClo
             <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0" />
           )}
           <div className="flex-1">
-            <CardTitle className="text-base">
-              {selected.pet.name}
-            </CardTitle>
+            <CardTitle className="text-base">{selected.pet.name}</CardTitle>
             <p className="text-sm text-muted-foreground">
               Reportado por: {selected.reporter.name}
             </p>

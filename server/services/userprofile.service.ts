@@ -4,7 +4,11 @@ export const getUserProfile = async (userId: string) => {
   return await prisma.userProfile.findUnique({
     where: { id: userId },
     include: {
-      pets: true,
+      pets: {
+        where: {
+          deleted: false,
+        },
+      },
     },
   });
 };

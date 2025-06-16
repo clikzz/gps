@@ -1,17 +1,26 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { MissingReport } from '@/app/types/find';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useEffect, useState } from "react";
+import { MissingReport } from "@/types/find";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface MyReportsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function MyReportsModal({ isOpen, onClose }: MyReportsModalProps) {
+export default function MyReportsModal({
+  isOpen,
+  onClose,
+}: MyReportsModalProps) {
   const [myReports, setMyReports] = useState<MissingReport[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +28,7 @@ export default function MyReportsModal({ isOpen, onClose }: MyReportsModalProps)
     if (!isOpen) return;
     setLoading(true);
 
-    fetch('/api/find?mode=my')
+    fetch("/api/find?mode=my")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -48,7 +57,10 @@ export default function MyReportsModal({ isOpen, onClose }: MyReportsModalProps)
           ) : (
             <ul className="space-y-4">
               {myReports.map((r) => (
-                <Card key={r.id} className="border flex flex-row items-center space-x-3 p-4">
+                <Card
+                  key={r.id}
+                  className="border flex flex-row items-center space-x-3 p-4"
+                >
                   <CardHeader className="flex items-center p-4 space-x-4">
                     {r.pet.photo_url ? (
                       <img

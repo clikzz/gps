@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Pets as Pet } from "@prisma/client";
+import { Pet } from "@/types/pet";
 
 type PhotoLog = { id: string; url: string };
 type Forum = { id: string; title: string };

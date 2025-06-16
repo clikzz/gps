@@ -8,17 +8,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 interface ReportPopupProps {
   selected: MissingReport | null;
+  userId: string;
   photoIndex: number;
   setPhotoIndex: (i: number) => void;
   onClose: () => void;
 }
 
-export default function ReportPopup({
-  selected,
-  photoIndex,
-  setPhotoIndex,
-  onClose,
-}: ReportPopupProps) {
+export default function ReportPopup({ selected, userId, photoIndex, setPhotoIndex, onClose }: ReportPopupProps) {
   useEffect(() => {
     setPhotoIndex(0);
   }, [selected]);

@@ -6,6 +6,7 @@ import {
   fetchAllMissingPets,
   fetchMyMissingPets,
   fetchUserPets,
+  reportPetFound
 } from "@/server/controllers/find.controller";
 
 /**

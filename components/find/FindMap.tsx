@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import dynamic from "next/dynamic";
-import "mapbox-gl/dist/mapbox-gl.css";
-import { Marker } from "react-map-gl/mapbox";
-import { MissingReport } from "@/types/find";
-import { useUserLocation } from "@/hooks/useUserLocation";
-import { Circle, MapPinCheck } from "lucide-react";
-import ActionsMenu from "@/components/find/ActionsMenu";
-import ReportModal, { LatLng } from "@/components/find/ReportModal";
-import MyReports from "@/components/find/MyReports";
-import OthersReports from "@/components/find/OthersReports";
-import MapMarkers from "@/components/find/MapMarkers";
-import ReportPopup from "@/components/find/MapPopups";
+import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import { useUser } from '@supabase/auth-helpers-react';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { Marker } from 'react-map-gl/mapbox';
+import { MissingReport } from '@/app/types/find';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { Circle, MapPinCheck } from 'lucide-react';
+import ActionsMenu from '@/components/find/ActionsMenu';
+import ReportModal, { LatLng } from '@/components/find/ReportModal';
+import MyReports from '@/components/find/MyReports';
+import OthersReports from '@/components/find/OthersReports';
+import MapMarkers from '@/components/find/MapMarkers';
+import ReportPopup from '@/components/find/MapPopups';
 
 const Map = dynamic(
   () => import("react-map-gl/mapbox").then((mod) => mod.default),
@@ -22,6 +23,9 @@ const Map = dynamic(
 export default function FindMap() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const { initial, error, onMapLoad } = useUserLocation();
+
+  const user = useUser();
+  const userId = user?.id || '';
 
   const [reports, setReports] = useState<MissingReport[]>([]);
   const [selected, setSelected] = useState<MissingReport | null>(null);
@@ -184,6 +188,7 @@ export default function FindMap() {
         {/* Popup */}
         <ReportPopup
           selected={selected}
+          userId={userId}
           photoIndex={photoIndex}
           setPhotoIndex={setPhotoIndex}
           onClose={() => setSelected(null)}

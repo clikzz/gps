@@ -50,26 +50,20 @@ async function getPosts(topicId: number): Promise<Post[]> {
   }
 }
 
-interface TopicPageProps {
-  params: {
-    id: string
-  }
-}
+export default async function TopicPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const topicId = parseInt(id, 10);
+  if (isNaN(topicId)) notFound();
 
-export default async function TopicPage({ params }: TopicPageProps) {
-  const topicId = Number.parseInt(params.id)
-  if (isNaN(topicId)) {
-    notFound()
-  }
+  const topic = await getTopic(topicId);
+  if (!topic) notFound();
+  const posts = await getPosts(topicId);
 
-  const topic = await getTopic(topicId)
-  if (!topic) {
-    notFound()
-  }
-
-  const posts = await getPosts(topicId)
-  const mainPost = posts.length > 0 ? posts[0] : null;
-  const replies = posts.length > 1 ? posts.slice(1) : [];
+  const [mainPost, ...replies] = posts;
 
   return (
     <div className="h-full w-full">

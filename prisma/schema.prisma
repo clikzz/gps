@@ -102,7 +102,7 @@ model MissingPet {
   description String?
   reported_at DateTime    @default(now())
   photo_urls  String[]
-  Pets        Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+  pet         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
   reporter    UserProfile @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
 
   @@unique([pet_id, reporter_id])

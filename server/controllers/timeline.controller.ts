@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as timelineService from '@/server/services/timeline.service';
 import { NewTimelineEntrySchema } from '@/server/validations/timeline.validation';
-import { TimelineEntryWithPhotos } from '@/app/types/timeline';
+import { TimelineEntryWithPhotos } from '@/types/timeline';
 
 
 function serializeEntry(entry: TimelineEntryWithPhotos) {

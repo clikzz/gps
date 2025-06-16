@@ -2,13 +2,14 @@ import {
   getUserProfile,
   updateUserProfile,
 } from "@/server/services/userprofile.service";
-import type { Pet } from "@prisma/client";
+import { Pets as Pet } from "@prisma/client";
 
 export const fetchUserProfile = async (userId: string) => {
   const profile = await getUserProfile(userId);
   const userProfile = {
     ...profile,
-    pets: profile?.pets.map((pet: Pet) => ({
+    tag: profile?.tag.toString(),
+    Pets: profile?.Pets.map((pet: Pet) => ({
       ...pet,
       id: pet.id.toString(),
     })),
@@ -19,6 +20,8 @@ export const fetchUserProfile = async (userId: string) => {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  console.log("Formatted user profile:", userProfile);
 
   return new Response(JSON.stringify(userProfile), {
     status: 200,

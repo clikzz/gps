@@ -1,13 +1,13 @@
 import prisma from "@/lib/db";
 
 export const getPets = async (user_id: string) => {
-  return await prisma.pet.findMany({
+  return await prisma.pets.findMany({
     where: { user_id },
   });
 };
 
 export const getPetById = async (id: number) => {
-  return await prisma.pet.findUnique({
+  return await prisma.pets.findUnique({
     where: { id: id },
   });
 };
@@ -30,7 +30,7 @@ export const createPet = async ({
     photo_url?: string;
   };
 }) => {
-  const activePetsCount = await prisma.pet.count({
+  const activePetsCount = await prisma.pets.count({
     where: {
       user_id: user.id,
       active: true,
@@ -51,7 +51,7 @@ export const createPet = async ({
     );
   }
 
-  return await prisma.pet.create({
+  return await prisma.pets.create({
     data: {
       user_id: user.id,
       name: pet.name,
@@ -87,7 +87,7 @@ export const putPetById = async ({
   sex: string;
   photo_url: string;
 }) => {
-  return await prisma.pet.update({
+  return await prisma.pets.update({
     where: { id },
     data: {
       name,
@@ -103,7 +103,7 @@ export const putPetById = async ({
 };
 
 export const softDeletePetById = async (id: number) => {
-  return await prisma.pet.update({
+  return await prisma.pets.update({
     where: { id },
     data: {
       deleted: true,

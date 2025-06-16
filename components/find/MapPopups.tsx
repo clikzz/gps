@@ -40,17 +40,17 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
         </button>
 
         <CardHeader className="flex flex-row items-center space-x-3 p-4">
-          {selected.pet.photo_url ? (
+          {selected.Pets.photo_url ? (
             <img
-              src={selected.pet.photo_url}
-              alt={selected.pet.name}
+              src={selected.Pets.photo_url}
+              alt={selected.Pets.name}
               className="w-14 h-14 object-cover rounded-full flex-shrink-0"
             />
           ) : (
             <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0" />
           )}
           <div className="flex-1">
-            <CardTitle className="text-base">{selected.pet.name}</CardTitle>
+            <CardTitle className="text-base">{selected.Pets.name}</CardTitle>
             <p className="text-sm text-muted-foreground">
               Reportado por: {selected.reporter.name}
             </p>

@@ -111,7 +111,7 @@ export const useNewPetForm = ({
 
     const updatedUser = {
       ...user,
-      pets: [...user.pets, newPet],
+      Pets: [...user.Pets, newPet],
     };
 
     useUserProfile.setState({ user: updatedUser });

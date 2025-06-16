@@ -96,14 +96,14 @@ export const fetchAllMissingPets = async () => {
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
     pet: {
-      id: item.pet.id.toString(),
-      name: item.pet.name || "Sin nombre",
-      photo_url: item.pet.photo_url,
+      id: item.Pets.id.toString(),
+      name: item.Pets.name || "Sin nombre",
+      photo_url: item.Pets.photo_url,
     },
     reporter: {
-      ...item.reporter,
-      id: item.reporter.id.toString(),
-      name: item.reporter.name || "Desconocido",
+      ...item.users,
+      id: item.users.id.toString(),
+      name: item.users.name || "Desconocido",
     },
   }));
 
@@ -116,20 +116,22 @@ export const fetchAllMissingPets = async () => {
 export const fetchRecentMissingPets = async () => {
   const list = await listRecentMissingPets();
 
+  console.log(list);
+
   const output = list.map((item) => ({
     ...item,
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
-    pet: {
-      id: item.pet.id.toString(),
-      name: item.pet.name || "Sin nombre",
-      photo_url: item.pet.photo_url,
+    Pets: {
+      id: item.Pets.id.toString(),
+      name: item.Pets.name || "Sin nombre",
+      photo_url: item.Pets.photo_url,
     },
     reporter: {
-      ...item.reporter,
-      id: item.reporter.id.toString(),
-      name: item.reporter.name || "Desconocido",
+      ...item.users,
+      id: item.users.id.toString(),
+      name: item.users.name || "Desconocido",
     },
   }));
 
@@ -146,15 +148,15 @@ export const fetchMyMissingPets = async (userId: string) => {
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
-    pet: {
-      id: item.pet.id.toString(),
-      name: item.pet.name || "Sin nombre",
-      photo_url: item.pet.photo_url,
+    Pets: {
+      id: item.Pets.id.toString(),
+      name: item.Pets.name || "Sin nombre",
+      photo_url: item.Pets.photo_url,
     },
     reporter: {
-      ...item.reporter,
-      id: item.reporter.id.toString(),
-      name: item.reporter.name || "Desconocido",
+      ...item.users,
+      id: item.users.id.toString(),
+      name: item.users.name || "Desconocido",
     },
   }));
   return new Response(JSON.stringify(output), {

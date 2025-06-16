@@ -90,6 +90,11 @@ export const useEditPetForm = ({
 
       const newPet = (await response.json()) as Pet;
 
+      if (!newPet) {
+        toast.error("No se pudo editar la mascota");
+        return;
+      }
+
       await updateUserPets(newPet);
 
       form.reset();
@@ -118,7 +123,7 @@ export const useEditPetForm = ({
 
     const updatedUser = {
       ...user,
-      pets: user.pets.map((pet) => (pet.id === newPet.id ? newPet : pet)),
+      Pets: user.Pets.map((pet) => (pet.id === newPet.id ? newPet : pet)),
     };
 
     useUserProfile.setState({ user: updatedUser });

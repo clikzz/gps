@@ -1,6 +1,5 @@
 import React from "react";
 import { useUserProfile } from "@/stores/userProfile";
-
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Table,
@@ -22,15 +21,13 @@ import { EditPetDrawer } from "./EditPetDrawer";
 function PetsTable() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isMobile = useMediaQuery("(max-width: 640px)");
-  const pets = useUserProfile((state) => state?.user?.pets) || [];
+  const pets = useUserProfile((state) => state.user?.Pets || []);
   const [selectedPet, setSelectedPet] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const handleRowClick = (pet: any) => {
     setSelectedPet(pet);
     setIsDrawerOpen(true);
   };
-
-  console.log("table", pets);
 
   return (
     <div className={`${isDesktop ? "col-span-3" : "col-span-1"}`}>

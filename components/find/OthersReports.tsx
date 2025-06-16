@@ -1,34 +1,25 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-
-interface MissingReport {
-  id: string;
-  pet_id: string;
-  reporter_id: string;
-  latitude: number;
-  longitude: number;
-  photo_url: string | null;
-  description?: string;
-  reported_at: string;
-  pet: { id: string; name: string; photo_url?: string };
-  reporter: { id: string; name: string };
-}
+import React, { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { MissingReport } from "@/types/find";
 
 interface OthersReportsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function OthersReportsModal({ isOpen, onClose }: OthersReportsModalProps) {
+export default function OthersReportsModal({
+  isOpen,
+  onClose,
+}: OthersReportsModalProps) {
   const [othersReports, setOthersReports] = useState<MissingReport[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    fetch('/api/find?mode=all')
+    fetch("/api/find?mode=all")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -59,11 +50,14 @@ export default function OthersReportsModal({ isOpen, onClose }: OthersReportsMod
         ) : (
           <ul className="space-y-2 max-h-80 overflow-y-auto">
             {othersReports.map((r) => (
-              <li key={r.id} className="border-b pb-2 flex items-start space-x-3">
-                {r.pet.photo_url && (
+              <li
+                key={r.id}
+                className="border-b pb-2 flex items-start space-x-3"
+              >
+                {r.Pets.photo_url && (
                   <img
-                    src={r.pet.photo_url}
-                    alt={r.pet.name}
+                    src={r.Pets.photo_url}
+                    alt={r.Pets.name}
                     className="w-14 h-14 rounded-full object-cover border"
                   />
                 )}
@@ -71,10 +65,10 @@ export default function OthersReportsModal({ isOpen, onClose }: OthersReportsMod
                 <div className="flex-1">
                   <p className="font-semibold flex items-center space-x-1">
                     <span>🐾</span>
-                    <span>{r.pet.name}</span>
+                    <span>{r.Pets.name}</span>
                   </p>
                   <p className="text-xs text-gray-600">
-                    Reportado por: {r.reporter.name} •{' '}
+                    Reportado por: {r.reporter.name} •{" "}
                     {new Date(r.reported_at).toLocaleString()}
                   </p>
                   {r.description && (

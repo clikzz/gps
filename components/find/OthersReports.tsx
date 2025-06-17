@@ -54,10 +54,10 @@ export default function OthersReportsModal({
                 key={r.id}
                 className="border-b pb-2 flex items-start space-x-3"
               >
-                {r.Pets.photo_url && (
+                {r.pet.photo_url && (
                   <img
-                    src={r.Pets.photo_url}
-                    alt={r.Pets.name}
+                    src={r.pet.photo_url}
+                    alt={r.pet.name}
                     className="w-14 h-14 rounded-full object-cover border"
                   />
                 )}
@@ -65,7 +65,7 @@ export default function OthersReportsModal({
                 <div className="flex-1">
                   <p className="font-semibold flex items-center space-x-1">
                     <span>🐾</span>
-                    <span>{r.Pets.name}</span>
+                    <span>{r.pet.name}</span>
                   </p>
                   <p className="text-xs text-gray-600">
                     Reportado por: {r.reporter.name} •{" "}

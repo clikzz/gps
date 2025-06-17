@@ -33,7 +33,7 @@ export const reportMissingPet = async (reporterId: string, body: any) => {
       longitude,
       photo_urls,
       description,
-    });
+    }); 
 
     const output = {
       ...missing,
@@ -91,7 +91,6 @@ export const fetchAllMissingPets = async () => {
   const list = await listAllMissingPets();
 
   const output = list.map((item) => ({
-    ...item,
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
@@ -101,7 +100,6 @@ export const fetchAllMissingPets = async () => {
       photo_url: item.Pets.photo_url,
     },
     reporter: {
-      ...item.users,
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
     },
@@ -119,7 +117,6 @@ export const fetchRecentMissingPets = async () => {
   console.log(list);
 
   const output = list.map((item) => ({
-    ...item,
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
@@ -129,7 +126,6 @@ export const fetchRecentMissingPets = async () => {
       photo_url: item.Pets.photo_url,
     },
     reporter: {
-      ...item.users,
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
     },
@@ -144,7 +140,6 @@ export const fetchRecentMissingPets = async () => {
 export const fetchMyMissingPets = async (userId: string) => {
   const list = await listMyMissingPets(userId);
   const output = list.map((item) => ({
-    ...item,
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
@@ -154,7 +149,6 @@ export const fetchMyMissingPets = async (userId: string) => {
       photo_url: item.Pets.photo_url,
     },
     reporter: {
-      ...item.users,
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
     },

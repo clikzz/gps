@@ -48,14 +48,13 @@ async function getTopics(subforumId: number): Promise<Topic[]> {
   }
 }
 
-interface SubforumPageProps {
-  params: {
-    slug: string
-  }
-}
-
-export default async function SubforumPage({ params }: SubforumPageProps) {
-  const subforumName = subforumMap[params.slug]
+export default async function SubforumPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params
+  const subforumName = subforumMap[slug]
   if (!subforumName) {
     notFound()
   }
@@ -79,11 +78,11 @@ export default async function SubforumPage({ params }: SubforumPageProps) {
 
         <div className="border rounded-lg p-4 font-medium text-lg">{subforumName}</div>
 
-        <TopicList topics={topics} subforumSlug={params.slug} subforumId={subforum?.id} />
+        <TopicList topics={topics} subforumSlug={slug} subforumId={subforum?.id} />
 
         <div className="flex justify-end">
           <Link
-            href={`/forum/subforum/${params.slug}/new-topic`}
+            href={`/forum/subforum/${slug}/new-topic`}
             className="border rounded-full py-2 px-4 text-sm hover:bg-accent transition-colors"
           >
             Nuevo tema

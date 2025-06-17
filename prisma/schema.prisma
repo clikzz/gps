@@ -1,185 +1,188 @@
 generator client {
-  provider = "prisma-client-js"
+provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+provider  = "postgresql"
+url       = env("DATABASE_URL")
+directUrl = env("DIRECT_URL")
 }
 
 model MarketplaceItems {
-  id             BigInt   @id @default(autoincrement())
-  user_id        String   @db.Uuid
-  title          String?
-  image_url      String?
-  description    String?
-  condition      String?
-  price          Float?
-  contact_method String?
-  created_at     DateTime @default(now())
-  status         String?  @default("active")
-  users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+id             BigInt   @id @default(autoincrement())
+user_id        String   @db.Uuid
+title          String?
+image_url      String?
+description    String?
+condition      String?
+price          Float?
+contact_method String?
+created_at     DateTime @default(now())
+status         String?  @default("active")
+users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Medications {
-  id       BigInt  @id @default(autoincrement())
-  pet_id   BigInt
-  name     String?
-  dose     String?
-  duration String?
-  Pets     Pets    @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+id       BigInt  @id @default(autoincrement())
+pet_id   BigInt
+name     String?
+dose     String?
+duration String?
+Pets     Pets    @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 }
 
 model Milestones {
-  id              String            @id
-  name            String            @unique
-  icon_url        String?
-  TimelineEntries TimelineEntries[] @relation("MilestoneToTimelineEntry")
+id              String            @id
+name            String            @unique
+icon_url        String?
+TimelineEntries TimelineEntries[] @relation("MilestoneToTimelineEntry")
 }
 
 model MissingPets {
-  id          BigInt   @id @default(autoincrement())
-  pet_id      BigInt
-  reporter_id String   @db.Uuid
-  latitude    Float
-  longitude   Float
-  description String?
-  reported_at DateTime @default(now())
-  photo_urls  String[]
-  Pets        Pets     @relation(fields: [pet_id], references: [id], onDelete: Cascade)
-  users       users    @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+id          BigInt   @id @default(autoincrement())
+pet_id      BigInt
+reporter_id String   @db.Uuid
+latitude    Float
+longitude   Float
+description String?
+reported_at DateTime @default(now())
+photo_urls  String[]
+Pets        Pets     @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+users       users    @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
 
-  @@unique([pet_id, reporter_id])
+@@unique([pet_id, reporter_id])
 }
 
 model Pets {
-  id               BigInt            @id @default(autoincrement())
-  user_id          String            @db.Uuid
-  name             String
-  species          String
-  active           Boolean?          @default(true)
-  date_of_adoption DateTime?
-  date_of_birth    DateTime?
-  fixed            Boolean?
-  photo_url        String?
-  sex              String?
-  deleted          Boolean?          @default(false)
-  Medications      Medications[]
-  MissingPets      MissingPets[]
-  users            users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  TimelineEntries  TimelineEntries[]
-  Vaccinations     Vaccinations[]
+id               BigInt            @id @default(autoincrement())
+user_id          String            @db.Uuid
+name             String
+species          String
+active           Boolean?          @default(true)
+date_of_adoption DateTime?
+date_of_birth    DateTime?
+fixed            Boolean?
+photo_url        String?
+sex              String?
+deleted          Boolean?          @default(false)
+is_lost          Boolean?          @default(false)
+Medications      Medications[]
+MissingPets      MissingPets[]
+users            users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+TimelineEntries  TimelineEntries[]
+Vaccinations     Vaccinations[]
 }
 
 model Posts {
-  id         BigInt   @id @default(autoincrement())
-  content    String
-  created_at DateTime @default(now())
-  topic_id   BigInt
-  updated_at DateTime
-  user_id    String   @db.Uuid
-  Topics     Topics   @relation(fields: [topic_id], references: [id], onDelete: Cascade)
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+id         BigInt   @id @default(autoincrement())
+content    String
+created_at DateTime @default(now())
+topic_id   BigInt
+updated_at DateTime @updatedAt
+user_id    String   @db.Uuid
+Topics     Topics   @relation(fields: [topic_id], references: [id], onDelete: Cascade)
+users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Reviews {
-  id         BigInt   @id @default(autoincrement())
-  service_id BigInt
-  user_id    String   @db.Uuid
-  rating     Int?
-  comment    String?
-  created_at DateTime @default(now())
-  Services   Services @relation(fields: [service_id], references: [id], onDelete: Cascade)
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+id         BigInt   @id @default(autoincrement())
+service_id BigInt
+user_id    String   @db.Uuid
+rating     Int?
+comment    String?
+created_at DateTime @default(now())
+Services   Services @relation(fields: [service_id], references: [id], onDelete: Cascade)
+users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Services {
-  id          BigInt    @id @default(autoincrement())
-  name        String
-  category    String
-  description String
-  latitude    Float
-  longitude   Float
-  Reviews     Reviews[]
+id          BigInt    @id @default(autoincrement())
+name        String
+category    String
+description String
+latitude    Float
+longitude   Float
+Reviews     Reviews[]
 }
 
 model Subforums {
-  id          BigInt   @id @default(autoincrement())
-  name        String   @unique
-  description String?
-  category    String
-  Topics      Topics[]
+id          BigInt   @id @default(autoincrement())
+name        String   @unique
+description String?
+category    String
+Topics      Topics[]
 }
 
 model TimelineEntries {
-  id                  String                @id @default(cuid())
-  user_id             String                @db.Uuid
-  pet_id              BigInt
-  title               String?
-  description         String?
-  event_date          DateTime
-  created_at          DateTime              @default(now())
-  updated_at          DateTime
-  Pets                Pets                  @relation(fields: [pet_id], references: [id], onDelete: Cascade)
-  users               users                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  TimelineEntryPhotos TimelineEntryPhotos[]
-  Milestones          Milestones[]          @relation("MilestoneToTimelineEntry")
+id                  String                @id
+user_id             String                @db.Uuid
+pet_id              BigInt
+title               String?
+description         String?
+event_date          DateTime
+created_at          DateTime              @default(now())
+updated_at          DateTime
+Pets                Pets                  @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+users               users                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+TimelineEntryPhotos TimelineEntryPhotos[]
+Milestones          Milestones[]          @relation("MilestoneToTimelineEntry")
 }
 
 model TimelineEntryPhotos {
-  id                String          @id @default(cuid())
-  timeline_entry_id String
-  photo_url         String
-  order             Int?
-  created_at        DateTime        @default(now())
-  TimelineEntries   TimelineEntries @relation(fields: [timeline_entry_id], references: [id], onDelete: Cascade)
+id                String          @id
+timeline_entry_id String
+photo_url         String
+order             Int?
+created_at        DateTime        @default(now())
+TimelineEntries   TimelineEntries @relation(fields: [timeline_entry_id], references: [id], onDelete: Cascade)
 }
 
 model Topics {
-  id          BigInt    @id @default(autoincrement())
-  title       String
-  created_at  DateTime  @default(now())
-  subforum_id BigInt
-  updated_at  DateTime
-  user_id     String    @db.Uuid
-  Posts       Posts[]
-  Subforums   Subforums @relation(fields: [subforum_id], references: [id], onDelete: Cascade)
-  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+id          BigInt    @id @default(autoincrement())
+title       String
+created_at  DateTime  @default(now())
+subforum_id BigInt
+updated_at  DateTime  @updatedAt
+user_id     String    @db.Uuid
+Posts       Posts[]
+Subforums   Subforums @relation(fields: [subforum_id], references: [id], onDelete: Cascade)
+users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Vaccinations {
-  id               BigInt    @id @default(autoincrement())
-  pet_id           BigInt
-  type             String?
-  application_date DateTime?
-  next_dose_date   DateTime?
-  Pets             Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+id               BigInt    @id @default(autoincrement())
+pet_id           BigInt
+type             String?
+application_date DateTime?
+next_dose_date   DateTime?
+Pets             Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 }
 
 model debug_logs {
-  id            Int       @id @default(autoincrement())
-  event_type    String?
-  user_id       String?   @db.Uuid
-  email         String?
-  error_message String?
-  details       Json?
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+id            Int       @id @default(autoincrement())
+event_type    String?
+user_id       String?   @db.Uuid
+email         String?
+error_message String?
+details       Json?
+created_at    DateTime? @default(now()) @db.Timestamptz(6)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model users {
-  id               String             @id @db.Uuid
-  email            String?
-  name             String?
-  avatar_url       String?
-  created_at       DateTime           @default(now())
-  tag              Int                @unique @default(autoincrement())
-  MarketplaceItems MarketplaceItems[]
-  MissingPets      MissingPets[]
-  Pets             Pets[]
-  Posts            Posts[]
-  Reviews          Reviews[]
-  TimelineEntries  TimelineEntries[]
-  Topics           Topics[]
+id               String             @id @db.Uuid
+email            String?
+name             String?
+avatar_url       String?
+created_at       DateTime           @default(now())
+tag              Int                @unique @default(autoincrement())
+lastMessageAt    DateTime?          @map("lastMessageAt")
+menssageCount    Int                @default(0)
+MarketplaceItems MarketplaceItems[]
+MissingPets      MissingPets[]
+Pets             Pets[]
+Posts            Posts[]
+Reviews          Reviews[]
+TimelineEntries  TimelineEntries[]
+Topics           Topics[]
 }

@@ -65,9 +65,9 @@ export default function ProfileConfigPage() {
   const updateProfile = async (updatedData: Partial<typeof user>) => {
     try {
       const updatePayload = {
-        name: updatedData.name !== undefined ? updatedData.name : user?.name,
+        name: updatedData?.name !== undefined ? updatedData?.name : user?.name,
         email: user?.email || "",
-        avatar_url: updatedData.avatar_url !== undefined ? updatedData.avatar_url : user?.avatar_url,
+        avatar_url: updatedData?.avatar_url !== undefined ? updatedData?.avatar_url : user?.avatar_url,
       }
       const response = await fetch("/api/profile", {
         method: "POST",
@@ -102,7 +102,7 @@ export default function ProfileConfigPage() {
 
       if (response.ok) {
         resetImage()
-        const success = await updateProfile({ avatar_url: null })
+        const success = await updateProfile({ avatar_url: undefined })
         if (success) {
           toast.success("Avatar eliminado correctamente")
         }
@@ -146,7 +146,7 @@ export default function ProfileConfigPage() {
       }
 
       const success = await updateProfile({
-        name: name.trim() || null,
+        name: name.trim() || undefined,
         avatar_url: avatarUrl,
       })
 

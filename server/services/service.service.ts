@@ -23,7 +23,7 @@ export const createService = async (data: CreateServiceInput) => {
       category: data.category,
     },
     include: {
-      reviews: true,
+      Reviews: true,
     },
   })
 }
@@ -31,7 +31,7 @@ export const createService = async (data: CreateServiceInput) => {
 export const getServices = async (filters: GetServicesInput) => {
   const services = await prisma.services.findMany({
     include: {
-      reviews: true,
+      Reviews: true,
     },
   })
 
@@ -53,7 +53,7 @@ export const getServiceById = async (serviceId: string) => {
   return await prisma.services.findUnique({
     where: { id: BigInt(serviceId) },
     include: {
-      reviews: true,
+      Reviews: true,
     },
   })
 }
@@ -69,7 +69,7 @@ export const updateService = async (serviceId: string, data: Partial<CreateServi
       ...(data.category && { category: data.category }),
     },
     include: {
-      reviews: true,
+      Reviews: true,
     },
   })
 }

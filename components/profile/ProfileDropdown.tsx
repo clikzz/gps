@@ -89,7 +89,7 @@ export function ProfileDropdown() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsPreviewOpen(false)} />
           <div className="relative z-10">
-            <ProfilePreview user={user} onClose={() => setIsPreviewOpen(false)} />
+            <ProfilePreview onClose={() => setIsPreviewOpen(false)} />
           </div>
         </div>
       )}

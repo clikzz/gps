@@ -42,5 +42,5 @@ export default async function AuthButton() {
     }
   }
 
-  return <ProfileDropdown user={userProfile} />
+  return <ProfileDropdown/>
 }

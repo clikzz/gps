@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useUser } from '@supabase/auth-helpers-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Marker } from 'react-map-gl/mapbox';
-import { MissingReport } from '@/app/types/find';
+import { MissingReport } from '@/types/find';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { Circle, MapPinCheck } from 'lucide-react';
 import ActionsMenu from '@/components/find/ActionsMenu';
@@ -25,7 +25,7 @@ export default function FindMap() {
   const { initial, error, onMapLoad } = useUserLocation();
 
   const user = useUser();
-  const userId = user?.id || '';
+  const userId = user?.id || "";
 
   const [reports, setReports] = useState<MissingReport[]>([]);
   const [selected, setSelected] = useState<MissingReport | null>(null);
@@ -33,8 +33,7 @@ export default function FindMap() {
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isMyReportsModalOpen, setIsMyReportsModalOpen] = useState(false);
-  const [isOthersReportsModalOpen, setIsOthersReportsModalOpen] =
-    useState(false);
+  const [isOthersReportsModalOpen, setIsOthersReportsModalOpen] = useState(false);
 
   const [pickLocationMode, setPickLocationMode] = useState(false);
   const [pickedLocation, setPickedLocation] = useState<LatLng | null>(null);
@@ -192,6 +191,10 @@ export default function FindMap() {
           photoIndex={photoIndex}
           setPhotoIndex={setPhotoIndex}
           onClose={() => setSelected(null)}
+          onFound={() => {
+            setSelected(null);
+            refreshReports();
+          }}
         />
 
         {/* Marcador de ubicación marcada */}

@@ -6,7 +6,8 @@ import {
   fetchAllMissingPets,
   fetchMyMissingPets,
   fetchUserPets,
-  reportPetFound
+  reportPetFound,
+  fetchOtherMissingPets
 } from "@/server/controllers/find.controller";
 
 /**
@@ -14,6 +15,7 @@ import {
  *      /api/find?mode=all    → lista todos los reportes
  *      /api/find?mode=pets   → lista mascotas del usuario autenticado
  *      /api/find?mode=my     → lista reportes de mascotas desaparecidas del usuario autenticado
+ *      /api/find?mode=others → lista reportes de mascotas desaparecidas de otros usuarios
  */
 export async function GET(req: NextRequest) {
   const user = await authenticateUser(req);
@@ -41,6 +43,11 @@ export async function GET(req: NextRequest) {
   if (mode === "my") {
     // /api/find?mode=my
     return fetchMyMissingPets(user.id);
+  }
+
+  if (mode === "others") {
+    // /api/find?mode=others
+    return fetchOtherMissingPets(user.id);
   }
 
   // /api/find?mode=recent
@@ -71,4 +78,36 @@ export async function POST(req: NextRequest) {
   }
 
   return reportMissingPet(user.id, payload);
+}
+
+/**
+ * PUT /api/find/found → marca una mascota como encontrada
+ */
+export async function PUT(req: NextRequest) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) {
+    const body = await user.text();
+    return new NextResponse(body, { status: user.status, headers: user.headers });
+  }
+
+  const url = new URL(req.url);
+  const mode = url.searchParams.get("mode");
+  const petIdRaw = url.searchParams.get("pet");
+
+  if (mode !== "found" || !petIdRaw) {
+    return new NextResponse(
+      JSON.stringify({ error: "Parámetros inválidos" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const petId = parseInt(petIdRaw, 10);
+  if (isNaN(petId)) {
+    return new NextResponse(
+      JSON.stringify({ error: "pet debe ser un número" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  return reportPetFound(user.id, petId);
 }

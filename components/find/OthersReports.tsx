@@ -19,7 +19,7 @@ export default function OthersReportsModal({
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    fetch("/api/find?mode=all")
+    fetch("/api/find?mode=others")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

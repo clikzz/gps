@@ -65,6 +65,24 @@ export const listAllMissingPets = async () => {
 };
 
 /**
+ * Listar los reportes de mascotas desaparecidas de otros usuarios.
+ */
+export const listOtherMissingPets = async (userId: string) => {
+  return prisma.missingPets.findMany({
+    where: { reporter_id: { not: userId } },
+    include: {
+      Pets: {
+        select: { id: true, name: true, photo_url: true },
+      },
+      users: {
+        select: { id: true, name: true },
+      },
+    },
+    orderBy: { reported_at: "desc" },
+  });
+};
+
+/**
  * Lista reportes del último mes para mostrar en el mapa.
  */
 export const listRecentMissingPets = async () => {

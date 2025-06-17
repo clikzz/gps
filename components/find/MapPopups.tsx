@@ -5,6 +5,7 @@ import { Popup } from "react-map-gl/mapbox";
 import { MissingReport } from "@/types/find";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface ReportPopupProps {
   selected: MissingReport | null;
@@ -12,14 +13,39 @@ interface ReportPopupProps {
   photoIndex: number;
   setPhotoIndex: (i: number) => void;
   onClose: () => void;
+  onFound: ()  => void;
 }
 
-export default function ReportPopup({ selected, userId, photoIndex, setPhotoIndex, onClose }: ReportPopupProps) {
+export default function ReportPopup({ selected, userId, photoIndex, setPhotoIndex, onClose, onFound }: ReportPopupProps) {
+  const [loading, setLoading] = React.useState(false);
+
   useEffect(() => {
     setPhotoIndex(0);
   }, [selected]);
 
   if (!selected) return null;
+
+  const isMyReport = selected.reporter_id === userId;
+
+  const handleMarkFound = async () => {
+    if (!selected) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/find?mode=found&pet=${selected.pet_id}`,
+        { method: "PUT" }
+      );
+      if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+      onClose();
+      onFound();
+    } catch (err: any) {
+      alert("Error marcando encontrada: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  console.log("userId:", userId, "selected.reporter_id:", selected?.reporter_id)
 
   return (
     <Popup
@@ -40,17 +66,17 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
         </button>
 
         <CardHeader className="flex flex-row items-center space-x-3 p-4">
-          {selected.Pets.photo_url ? (
+          {selected.pet.photo_url ? (
             <img
-              src={selected.Pets.photo_url}
-              alt={selected.Pets.name}
+              src={selected.pet.photo_url}
+              alt={selected.pet.name}
               className="w-14 h-14 object-cover rounded-full flex-shrink-0"
             />
           ) : (
             <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0" />
           )}
           <div className="flex-1">
-            <CardTitle className="text-base">{selected.Pets.name}</CardTitle>
+            <CardTitle className="text-base">{selected.pet.name}</CardTitle>
             <p className="text-sm text-muted-foreground">
               Reportado por: {selected.reporter.name}
             </p>
@@ -94,6 +120,18 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
           <p className="text-xs text-muted-foreground text-right">
             {new Date(selected.reported_at).toLocaleString()}
           </p>
+
+          {isMyReport && (
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleMarkFound}
+              disabled={loading}
+              className="w-full mt-2"
+            >
+              {loading ? "Marcando..." : "Marcar encontrada"}
+            </Button>
+          )}
         </CardContent>
       </Card>
     </Popup>

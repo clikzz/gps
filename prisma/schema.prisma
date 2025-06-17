@@ -114,14 +114,14 @@ Topics      Topics[]
 }
 
 model TimelineEntries {
-id                  String                @id
+id                  String                @id @default(cuid())
 user_id             String                @db.Uuid
 pet_id              BigInt
 title               String?
 description         String?
 event_date          DateTime
 created_at          DateTime              @default(now())
-updated_at          DateTime
+updated_at          DateTime              @default(now()) @updatedAt
 Pets                Pets                  @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 users               users                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
 TimelineEntryPhotos TimelineEntryPhotos[]
@@ -129,7 +129,7 @@ Milestones          Milestones[]          @relation("MilestoneToTimelineEntry")
 }
 
 model TimelineEntryPhotos {
-id                String          @id
+id                String          @id @default(cuid())
 timeline_entry_id String
 photo_url         String
 order             Int?

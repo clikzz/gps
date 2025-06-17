@@ -4,6 +4,7 @@ import {
   listAllMissingPets,
   findPetsByUser,
   listMyMissingPets,
+  listOtherMissingPets,
   markPetAsFound
 } from "@/server/services/find.service";
 import { Prisma } from "@prisma/client";
@@ -94,10 +95,15 @@ export const fetchAllMissingPets = async () => {
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
+    latitude: item.latitude,
+    longitude: item.longitude,
+    photo_urls: item.photo_urls,
+    description: item.description,
+    reported_at: item.reported_at.toISOString(),
     pet: {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
-      photo_url: item.Pets.photo_url,
+      photo_url: item.Pets.photo_url ?? undefined,
     },
     reporter: {
       id: item.users.id.toString(),
@@ -120,7 +126,12 @@ export const fetchRecentMissingPets = async () => {
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
-    Pets: {
+    latitude: item.latitude,
+    longitude: item.longitude,
+    photo_urls: item.photo_urls,
+    description: item.description,
+    reported_at: item.reported_at.toISOString(),
+    pet: {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url,
@@ -143,7 +154,7 @@ export const fetchMyMissingPets = async (userId: string) => {
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
-    Pets: {
+    pet: {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url,
@@ -152,6 +163,32 @@ export const fetchMyMissingPets = async (userId: string) => {
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
     },
+  }));
+  return new Response(JSON.stringify(output), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+};
+
+export const fetchOtherMissingPets = async (userId: string) => {
+  const list = await listOtherMissingPets(userId);
+
+  const output = list.map((item) => ({
+    id: item.id.toString(),
+    pet_id: item.pet_id.toString(),
+    reporter_id: item.reporter_id.toString(),
+    latitude: item.latitude,
+    longitude: item.longitude,
+    pet: {
+      id: item.Pets.id.toString(),
+      name: item.Pets.name || "Sin nombre",
+      photo_url: item.Pets.photo_url,
+    },
+    reporter: {
+      id: item.users.id.toString(),
+      name: item.users.name || "Desconocido",
+    },
+    reported_at: item.reported_at.toISOString(),
   }));
   return new Response(JSON.stringify(output), {
     status: 200,

@@ -21,10 +21,10 @@ export default function MapMarkers({ reports, onSelect }: MapMarkersProps) {
           anchor="bottom"
           onClick={() => onSelect(r)}
         >
-          {r.Pets.photo_url ? (
+          {r.pet.photo_url ? (
             <img
-              src={r.Pets.photo_url}
-              alt={r.Pets.name}
+              src={r.pet.photo_url}
+              alt={r.pet.name}
               className="w-14 h-14 rounded-full border-2 border-white shadow-lg cursor-pointer"
             />
           ) : (

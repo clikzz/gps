@@ -137,6 +137,16 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
     }
   }
 
+  function movePhoto(index: number, direction: 'left' | 'right') {
+    const newPhotos = [...selectedPhotos];
+    const target = direction === 'left' ? index - 1 : index + 1;
+    [newPhotos[index], newPhotos[target]] = [newPhotos[target], newPhotos[index]];
+    setSelectedPhotos(newPhotos);
+    const dt = new DataTransfer();
+    newPhotos.forEach(file => dt.items.add(file));
+    form.setValue('photos', dt.files);
+  }
+
   // Validación personalizada antes del envío (foto o descripción)
   function validateFormData(data: FormValues): string | null {
     const hasPhotos = selectedPhotos.length > 0;
@@ -246,7 +256,7 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
           </FormItem>
         )} />
 
-        <FormField control={form.control} name="photos" render={({ field }) => (
+        <FormField control={form.control} name="photos" render={() => (
           <FormItem>
             <FormLabel>Fotos (opcional - máx. 5)</FormLabel>
             <FormControl>
@@ -267,6 +277,26 @@ export default function NewTimelineEntryForm({ petId, onSuccess }: NewTimelineEn
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {selectedPhotos.map((file, index) => (
                     <div key={index} className="relative">
+                      {/* Botón mover a la izquierda */}
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => movePhoto(index, 'left')}
+                          className="absolute top-1 left-1 bg-background/80 rounded-full p-1"
+                        >
+                          ‹
+                        </button>
+                      )}
+                      {/* Botón mover a la derecha */}
+                      {index < selectedPhotos.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => movePhoto(index, 'right')}
+                          className="absolute top-1 right-6 bg-background/80 rounded-full p-1"
+                        >
+                          ›
+                        </button>
+                      )}
                       <img
                         src={URL.createObjectURL(file)}
                         alt={`Preview ${index + 1}`}

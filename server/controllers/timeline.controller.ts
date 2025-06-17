@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import * as timelineService from '@/server/services/timeline.service';
 import { NewTimelineEntrySchema } from '@/server/validations/timeline.validation';
 import { TimelineEntryWithPhotos } from '@/types/timeline';
+import { createClient } from '@/utils/supabase/server';
 
 
 function serializeEntry(entry: TimelineEntryWithPhotos) {
@@ -69,4 +70,63 @@ export async function createEntry(userId: string, petIdStr: string, payload: any
         console.error(`[TimelineController] Error en createEntry:`, error);
         return NextResponse.json({ error: 'Error interno del servidor al crear la entrada.' }, { status: 500 });
     }
+}
+
+export async function deleteEntry(
+  userId: string,
+  petIdStr: string,
+  entryId: string
+) {
+  try {
+    const petId = BigInt(petIdStr);
+
+    // Validar existencia y permisos sobre la mascota
+    const ownerId = await timelineService.getPetOwnerId(petId);
+    if (!ownerId) {
+      return NextResponse.json({ error: 'Mascota no encontrada.' }, { status: 404 });
+    }
+    if (ownerId !== userId) {
+      return NextResponse.json({ error: 'No autorizado para eliminar esta entrada.' }, { status: 403 });
+    }
+
+    // Eliminar en DB y obtener URLs de fotos
+    let photoUrls: string[];
+    try {
+      photoUrls = await timelineService.deleteTimelineEntry(entryId);
+    } catch (err) {
+      console.error(`[TimelineController] Error en deleteTimelineEntry:`, err);
+      return NextResponse.json({ error: 'Entrada de timeline no encontrada.' }, { status: 404 });
+    }
+
+    // Borrar imágenes en Supabase Storage
+    const supabase = await createClient();
+    const bucket = 'images';
+    const pathPrefix = `/storage/v1/object/public/${bucket}/`;
+    const filePaths = photoUrls.reduce<string[]>((acc, url) => {
+      const idx = url.indexOf(pathPrefix);
+      if (idx !== -1) {
+        acc.push(url.substring(idx + pathPrefix.length));
+      }
+      return acc;
+    }, []);
+
+    if (filePaths.length > 0) {
+      const { error: supError } = await supabase.storage.from(bucket).remove(filePaths);
+      if (supError) {
+        console.error(`[TimelineController] Error eliminando imágenes:`, supError);
+      }
+    }
+
+    return NextResponse.json(
+      { message: 'Entrada eliminada correctamente.' },
+      { status: 200 }
+    );
+
+  } catch (error) {
+    console.error(`[TimelineController] Error en deleteEntry:`, error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor.' },
+      { status: 500 }
+    );
+  }
 }

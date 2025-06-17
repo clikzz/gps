@@ -1,6 +1,6 @@
 {
   "private": true,
-    "prisma": {
+  "prisma": {
     "seed": "node prisma/seed.js"
   },
   "scripts": {

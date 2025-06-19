@@ -106,7 +106,7 @@ export const addTopic = async (req: Request) => {
       { status: 422, headers: { "Content-Type": "application/json" } }
     );
   }
-  if (err instanceof Error && err.message.includes("120 segundos")) {
+  if (err instanceof Error && err.message.includes("10 segundos")) {
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 429, headers: { "Content-Type": "application/json" } }
@@ -151,7 +151,7 @@ export const addPost = async (req: Request) => {
       { status: 422, headers: { "Content-Type": "application/json" } }
     );
   }
-  if (err instanceof Error && err.message.includes("120 segundos")) {
+  if (err instanceof Error && err.message.includes("10 segundos")) {
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 429, headers: { "Content-Type": "application/json" } }

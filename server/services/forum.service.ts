@@ -46,8 +46,8 @@ export const createTopic = async (
 
     if (profile?.lastMessageAt) {
       const secondsSinceLast = (Date.now() - new Date(profile.lastMessageAt).getTime()) / 1000;
-      if (secondsSinceLast < 120) {
-        throw new Error("Debes esperar 120 segundos entre publicaciones.");
+      if (secondsSinceLast < 10) {
+        throw new Error("Debes esperar 10 segundos entre publicaciones.");
       }
     }
     const topic = await tx.topics.create({
@@ -80,8 +80,8 @@ export const createPost = async (
     const profile = await tx.users.findUnique({ where: { id: userId } });
     if (profile?.lastMessageAt) {
       const secondsSinceLast = (Date.now() - new Date(profile.lastMessageAt).getTime()) / 1000;
-      if (secondsSinceLast < 120) {
-        throw new Error("Debes esperar 120 segundos entre publicaciones.");
+      if (secondsSinceLast < 10) {
+        throw new Error("Debes esperar 10 segundos entre publicaciones.");
       }
     }
     const post = await tx.posts.create({

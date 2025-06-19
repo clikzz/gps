@@ -79,7 +79,7 @@ export function ReplyForm({ topicId }: ReplyFormProps) {
         />
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="text-sm text-muted-foreground">
-            {cooldown && "Podrás publicar otro mensaje en 2 minutos."}
+            {cooldown && "Podrás publicar otro mensaje en 10 segundos."}
           </div>
           <Button type="submit" disabled={isSubmitting || cooldown} className="w-full sm:w-auto">
             {isSubmitting ? "Enviando..." : "Enviar respuesta"}

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { formatDateLabel } from "@/lib/date"
 
 interface ForumCategoryProps {
   category: {
@@ -55,7 +56,9 @@ export function ForumCategory({ category }: ForumCategoryProps) {
                 <div>
                   {subforum.lastPost ? (
                     <>
-                      <div className="text-muted-foreground">{subforum.lastPost.date}</div>
+                      <div className="text-muted-foreground">
+                        {formatDateLabel(subforum.lastPost.date)}
+                        </div>
                       <div>
                         por{subforum.lastPost.author.name}#{subforum.lastPost.author.tag}
                         <Link href={`/forum/user/${subforum.lastPost.author.id}`} className="hover:underline">

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { formatDateLabel } from "@/lib/date"
 
 interface Reply {
   id: number
@@ -36,12 +37,16 @@ export function ReplyList({ replies }: ReplyListProps) {
                 <Link href={`/forum/user/${reply.author.id}`} className="font-medium hover:underline text-base">
                   {reply.author.name}#{reply.author.tag}
                 </Link>
-                <div className="text-sm text-muted-foreground mt-1">Mensajes: {reply.author.menssageCount}</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Mensajes: {reply.author.menssageCount}
+                  </div>
               </div>
             </div>
 
             <div className="lg:col-span-9 xl:col-span-10">
-              <div className="text-sm text-muted-foreground mb-4">{new Date(reply.createdAt).toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground mb-4">
+                {formatDateLabel(reply.createdAt)}
+                </div>
               <div className="prose max-w-none text-base leading-relaxed">
                 <p className="whitespace-pre-wrap">{reply.content}</p>
               </div>

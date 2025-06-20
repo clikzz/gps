@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { formatDateLabel } from "@/lib/date"
 
 interface Topic {
   id: number
@@ -55,7 +56,9 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
             </div>
 
             <div className="lg:col-span-1 xl:col-span-2 text-sm lg:text-right">
-              <div className="text-muted-foreground">{new Date(topic.updatedAt).toLocaleDateString()}</div>
+              <div className="text-muted-foreground">
+                {formatDateLabel(topic.updatedAt)}
+                </div>
               <div>
                 por {topic.author.name}#{topic.author.tag} 
                 <Link href={`/forum/user/${topic.author.id}`} className="hover:underline">

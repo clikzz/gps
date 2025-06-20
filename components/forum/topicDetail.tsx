@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { formatDateLabel } from "@/lib/date"
 
 interface TopicDetailProps {
   topic: {
@@ -43,12 +44,16 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
             <Link href={`/forum/user/${mainPost.author.id}`} className="font-medium hover:underline text-base">
               {mainPost.author.name}#{mainPost.author.tag}
             </Link>
-            <div className="text-sm text-muted-foreground mt-1">Mensajes: {mainPost.author.menssageCount}</div>
+            <div className="text-sm text-muted-foreground mt-1">
+              Mensajes: {mainPost.author.menssageCount}
+              </div>
           </div>
         </div>
 
         <div className="lg:col-span-9 xl:col-span-10">
-          <div className="text-sm text-muted-foreground mb-4">{new Date(mainPost.createdAt).toLocaleString()}</div>
+          <div className="text-sm text-muted-foreground mb-4">
+            {formatDateLabel(mainPost.createdAt)}
+            </div>
           <div className="prose max-w-none text-base leading-relaxed">
             <p className="whitespace-pre-wrap">{mainPost.content}</p>
           </div>

@@ -1,7 +1,7 @@
 import prisma from "@/lib/db"; 
 import { ZodError } from "zod";
-import { listSubforums, listTopics, listPosts, createTopic, createPost } from "../services/forum.service";
-import { createTopicSchema, createPostSchema } from "../validations/forum.validation";
+import { listSubforums, listTopics, listPosts, createTopic, createPost, deletePost, deleteTopic, updatePost, updateTopic } from "../services/forum.service";
+import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema} from "../validations/forum.validation";
 import { authenticateUser } from "../middlewares/auth.middleware";
 
 
@@ -208,3 +208,60 @@ export const addPost = async (req: Request) => {
 }
 }
 
+export async function editTopic(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+
+  try {
+    const { id } = req.url.match(/\/topics\/(\d+)/)!.groups!; 
+    const dto = editTopicSchema.parse(await req.json());
+    const result = await updateTopic(user.id, +id, dto);
+    if (result.count === 0) throw new Error("No autorizado o no existe");
+    return new Response(null, { status: 204 });
+  } catch (err) {
+    if (err instanceof ZodError)
+      return new Response(JSON.stringify({ errors: err.errors }), { status: 422 });
+    const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+    return new Response(JSON.stringify({ error: errorMessage }), { status: 403 });
+  }
+}
+
+export async function removeTopic(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+
+  const { id } = req.url.match(/\/topics\/(\d+)/)!.groups!;
+  const result = await deleteTopic(user.id, +id);
+  return result.count
+    ? new Response(null, { status: 204 })
+    : new Response(JSON.stringify({ error: "No autorizado o no existe" }), { status: 403 });
+}
+
+export async function editPost(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+
+  try {
+    const { id } = req.url.match(/\/posts\/(\d+)/)!.groups!;
+    const dto = editPostSchema.parse(await req.json());
+    const result = await updatePost(user.id, +id, dto);
+    if (result.count === 0) throw new Error("No autorizado o no existe");
+    return new Response(null, { status: 204 });
+  } catch (err) {
+    if (err instanceof ZodError)
+      return new Response(JSON.stringify({ errors: err.errors }), { status: 422 });
+    const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+    return new Response(JSON.stringify({ error: errorMessage }), { status: 403 });
+  }
+}
+
+export async function removePost(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+
+  const { id } = req.url.match(/\/posts\/(\d+)/)!.groups!;
+  const result = await deletePost(user.id, +id);
+  return result.count
+    ? new Response(null, { status: 204 })
+    : new Response(JSON.stringify({ error: "No autorizado o no existe" }), { status: 403 });
+}

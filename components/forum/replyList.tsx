@@ -1,21 +1,6 @@
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
-
-interface Reply {
-  id: number
-  content: string
-  createdAt: string
-  author: {
-    name: string
-    id: string
-    tag: number
-    menssageCount: number
-  }
-}
-
-interface ReplyListProps {
-  replies: Reply[]
-}
+import { Reply, ReplyListProps } from "@/types/forum";
 
 export function ReplyList({ replies }: ReplyListProps) {
   if (replies.length === 0) {

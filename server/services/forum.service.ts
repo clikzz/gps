@@ -121,3 +121,43 @@ export const createPost = async (
     return post;
   });
 };
+
+export async function updateTopic(
+  userId: string,
+  topicId: number,
+  data: { title: string }
+) {
+  return prisma.topics.updateMany({
+    where: { id: topicId, user_id: userId },
+    data: { title: data.title, updated_at: new Date() },
+  });
+}
+
+export async function deleteTopic(
+  userId: string,
+  topicId: number
+) {
+  return prisma.topics.deleteMany({
+    where: { id: topicId, user_id: userId },
+  });
+}
+
+export async function updatePost(
+  userId: string,
+  postId: number,
+  data: { content: string }
+) {
+  return prisma.posts.updateMany({
+    where: { id: postId, user_id: userId },
+    data: { content: data.content, updated_at: new Date() },
+  });
+}
+
+export async function deletePost(
+  userId: string,
+  postId: number
+) {
+  return prisma.posts.deleteMany({
+    where: { id: postId, user_id: userId },
+  });
+}

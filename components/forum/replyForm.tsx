@@ -1,15 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-
-interface ReplyFormProps {
-  topicId: number
-}
+import { ReplyFormProps } from "@/types/forum";
 
 export function ReplyForm({ topicId }: ReplyFormProps) {
   const [content, setContent] = useState("")

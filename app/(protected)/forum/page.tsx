@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { ForumCategory } from "@/components/forum/forumCategory"
 import { fetcher } from "@/lib/utils"
+import ForumFooter  from "@/components/forum/forumFooter"
 
 interface Subforum {
   id: number
@@ -166,6 +167,8 @@ export default async function ForumPage() {
           <ForumCategory key={category.id} category={category} />
         ))}
       </main>
+      
+      <ForumFooter />
     </div>
   )
 }

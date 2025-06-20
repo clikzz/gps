@@ -1,29 +1,6 @@
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
-
-interface TopicDetailProps {
-  topic: {
-    id: number
-    title: string
-    createdAt: string
-    author: {
-      name: string
-      id: string
-      tag: number
-      menssageCount: number
-    }
-  }
-  mainPost: {
-    content: string
-    createdAt: string
-    author: {
-      name: string
-      id: string
-      tag: number
-      menssageCount: number
-    }
-  } | null
-}
+import { TopicDetailProps } from "@/types/forum";
 
 export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
   if (!mainPost) {

@@ -12,6 +12,7 @@ interface Post {
   author: {
     name: string
     id: string
+    tag: number
     menssageCount: number
   }
 }
@@ -23,6 +24,7 @@ interface Topic {
   author: {
     name: string
     id: string
+    tag: number
     menssageCount: number
   }
   Subforums: {

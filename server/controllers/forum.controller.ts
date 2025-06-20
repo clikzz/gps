@@ -1,7 +1,9 @@
+import prisma from "@/lib/db"; 
 import { ZodError } from "zod";
 import { listSubforums, listTopics, listPosts, createTopic, createPost } from "../services/forum.service";
 import { createTopicSchema, createPostSchema } from "../validations/forum.validation";
 import { authenticateUser } from "../middlewares/auth.middleware";
+
 
 export const fetchSubforums = async () => {
   const subs = await listSubforums();
@@ -34,6 +36,7 @@ export const fetchTopics = async (req: Request) => {
     author: {
       id: t.author.id,
       name: t.author.name,
+      tag: t.author.tag,
       menssageCount: t.author.menssageCount,
     },
     Subforums: {
@@ -68,6 +71,7 @@ export const fetchPosts = async (req: Request) => {
     author: {
       id: p.author.id,
       name: p.author.name,
+      tag: p.author.tag,
       menssageCount: p.author.menssageCount,
     },
   }));
@@ -79,17 +83,40 @@ export const fetchPosts = async (req: Request) => {
 };
 
 export const addTopic = async (req: Request) => {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+  const authUser = await authenticateUser(req);
+  if (authUser instanceof Response) return authUser;
+
+  const profile = await prisma.users.findUnique({
+    where: { id: authUser.id },
+    select: {
+      id: true,
+      name: true,
+      tag: true,
+      menssageCount: true,
+    },
+  });
+
+  if (!profile) {
+    return new Response(
+      JSON.stringify({ error: "Usuario no encontrado" }),
+      { status: 404, headers: { "Content-Type": "application/json" } }
+    );
+  }
 
   try {
     const body = await req.json();
     const dto = createTopicSchema.parse(body);
-    const topic = await createTopic(user.id, dto);
+    const topic = await createTopic(authUser.id, dto);
+
     const formatted = {
       id: Number(topic.id),
       subforumId: Number(topic.subforum_id),
-      userId: topic.user_id,
+      author: {
+        id: profile.id,
+        name: profile.name,
+        tag: profile.tag,
+        menssageCount: profile.menssageCount,
+      },
       title: topic.title,
       createdAt: topic.created_at.toISOString(),
       updatedAt: topic.updated_at.toISOString(),
@@ -123,18 +150,34 @@ export const addTopic = async (req: Request) => {
 
 
 export const addPost = async (req: Request) => {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+  const authUser = await authenticateUser(req);
+  if (authUser instanceof Response) return authUser;
+
+  const profile = await prisma.users.findUnique({
+    where: { id: authUser.id },
+    select: { id: true, name: true, tag: true, menssageCount: true },
+  });
+  if (!profile) {
+    return new Response(
+      JSON.stringify({ error: "Usuario no encontrado" }),
+      { status: 404, headers: { "Content-Type": "application/json" } }
+    );
+  }
 
   try {
     const body = await req.json();
     const dto = createPostSchema.parse(body);
-    const post = await createPost(user.id, dto);
+    const post = await createPost(authUser.id, dto);
 
     const formatted = {
       id: post.id.toString(),
       topicId: post.topic_id.toString(),
-      userId: post.user_id,
+      author: {
+        id: profile.id,
+        name: profile.name,
+        tag: profile.tag,
+        menssageCount: profile.menssageCount,
+      },
       content: post.content,
       createdAt: post.created_at.toISOString(),
       updatedAt: post.updated_at.toISOString(),

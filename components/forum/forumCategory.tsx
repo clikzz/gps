@@ -57,7 +57,7 @@ export function ForumCategory({ category }: ForumCategoryProps) {
                     <>
                       <div className="text-muted-foreground">{subforum.lastPost.date}</div>
                       <div>
-                        por{" "}
+                        por{subforum.lastPost.author.name}#{subforum.lastPost.author.tag}
                         <Link href={`/forum/user/${subforum.lastPost.author.id}`} className="hover:underline">
                           {subforum.lastPost.author.name}
                         </Link>

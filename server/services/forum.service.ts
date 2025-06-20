@@ -1,21 +1,34 @@
 import prisma from "@/lib/db";
-import { Topics, Posts, users } from "@prisma/client";
+import { Topics, Posts, users, Subforums } from "@prisma/client";
 
-export const listSubforums = async () => {
+export const listSubforums = async (): Promise<Subforums[]> => {
   return prisma.subforums.findMany({
     orderBy: { category: "asc" }
   });
 };
 
-export const listTopics = async (subforumId?: number): Promise<(Topics & { author: users; postsCount: number; Subforums: { name: string; category: string } })[]> => {
+export const listTopics = async (
+  subforumId?: number
+): Promise<
+  (
+    Topics & {
+      postsCount: number;
+      author: Pick<users, "id" | "name" | "tag" | "menssageCount">;
+      Subforums: Pick<Subforums, "name" | "category">;
+    }
+  )[]
+> => {
   const where = subforumId !== undefined ? { subforum_id: subforumId } : {};
 
   const topics = await prisma.topics.findMany({
     where,
     include: {
-      users: true,
-      Posts: { select: { id: true } },
-      Subforums: true,
+      users: 
+        { select: { id: true, name: true, tag: true, menssageCount: true } },
+      Posts: 
+        { select: { id: true } },
+      Subforums: 
+      { select: { name: true, category: true }}
     },
     orderBy: { updated_at: "desc" },
   });
@@ -24,13 +37,24 @@ export const listTopics = async (subforumId?: number): Promise<(Topics & { autho
     ...t,
     postsCount: t.Posts.length,
     author: t.users,
+    Subforums: t.Subforums,
   }));
 };
 
-export const listPosts = async (topicId: number): Promise<(Posts & { author: users })[]> => {
+export const listPosts = async (
+  topicId: number
+): Promise<
+  (
+    Posts & {
+      author: Pick<users, "id" | "name" | "tag" | "menssageCount">;
+    }
+  )[]
+> => {
   return prisma.posts.findMany({
     where: { topic_id: topicId },
-    include: { users: true },
+    include: { 
+      users: { select: { id: true, name: true, tag: true, menssageCount: true}} 
+    },
     orderBy: { created_at: "asc" },
   }).then(posts =>
     posts.map(p => ({ ...p, author: p.users }))

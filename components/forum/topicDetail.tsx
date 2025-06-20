@@ -8,6 +8,7 @@ interface TopicDetailProps {
     author: {
       name: string
       id: string
+      tag: number
       menssageCount: number
     }
   }
@@ -17,6 +18,7 @@ interface TopicDetailProps {
     author: {
       name: string
       id: string
+      tag: number
       menssageCount: number
     }
   } | null
@@ -39,7 +41,7 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
         <div className="lg:col-span-3 xl:col-span-2 lg:border-r lg:pr-6">
           <div className="text-center lg:text-left">
             <Link href={`/forum/user/${mainPost.author.id}`} className="font-medium hover:underline text-base">
-              {mainPost.author.name}
+              {mainPost.author.name}#{mainPost.author.tag}
             </Link>
             <div className="text-sm text-muted-foreground mt-1">Mensajes: {mainPost.author.menssageCount}</div>
           </div>

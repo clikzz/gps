@@ -8,6 +8,7 @@ interface Topic {
   author: {
     name: string
     id: string
+    tag: number
   }
   postsCount: number
 }
@@ -38,7 +39,6 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
                 {topic.title}
               </Link>
               <div className="text-sm text-muted-foreground mt-1">
-                por {topic.author.name} - {new Date(topic.createdAt).toLocaleDateString()}
               </div>
             </div>
 
@@ -57,7 +57,7 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
             <div className="lg:col-span-1 xl:col-span-2 text-sm lg:text-right">
               <div className="text-muted-foreground">{new Date(topic.updatedAt).toLocaleDateString()}</div>
               <div>
-                por{" "}
+                por {topic.author.name}#{topic.author.tag} 
                 <Link href={`/forum/user/${topic.author.id}`} className="hover:underline">
                   {topic.author.name}
                 </Link>
@@ -66,12 +66,6 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
           </div>
         </div>
       ))}
-      <Link
-        href={`/forum/subforum/${subforumSlug}/new-topic`}
-        className="border rounded-full py-2 px-4 text-sm hover:bg-accent transition-colors"
-      >
-        Nuevo tema
-      </Link>
     </div>
   )
 }

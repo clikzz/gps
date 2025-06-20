@@ -15,6 +15,7 @@ interface Subforum {
     author: {
       name: string
       id: string
+      tag: number
     }
   } | null
 }

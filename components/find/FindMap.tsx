@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, use } from 'react';
 import dynamic from 'next/dynamic';
-import { useUser } from '@supabase/auth-helpers-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Marker } from 'react-map-gl/mapbox';
+import { useUserProfile } from '@/stores/userProfile';
 import { MissingReport } from '@/types/find';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { Circle, MapPinCheck } from 'lucide-react';
@@ -14,6 +14,7 @@ import MyReports from '@/components/find/MyReports';
 import OthersReports from '@/components/find/OthersReports';
 import MapMarkers from '@/components/find/MapMarkers';
 import ReportPopup from '@/components/find/MapPopups';
+import { set } from 'zod';
 
 const Map = dynamic(
   () => import("react-map-gl/mapbox").then((mod) => mod.default),
@@ -24,8 +25,7 @@ export default function FindMap() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const { initial, error, onMapLoad } = useUserLocation();
 
-  const user = useUser();
-  const userId = user?.id || "";
+  const userId = useUserProfile((state) => state.user?.id || "");
 
   const [reports, setReports] = useState<MissingReport[]>([]);
   const [selected, setSelected] = useState<MissingReport | null>(null);
@@ -45,6 +45,19 @@ export default function FindMap() {
   useEffect(() => {
     refreshReports();
   }, []);
+
+  const goToReportLocation = (report: MissingReport) => {
+    setIsOthersReportsModalOpen(false);
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [report.longitude, report.latitude],
+        zoom: 16,
+        essential: true,
+        speed: 1.2,
+      });
+    }
+    setSelected(report);
+  };
 
   function refreshReports() {
     fetch("/api/find?mode=recent")
@@ -152,6 +165,7 @@ export default function FindMap() {
       <OthersReports
         isOpen={isOthersReportsModalOpen}
         onClose={() => setIsOthersReportsModalOpen(false)}
+        onGoTo={(r) => goToReportLocation(r)}
       />
 
       {/* Mapa */}

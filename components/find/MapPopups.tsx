@@ -124,7 +124,7 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
           {isMyReport && (
             <Button
               variant="outline"
-              size="default"
+              size="sm"
               onClick={handleMarkFound}
               disabled={loading}
               className="w-full mt-2"

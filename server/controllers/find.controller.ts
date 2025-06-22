@@ -48,26 +48,12 @@ export const reportMissingPet = async (reporterId: string, body: any) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2002" &&
-      Array.isArray(err.meta?.target) &&
-      err.meta?.target.includes("pet_id") &&
-      err.meta?.target.includes("reporter_id")
-    ) {
-      return new Response(
-        JSON.stringify({
-          error: "Ya has reportado esta mascota anteriormente.",
-        }),
-        { status: 409, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    console.error(err);
-    return new Response(JSON.stringify({ error: "Error al crear reporte." }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    const msg = err.message || "Error al crear reporte.";
+    const status = msg.includes("Ya tienes un reporte activo") ? 409 : 500;
+    return new Response(
+      JSON.stringify({ error: msg }),
+      { status, headers: { "Content-Type": "application/json" } }
+    );
   }
 };
 
@@ -154,6 +140,8 @@ export const fetchMyMissingPets = async (userId: string) => {
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
+    reported_at: item.reported_at.toISOString(),
+    description: item.description,
     pet: {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
@@ -177,6 +165,7 @@ export const fetchOtherMissingPets = async (userId: string) => {
     id: item.id.toString(),
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
+    description: item.description,
     latitude: item.latitude,
     longitude: item.longitude,
     pet: {

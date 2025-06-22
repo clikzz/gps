@@ -7,11 +7,13 @@ import { MissingReport } from "@/types/find";
 interface OthersReportsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onGoTo: (report: MissingReport) => void;
 }
 
 export default function OthersReportsModal({
   isOpen,
   onClose,
+  onGoTo,
 }: OthersReportsModalProps) {
   const [othersReports, setOthersReports] = useState<MissingReport[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,6 +76,15 @@ export default function OthersReportsModal({
                   {r.description && (
                     <p className="text-sm mt-1">{r.description}</p>
                   )}
+                </div>
+                <div className="mt-2 text-right">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onGoTo(r)}
+                  >
+                    Ver en mapa
+                  </Button>
                 </div>
               </li>
             ))}

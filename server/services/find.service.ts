@@ -16,7 +16,18 @@ export const createMissingPet = async (
   data: MissingPetInput
 ) => {
   return prisma.$transaction(async (tx) => {
-    const missing = await prisma.missingPets.create({
+    const exists = await tx.missingPets.findFirst({
+      where: {
+        pet_id: data.pet_id,
+        reporter_id: reporterId,
+        resolved: false,
+      }
+    });
+    if (exists) {
+      throw new Error("Ya tienes un reporte activo para esta mascota.");
+    }
+
+    const missing = await tx.missingPets.create({
       data: {
         reporter_id: reporterId,
         pet_id: data.pet_id,
@@ -37,14 +48,30 @@ export const createMissingPet = async (
 };
 
 /**
- * Marca una mascota como encontrada. Solo el usuario que reportó la desaparición puede marcarla como encontrada.
+ * Marca una mascota como encontrada y resuelve su reporte activos. Solo el usuario que reportó la desaparición puede marcarla como encontrada.
  */
 export const markPetAsFound = async (petId: number, userId: string) => {
-  const result = await prisma.pets.updateMany({
-    where: { id: petId, user_id: userId },
-    data: { is_lost: false },
+  return prisma.$transaction(async (tx) => {
+    const updatePet = await tx.pets.updateMany({
+      where: { id: petId, user_id: userId },
+      data: { is_lost: false },
+    });
+
+    if (updatePet.count === 0) {
+      throw new Error("No tienes permiso para marcar esta mascota como encontrada.");
+    }
+
+    await tx.missingPets.updateMany({
+      where: {
+        pet_id: petId,
+        reporter_id: userId,
+        resolved: false,
+      },
+      data: { resolved: true },
+    });
+
+    return true;
   });
-  return result.count > 0;
 };
 
 /**
@@ -52,6 +79,10 @@ export const markPetAsFound = async (petId: number, userId: string) => {
  */
 export const listAllMissingPets = async () => {
   return prisma.missingPets.findMany({
+    where: {
+      resolved: false,
+      Pets: { is_lost: true },
+    },
     include: {
       Pets: {
         select: { id: true, name: true, photo_url: true },
@@ -69,10 +100,14 @@ export const listAllMissingPets = async () => {
  */
 export const listOtherMissingPets = async (userId: string) => {
   return prisma.missingPets.findMany({
-    where: { reporter_id: { not: userId } },
+    where: {
+      reporter_id: { not: userId },
+      resolved: false,
+      Pets: { is_lost: true },
+    },
     include: {
       Pets: {
-        select: { id: true, name: true, photo_url: true },
+        select: { id: true, name: true, photo_url: true, is_lost: true },
       },
       users: {
         select: { id: true, name: true },
@@ -92,6 +127,8 @@ export const listRecentMissingPets = async () => {
   return prisma.missingPets.findMany({
     where: {
       reported_at: { gte: oneMonthAgo },
+      resolved: false,
+      Pets: { is_lost: true },
     },
     include: {
       Pets: {
@@ -110,7 +147,11 @@ export const listRecentMissingPets = async () => {
  */
 export const listMyMissingPets = async (userId: string) => {
   return prisma.missingPets.findMany({
-    where: { reporter_id: userId },
+    where: {
+      reporter_id: userId,
+      resolved: false,
+      Pets: { is_lost: true },
+    },
     include: {
       Pets: { select: { id: true, name: true, photo_url: true } },
       users: { select: { id: true, name: true } },
@@ -124,7 +165,10 @@ export const listMyMissingPets = async (userId: string) => {
  */
 export const findPetsByUser = async (userId: string) => {
   return prisma.pets.findMany({
-    where: { user_id: userId },
+    where: {
+      user_id: userId,
+      is_lost: false,
+    },
     orderBy: { name: "asc" },
   });
 };

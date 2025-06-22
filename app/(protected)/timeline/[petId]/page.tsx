@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-
-import PetTimelineHeader from "./TimelineHeader";
+import TimelineHeader from "@/components/timeline/TimelineHeader";
 import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer";
-import TimelineEntriesList from "./TimelineEntriesList";
-
+import TimelineEntriesList from "@/components/timeline/TimelineEntriesList";
 import { useTimelineData } from "@/hooks/timeline/useTimelineData";
 import { useMilestones } from "@/hooks/timeline/useMilestones";
 import { useTimelineFilters } from "@/hooks/timeline/useTimelineFilters";
@@ -42,7 +40,6 @@ export default function PetTimelinePage() {
     selectedMilestone,
   });
 
-  // Estado combinado
   const isLoading = isLoadingData || isLoadingMilestones;
   const error = dataError || milestonesError;
 
@@ -59,8 +56,10 @@ export default function PetTimelinePage() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4">
-      <PetTimelineHeader
+    // ← Aquí eliminamos `max-w-4xl` para heredar el ancho del layout global
+    <div className="w-full px-4">
+      {/* Header con filtros y botón */}
+      <TimelineHeader
         petData={pet}
         startDate={startDate}
         endDate={endDate}
@@ -69,10 +68,10 @@ export default function PetTimelinePage() {
         milestones={milestones}
         selectedMilestone={selectedMilestone}
         onMilestoneChange={setSelectedMilestone}
-      />
-
-      {/* Botón para crear nueva entrada en Drawer */}
-      <NewTimelineDrawer petId={pet.id.toString()} />
+      >
+        {/* Pasamos el botón como children para que quede alineado */}
+        <NewTimelineDrawer petId={pet.id.toString()} />
+      </TimelineHeader>
 
       <hr className="my-6 border-border" />
 

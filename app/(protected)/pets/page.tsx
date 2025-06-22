@@ -16,6 +16,7 @@ function Pets() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [selectedPet] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isNewPetDrawerOpen, setIsNewPetDrawerOpen] = useState(false);
 
   return (
     <motion.div
@@ -34,14 +35,17 @@ function Pets() {
           <PawPrint className="h-6 w-6 text-primary" />
           <h2 className="font-bold text-2xl md:text-3xl">Mis mascotas</h2>
         </div>
-        <NewPetDrawer />
+        <NewPetDrawer
+          open={isNewPetDrawerOpen}
+          onOpenChange={setIsNewPetDrawerOpen}
+        />
       </motion.div>
 
       {pets && pets.length > 0 ? (
         <div
           className={`grid gap-6 ${isDesktop ? "grid-cols-4" : "grid-cols-1"}`}
         >
-          <PetsStats />
+          {isDesktop && <PetsStats />}
           <PetsTable />
         </div>
       ) : (

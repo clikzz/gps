@@ -14,9 +14,25 @@ import {
 } from "@/components/ui/drawer";
 import NewPetForm from "./NewPetForm";
 
-export function NewPetDrawer() {
+export function NewPetDrawer({
+  open,
+  onOpenChange,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const handleClose = () => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+  };
+
+  const handleFormSuccess = () => {
+    handleClose();
+  };
+
   return (
-    <Drawer>
+    <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerTrigger asChild>
         <Button variant="outline">Nueva Mascota</Button>
       </DrawerTrigger>
@@ -29,7 +45,7 @@ export function NewPetDrawer() {
             </DrawerDescription>
           </DrawerHeader>
           <div className="overflow-y-auto max-h-[50vh] px-4">
-            <NewPetForm />
+            <NewPetForm onSuccess={handleFormSuccess} />
           </div>
           <DrawerFooter>
             <DrawerClose asChild>

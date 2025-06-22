@@ -57,9 +57,9 @@ async function getPosts(topicId: number): Promise<Post[]> {
 export default async function TopicPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string; id: string }>;
 }) {
-  const { id } = await params;
+  const { slug, id } = await params;
   const topicId = parseInt(id, 10);
   if (isNaN(topicId)) notFound();
 

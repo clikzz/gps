@@ -37,7 +37,7 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
         <div key={topic.id} className={`${index !== 0 ? "border-t" : ""}`}>
           <div className="grid grid-cols-1 lg:grid-cols-12 p-4 gap-4 hover:bg-muted/30 transition-colors">
             <div className="lg:col-span-7 xl:col-span-8">
-              <Link href={`/forum/topic/${topic.id}`} className="font-medium hover:underline text-base">
+              <Link href={`/forum/subforum/${subforumSlug}/topic/${topic.id}`} className="font-medium hover:underline text-base">
                 {topic.title}
               </Link>
               <div className="text-sm text-muted-foreground mt-1">

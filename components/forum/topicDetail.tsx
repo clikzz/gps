@@ -1,6 +1,39 @@
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
-import { TopicDetailProps } from "@/types/forum";
+
+interface TopicDetailProps {
+  topic: {
+    id: number
+    title: string
+    createdAt: string
+    author: {
+      name: string
+      id: string
+      tag: number
+      menssageCount: number
+    }
+  }
+  mainPost: {
+    content: string
+    createdAt: string
+    author: {
+      name: string
+      id: string
+      tag: number
+      menssageCount: number
+    }
+  } | null
+}
+
+const getUserTitle = (messageCount: number): string => {
+  if (messageCount >= 150) return "Líder de Manada"
+  if (messageCount >= 100) return "Veterinario(a)"
+  if (messageCount >= 50) return "Maullador(a) Senior"
+  if (messageCount >= 25) return "Amante de Mascotas"
+  if (messageCount >= 10) return "Cachorro Activo"
+  if (messageCount >= 5) return "Gatito Curioso"
+  return "Mascota Nueva"
+}
 
 export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
   if (!mainPost) {
@@ -12,31 +45,43 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden w-full">
-      <div className="border-b p-4 font-medium text-lg bg-muted/50 w-full">{topic.title}</div>
+    <div className="border rounded-lg overflow-hidden">
+      <div className="border-b p-3 flex justify-end items-center text-sm">
+        <div className="flex items-center gap-4">
+          <span>{formatDateLabel(topic.createdAt)}</span>
+          <span>#{topic.id}</span>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 p-6 gap-6 w-full">
-        <div className="lg:col-span-3 xl:col-span-2 lg:border-r lg:pr-6">
-          <div className="text-center lg:text-left">
-            <Link href={`/forum/user/${mainPost.author.id}`} className="font-medium hover:underline text-base">
-              {mainPost.author.name}#{mainPost.author.tag}
+      <div className="flex">
+        <div className="w-48 border-r p-4 text-center space-y-3">
+          <div>
+            <Link href={`/forum/user/${topic.author.id}`} className="font-medium hover:underline text-sm">
+              {topic.author.name}#{topic.author.tag}
             </Link>
-            <div className="text-sm text-muted-foreground mt-1">
-              Mensajes: {mainPost.author.menssageCount}
-              </div>
           </div>
+
+          <div className="text-xs font-medium">{getUserTitle(topic.author.menssageCount)}</div>
+
+          <div className="flex justify-center">
+            <img
+              src="/placeholder.svg?height=120&width=120"
+              alt={`Avatar de ${topic.author.name}`}
+              className="w-24 h-24 rounded border"
+            />
+          </div>
+
+          <div className="text-xs">Mensajes: {topic.author.menssageCount.toLocaleString()}</div>
         </div>
 
-        <div className="lg:col-span-9 xl:col-span-10">
-          <div className="text-sm text-muted-foreground mb-4">
-            {formatDateLabel(mainPost.createdAt)}
-            </div>
-          <div className="prose max-w-none text-base leading-relaxed">
-            <p className="whitespace-pre-wrap">{mainPost.content}</p>
-          </div>
+        <div className="flex-1 p-4 min-h-[200px] relative"> 
+            <>
+              <div className="prose max-w-none mb-8">
+                <p>{mainPost.content}</p>
+              </div>
+            </>
         </div>
       </div>
     </div>
-  );
+  )
 }
-

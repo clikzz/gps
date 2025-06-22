@@ -1,6 +1,21 @@
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
-import { ForumCategoryProps } from "@/types/forum";
+
+export interface ForumCategoryProps {
+  category: {
+    id: string
+    name: string
+    subforums: Array<{
+      id: number
+      name: string
+      slug: string
+      description: string
+      topicCount: number
+      messageCount: number
+      lastPost: any
+    }>
+  }
+}
 
 export function ForumCategory({ category }: ForumCategoryProps) {
   return (

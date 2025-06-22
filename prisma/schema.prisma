@@ -23,12 +23,49 @@ users          users    @relation(fields: [user_id], references: [id], onDelete:
 }
 
 model Medications {
-id       BigInt  @id @default(autoincrement())
-pet_id   BigInt
-name     String?
-dose     String?
-duration String?
-Pets     Pets    @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+id             BigInt   @id @default(autoincrement())
+pet_id         BigInt
+name           String
+dose           String
+duration       String
+start_date     DateTime
+next_dose_date DateTime?
+notes          String?
+active         Boolean   @default(true)
+created_at     DateTime  @default(now())
+updated_at     DateTime  @updatedAt
+Pets           Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+}
+
+model Vaccinations {
+id               BigInt    @id @default(autoincrement())
+pet_id           BigInt
+name             String
+type             String?
+application_date DateTime
+next_dose_date   DateTime?
+notes            String?
+active           Boolean   @default(true)
+created_at       DateTime  @default(now())
+updated_at       DateTime  @updatedAt
+Pets             Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+}
+
+model HealthAlerts {
+id           BigInt      @id @default(autoincrement())
+user_id      String      @db.Uuid
+pet_id       BigInt
+alert_type   String
+reference_id BigInt
+title        String
+message      String
+alert_date   DateTime
+sent         Boolean     @default(false)
+created_at   DateTime    @default(now())
+users        users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+
+@@index([alert_date, sent])
 }
 
 model Milestones {
@@ -71,6 +108,7 @@ MissingPets      MissingPets[]
 users            users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
 TimelineEntries  TimelineEntries[]
 Vaccinations     Vaccinations[]
+HealthAlerts     HealthAlerts[]
 }
 
 model Posts {
@@ -149,15 +187,6 @@ Subforums   Subforums @relation(fields: [subforum_id], references: [id], onDelet
 users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model Vaccinations {
-id               BigInt    @id @default(autoincrement())
-pet_id           BigInt
-type             String?
-application_date DateTime?
-next_dose_date   DateTime?
-Pets             Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
-}
-
 model debug_logs {
 id            Int       @id @default(autoincrement())
 event_type    String?
@@ -178,6 +207,7 @@ created_at       DateTime           @default(now())
 tag              Int                @unique @default(autoincrement())
 lastMessageAt    DateTime?          @map("lastMessageAt")
 menssageCount    Int                @default(0)
+role             Role               @default(USER)
 MarketplaceItems MarketplaceItems[]
 MissingPets      MissingPets[]
 Pets             Pets[]
@@ -185,4 +215,11 @@ Posts            Posts[]
 Reviews          Reviews[]
 TimelineEntries  TimelineEntries[]
 Topics           Topics[]
+HealthAlerts     HealthAlerts[]
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
 }

@@ -1,8 +1,102 @@
+"use client"
+
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
-import { Reply, ReplyListProps } from "@/types/forum";
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { useState } from "react"
+import { useEffect } from "react"
 
-export function ReplyList({ replies }: ReplyListProps) {
+export interface Reply {
+  id: number
+  content: string
+  createdAt: string
+  author: {
+    name: string
+    id: string
+    tag: number
+    menssageCount: number
+  }
+}
+
+export interface ReplyListProps {
+  replies: Reply[]
+  currentUserId?: string
+  userRole?: "user" | "moderator" | "admin"
+}
+
+const getUserTitle = (messageCount: number): string => {
+  if (messageCount >= 150) return "Líder de Manada"
+  if (messageCount >= 100) return "Veterinario(a)"
+  if (messageCount >= 50) return "Maullador(a) Senior"
+  if (messageCount >= 25) return "Amante de Mascotas"
+  if (messageCount >= 10) return "Cachorro Activo"
+  if (messageCount >= 5) return "Gatito Curioso"
+  return "Mascota Nueva"
+}
+
+export function ReplyList({ replies, userRole = "user", currentUserId }: ReplyListProps) {
+
+  const [editingReply, setEditingReply] = useState<number | null>(null)
+  const [editContent, setEditContent] = useState("")
+  const [replyList, setReplyList] = useState(replies)
+
+  useEffect(() => {
+    setReplyList(replies)
+  }, [replies])
+
+
+  const handleEdit = (reply: Reply) => {
+    setEditingReply(reply.id)
+    setEditContent(reply.content)
+  }
+
+  const handleSaveEdit = async (replyId: number) => {
+    setReplyList(replyList.map((reply) => (reply.id === replyId ? { ...reply, content: editContent } : reply)))
+    toast.success("Respuesta editada correctamente")
+    setEditingReply(null)
+    try {
+      const res = await fetch(`/api/forum/posts/${replyId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: editContent }),
+      })
+      if (!res.ok) {
+        throw new Error("Error al editar la respuesta")
+      }
+      setReplyList(replyList.map((r) =>
+        r.id === replyId ? { ...r, content: editContent } : r
+      ))
+      toast.success("Respuesta editada correctamente")
+      setEditingReply(null)
+      } catch (err: any) {
+        toast.error(err.message)
+    }
+  }
+
+  const handleDelete = async (replyId: number) => {
+    if (confirm("¿Estás seguro de que quieres eliminar esta respuesta?")) {
+      setReplyList(replyList.filter((reply) => reply.id !== replyId))
+      toast.success("Respuesta eliminada correctamente")
+      try {
+        const res = await fetch(`/api/forum/posts/${replyId}`, {
+          method: "DELETE",
+        })
+        if (res.status !== 204) {
+          const { error } = await res.json().catch(() => ({}))
+          throw new Error(error || "Error al eliminar")
+        }
+
+        setReplyList(replyList.filter((r) => r.id !== replyId))
+        toast.success("Respuesta eliminada correctamente")
+      } catch (err: any) {
+        toast.error(err.message)
+      }
+    }
+  }
+
   if (replies.length === 0) {
     return (
       <div className="text-center p-8 border rounded-lg text-muted-foreground">
@@ -14,31 +108,88 @@ export function ReplyList({ replies }: ReplyListProps) {
 
   return (
     <div className="space-y-4">
-      {replies.map((reply) => (
-        <div key={reply.id} className="border rounded-lg overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 p-6 gap-6">
-            <div className="lg:col-span-3 xl:col-span-2 lg:border-r lg:pr-6">
-              <div className="text-center lg:text-left">
-                <Link href={`/forum/user/${reply.author.id}`} className="font-medium hover:underline text-base">
-                  {reply.author.name}#{reply.author.tag}
-                </Link>
-                <div className="text-sm text-muted-foreground mt-1">
-                  Mensajes: {reply.author.menssageCount}
-                  </div>
+      {replyList.map((reply) => {
+        
+        const canDelete = currentUserId === reply.author.id || userRole === "admin"
+        const isEditing = editingReply === reply.id
+
+        return (
+          <div key={reply.id} className="border rounded-lg overflow-hidden">
+            <div className="border-b p-3 flex justify-end items-center text-sm">
+              <div className="flex items-center gap-4">
+                <span>{formatDateLabel(reply.createdAt)}</span>
+                <span>#{reply.id}</span>
               </div>
             </div>
 
-            <div className="lg:col-span-9 xl:col-span-10">
-              <div className="text-sm text-muted-foreground mb-4">
-                {formatDateLabel(reply.createdAt)}
+            <div className="flex">
+              <div className="w-48 border-r p-4 text-center space-y-3">
+                <div>
+                  <Link href={`/forum/user/${reply.author.id}`} className="font-medium hover:underline text-sm">
+                    {reply.author.name}#{reply.author.tag}
+                  </Link>
                 </div>
-              <div className="prose max-w-none text-base leading-relaxed">
-                <p className="whitespace-pre-wrap">{reply.content}</p>
+
+                <div className="text-xs font-medium">{getUserTitle(reply.author.menssageCount)}</div>
+
+                <div className="flex justify-center">
+                  <img
+                    src="/placeholder.svg?height=120&width=120"
+                    alt={`Avatar de ${reply.author.name}`}
+                    className="w-24 h-24 rounded border"
+                  />
+                </div>
+
+                <div className="text-xs">Mensajes: {reply.author.menssageCount.toLocaleString()}</div>
+              </div>
+
+              <div className="flex-1 p-4 min-h-[150px] relative">
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full min-h-[100px] p-3 border rounded-lg resize-none"
+                      placeholder="Edita tu mensaje..."
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleSaveEdit(reply.id)}>
+                        Guardar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingReply(null)}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="prose max-w-none mb-8">
+                      <p className="whitespace-pre-wrap">{reply.content}</p>
+                    </div>
+
+                    
+                    {(
+                      <div className="absolute bottom-4 right-4 flex gap-1 text-sm">
+                        {
+                          <button onClick={() => handleEdit(reply)} className="hover:underline">
+                            Editar
+                          </button>
+                        }
+                        { <span> | </span>}
+                        {
+                          <button onClick={() => handleDelete(reply.id)} className="hover:underline">
+                            Eliminar
+                          </button>
+                        }
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

@@ -1,6 +1,25 @@
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
-import { Topic, TopicListProps } from "@/types/forum";
+
+interface Topic {
+  id: number
+  title: string
+  createdAt: string
+  updatedAt: string
+  author: {
+    name: string
+    id: string
+    tag: number
+  }
+  postsCount: number
+}
+
+interface TopicListProps {
+  topics: Topic[]
+  subforumSlug: string
+  subforumId?: number
+}
+
 
 export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) {
   if (topics.length === 0) {

@@ -122,42 +122,67 @@ export const createPost = async (
   });
 };
 
-export async function updateTopic(
-  userId: string,
-  topicId: number,
-  data: { title: string }
-) {
-  return prisma.topics.updateMany({
-    where: { id: topicId, user_id: userId },
-    data: { title: data.title, updated_at: new Date() },
-  });
-}
-
-export async function deleteTopic(
-  userId: string,
-  topicId: number
-) {
-  return prisma.topics.deleteMany({
-    where: { id: topicId, user_id: userId },
-  });
-}
-
-export async function updatePost(
+export async function updateOwnPost(
   userId: string,
   postId: number,
-  data: { content: string }
+  content: string
 ) {
   return prisma.posts.updateMany({
     where: { id: postId, user_id: userId },
-    data: { content: data.content, updated_at: new Date() },
+    data: { content, updated_at: new Date() },
   });
 }
 
-export async function deletePost(
+export async function deleteOwnPost(
   userId: string,
   postId: number
 ) {
-  return prisma.posts.deleteMany({
-    where: { id: postId, user_id: userId },
+  return prisma.$transaction(async (tx) => {
+    const deleted = await tx.posts.deleteMany({
+      where: { id: postId, user_id: userId },
+    });
+    if (deleted.count > 0) {
+      await tx.users.update({
+        where: { id: userId },
+        data: { menssageCount: { decrement: 1 } },
+      });
+    }
+    return deleted;
   });
 }
+
+export async function updateOwnTopic(
+  userId: string,
+  topicId: number,
+  title: string
+) {
+  return prisma.topics.updateMany({
+    where: { id: topicId, user_id: userId },
+    data: { title, updated_at: new Date() },
+  });
+}
+
+
+export async function deleteOwnTopic(
+  userId: string,
+  topicId: number
+) {
+  return prisma.$transaction(async (tx) => {
+    const count = await tx.posts.count({
+      where: { topic_id: topicId, user_id: userId },
+    });
+    const deleted = await tx.topics.deleteMany({
+      where: { id: topicId, user_id: userId },
+    });
+    if (deleted.count > 0 && count > 0) {
+      await tx.users.update({
+        where: { id: userId },
+        data: { menssageCount: { decrement: count } },
+      });
+    }
+    return deleted;
+  });
+}
+
+
+

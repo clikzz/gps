@@ -1,8 +1,9 @@
 import prisma from "@/lib/db"; 
 import { ZodError } from "zod";
-import { listSubforums, listTopics, listPosts, createTopic, createPost, deletePost, deleteTopic, updatePost, updateTopic } from "../services/forum.service";
+import { listSubforums, listTopics, listPosts, createTopic, createPost, deleteOwnPost, deleteOwnTopic, updateOwnPost, updateOwnTopic } from "../services/forum.service";
 import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema} from "../validations/forum.validation";
 import { authenticateUser } from "../middlewares/auth.middleware";
+import { NextResponse } from "next/server";
 
 
 export const fetchSubforums = async () => {
@@ -208,60 +209,106 @@ export const addPost = async (req: Request) => {
 }
 }
 
-export async function editTopic(req: Request) {
+export async function editOwnPost(req: Request) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
 
+  const postId = Number(new URL(req.url).pathname.split("/").pop());
+  if (isNaN(postId)) {
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+  }
+
   try {
-    const { id } = req.url.match(/\/topics\/(\d+)/)!.groups!; 
-    const dto = editTopicSchema.parse(await req.json());
-    const result = await updateTopic(user.id, +id, dto);
-    if (result.count === 0) throw new Error("No autorizado o no existe");
-    return new Response(null, { status: 204 });
+    const { content } = editPostSchema.parse(await req.json());
+    const result = await updateOwnPost(user.id, postId, content);
+    if (result.count === 0) {
+      return NextResponse.json(
+        { error: "No tienes permiso o mensaje no existe" },
+        { status: 403 }
+      );
+    }
+    return new NextResponse(null, { status: 204 });
   } catch (err) {
-    if (err instanceof ZodError)
-      return new Response(JSON.stringify({ errors: err.errors }), { status: 422 });
-    const errorMessage = err instanceof Error ? err.message : "Error desconocido";
-    return new Response(JSON.stringify({ error: errorMessage }), { status: 403 });
+    if (err instanceof ZodError) {
+      return NextResponse.json(
+        { errors: err.errors },
+        { status: 422 }
+      );
+    }
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Error interno" },
+      { status: 500 }
+    );
   }
 }
 
-export async function removeTopic(req: Request) {
+export async function removeOwnPost(req: Request) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
 
-  const { id } = req.url.match(/\/topics\/(\d+)/)!.groups!;
-  const result = await deleteTopic(user.id, +id);
-  return result.count
-    ? new Response(null, { status: 204 })
-    : new Response(JSON.stringify({ error: "No autorizado o no existe" }), { status: 403 });
+  const postId = Number(new URL(req.url).pathname.split("/").pop());
+  if (isNaN(postId)) {
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+  }
+
+  const result = await deleteOwnPost(user.id, postId);
+  if (result.count === 0) {
+    return NextResponse.json(
+      { error: "No tienes permiso o mensaje no existe" },
+      { status: 403 }
+    );
+  }
+  return new NextResponse(null, { status: 204 });
 }
 
-export async function editPost(req: Request) {
+export async function editOwnTopic(req: Request) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
 
+  const topicId = Number(new URL(req.url).pathname.split("/").pop());
+  if (isNaN(topicId)) {
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+  }
+
   try {
-    const { id } = req.url.match(/\/posts\/(\d+)/)!.groups!;
-    const dto = editPostSchema.parse(await req.json());
-    const result = await updatePost(user.id, +id, dto);
-    if (result.count === 0) throw new Error("No autorizado o no existe");
-    return new Response(null, { status: 204 });
+    const { title } = editTopicSchema.parse(await req.json());
+    const result = await updateOwnTopic(user.id, topicId, title);
+    if (result.count === 0) {
+      return NextResponse.json(
+        { error: "No tienes permiso o tema no existe" },
+        { status: 403 }
+      );
+    }
+    return new NextResponse(null, { status: 204 });
   } catch (err) {
-    if (err instanceof ZodError)
-      return new Response(JSON.stringify({ errors: err.errors }), { status: 422 });
-    const errorMessage = err instanceof Error ? err.message : "Error desconocido";
-    return new Response(JSON.stringify({ error: errorMessage }), { status: 403 });
+    if (err instanceof ZodError) {
+      return NextResponse.json(
+        { errors: err.errors },
+        { status: 422 }
+      );
+    }
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Error interno" },
+      { status: 500 }
+    );
   }
 }
 
-export async function removePost(req: Request) {
+export async function removeOwnTopic(req: Request) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
 
-  const { id } = req.url.match(/\/posts\/(\d+)/)!.groups!;
-  const result = await deletePost(user.id, +id);
-  return result.count
-    ? new Response(null, { status: 204 })
-    : new Response(JSON.stringify({ error: "No autorizado o no existe" }), { status: 403 });
+  const topicId = Number(new URL(req.url).pathname.split("/").pop());
+  if (isNaN(topicId)) {
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+  }
+
+  const result = await deleteOwnTopic(user.id, topicId);
+  if (result.count === 0) {
+    return NextResponse.json(
+      { error: "No tienes permiso o tema no existe" },
+      { status: 403 }
+    );
+  }
+  return new NextResponse(null, { status: 204 });
 }

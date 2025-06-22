@@ -5,7 +5,7 @@ import { ReplyForm } from "@/components/forum/replyForm"
 import { fetcher } from "@/lib/utils"
 import { notFound } from "next/navigation"
 
-interface Post {
+export interface Post {
   id: number
   content: string
   createdAt: string
@@ -14,6 +14,7 @@ interface Post {
     id: string
     tag: number
     menssageCount: number
+    avatar_url?: string
   }
 }
 
@@ -26,6 +27,7 @@ interface Topic {
     id: string
     tag: number
     menssageCount: number
+    avatar_url?: string
   }
   Subforums: {
     name: string

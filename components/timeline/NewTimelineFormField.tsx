@@ -49,7 +49,7 @@ export const TextField: React.FC<TextFieldProps> = ({
   value,
   onChange,
   placeholder,
-  required,
+  required = false,
   error,
 }) => (
   <FormFieldWrapper label={label} required={required} error={error}>
@@ -74,21 +74,16 @@ interface DateFieldProps {
   value: string;
   onChange: (v: string) => void;
   max?: string;
-  required?: boolean;
-  error?: string;
 }
 export const DateField: React.FC<DateFieldProps> = ({
   label,
   value,
   onChange,
   max,
-  required,
-  error,
 }) => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Cierra el calendario al hacer clic fuera
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (
@@ -103,7 +98,6 @@ export const DateField: React.FC<DateFieldProps> = ({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
-  // Convierte "YYYY-MM-DD" → "DD-MM-YYYY"
   const displayValue = value
     ? (() => {
         const [y, m, d] = value.split("-");
@@ -112,7 +106,7 @@ export const DateField: React.FC<DateFieldProps> = ({
     : "dd-mm-aaaa";
 
   return (
-    <FormFieldWrapper label={label} required={required} error={error}>
+    <FormFieldWrapper label={label}>
       <div ref={wrapperRef} className="relative">
         <Button
           variant="outline"
@@ -123,7 +117,6 @@ export const DateField: React.FC<DateFieldProps> = ({
           <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
           {displayValue}
         </Button>
-
         <div
           className={`absolute z-20 mt-2 transform transition ease-out duration-150 origin-top-right
             ${open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}
@@ -189,7 +182,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   onChange,
   options,
   placeholder,
-  required,
+  required = false,
   error,
 }) => (
   <FormFieldWrapper label={label} required={required} error={error}>
@@ -208,14 +201,24 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   </FormFieldWrapper>
 );
 
-// Área de texto
-export const TextAreaField: React.FC<{
+// Área de texto (ahora acepta error y required)
+interface TextAreaFieldProps {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
-}> = ({ label, value, onChange, placeholder }) => (
-  <FormFieldWrapper label={label}>
+  required?: boolean;
+  error?: string;
+}
+export const TextAreaField: React.FC<TextAreaFieldProps> = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  error,
+}) => (
+  <FormFieldWrapper label={label} required={required} error={error}>
     <textarea
       rows={4}
       className="block w-full rounded border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"

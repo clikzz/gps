@@ -1,4 +1,3 @@
-// /components/timeline/NewTimelineForm.tsx
 "use client";
 
 import React, { useState, useRef } from "react";
@@ -31,32 +30,50 @@ export default function NewTimelineForm({
   const { isUploading, uploadTimelinePhotos } = useTimelineImageUpload();
   const { isSubmitting, createEntry } = useNewTimelineEntry(petId);
 
+  // Refs
+  const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Estado local
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState(today);
   const [selectedMilestones, setSelectedMilestones] = useState<string[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [errors, setErrors] = useState<{
+    title?: string;
+    description?: string;
+    photos?: string;
+  }>({});
+
+  // Límites
+  const TITLE_MAX = 50;
+  const DESC_MAX = 200;
+  const PHOTOS_MAX = 5;
 
   // Handlers
   const toggleMilestone = (id: string) =>
-    setSelectedMilestones(prev =>
+    setSelectedMilestones((prev) =>
       prev.includes(id)
-        ? prev.filter(x => x !== id)
+        ? prev.filter((x) => x !== id)
         : prev.length < 4
         ? [...prev, id]
         : prev
     );
 
   const handleFileChange = (files: FileList | null) => {
-    if (!files) return setSelectedPhotos([]);
-    setSelectedPhotos(Array.from(files).slice(0, 5));
+    if (!files) {
+      setSelectedPhotos([]);
+      return;
+    }
+    const picked = Array.from(files).slice(0, PHOTOS_MAX);
+    setSelectedPhotos(picked);
+    // No borramos aquí errors.photos: mantendremos el error hasta el siguiente submit
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removePhoto = (idx: number) => {
-    setSelectedPhotos(prev => prev.filter((_, i) => i !== idx));
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setSelectedPhotos((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const movePhoto = (idx: number, dir: "left" | "right") => {
@@ -68,46 +85,73 @@ export default function NewTimelineForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description.trim() && selectedPhotos.length === 0) {
-      alert("Agrega una descripción o al menos una foto.");
+
+    // Limpiar errores anteriores
+    setErrors({});
+
+    // 1) Validar título
+    if (!title.trim()) {
+      setErrors({ title: "El título es obligatorio." });
+      formRef.current?.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
-    // Subida de fotos
+    // 2) Validar descripción o fotos
+    if (!description.trim() && selectedPhotos.length === 0) {
+      setErrors({
+        description: "Agrega una descripción o al menos una foto.",
+      });
+      formRef.current?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    // 3) Subida de fotos
     const photoUrls = selectedPhotos.length
       ? await uploadTimelinePhotos(selectedPhotos as unknown as FileList)
       : [];
 
-    // Crear entrada y revalidar
+    // 4) Crear entrada y revalidar
     await createEntry({
-      title: title.trim() || undefined,
+      title: title.trim(),
       description: description.trim() || undefined,
       eventDate,
       photos: selectedPhotos as unknown as FileList,
       milestoneIds: selectedMilestones,
     });
 
-    // Cerrar drawer / callback
+    // 5) Callback y reset
     onSuccess?.();
-
-    // Reset
     setTitle("");
     setDescription("");
     setEventDate(today);
     setSelectedMilestones([]);
     setSelectedPhotos([]);
+    setErrors({});
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <TextField
-        label="Título (opcional)"
-        value={title}
-        onChange={setTitle}
-        placeholder="Ej: Primer paseo"
-      />
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+      {/* TÍTULO + CONTADOR */}
+      <div className="relative">
+        <TextField
+          label="Título"
+          value={title}
+          onChange={(v) => {
+            if (v.length <= TITLE_MAX) {
+              setTitle(v);
+            }
+          }}
+          placeholder="Ej: Primer paseo"
+          required
+          error={errors.title}
+        />
+        <p className="absolute top-2 right-2 text-xs text-muted-foreground">
+          {title.length}/{TITLE_MAX}
+        </p>
+      </div>
 
+      {/* FECHA */}
       <DateField
         label="Fecha del evento"
         value={eventDate}
@@ -115,18 +159,37 @@ export default function NewTimelineForm({
         max={today}
       />
 
-      <TextAreaField
-        label="Descripción"
-        value={description}
-        onChange={setDescription}
-        placeholder="Describe este momento..."
-      />
+      {/* DESCRIPCIÓN + CONTADOR */}
+      <div className="relative">
+        <TextAreaField
+          label="Descripción"
+          value={description}
+          onChange={(v) => {
+            if (v.length <= DESC_MAX) setDescription(v);
+          }}
+          placeholder="Describe este momento..."
+          error={errors.description}
+        />
+        <p className="absolute top-2 right-2 text-xs text-muted-foreground">
+          {description.length}/{DESC_MAX}
+        </p>
+      </div>
 
-      <FileField
-        label="Fotos (máx. 5)"
-        onChange={handleFileChange}
-        multiple
-      />
+      {/* FOTOS + CONTADOR */}
+      <div className="relative">
+        <FileField
+          label="Fotos (máx. 5)"
+          onChange={handleFileChange}
+          multiple
+          accept="image/jpeg, image/png"
+          error={errors.photos}
+        />
+        <p className="absolute top-2 right-2 text-xs text-muted-foreground">
+          {selectedPhotos.length}/{PHOTOS_MAX}
+        </p>
+      </div>
+
+      {/* PREVIEW FOTOS */}
       {selectedPhotos.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
           {selectedPhotos.map((file, idx) => (
@@ -166,9 +229,10 @@ export default function NewTimelineForm({
         </div>
       )}
 
+      {/* HITOS */}
       <FormFieldWrapper label="Hitos (máx. 4)">
         <div className="flex flex-wrap gap-2 mt-1">
-          {milestones.map(m => (
+          {milestones.map((m) => (
             <button
               key={m.id}
               type="button"
@@ -186,6 +250,7 @@ export default function NewTimelineForm({
         </div>
       </FormFieldWrapper>
 
+      {/* BOTÓN GUARDAR */}
       <Button
         type="submit"
         className="w-full mt-4"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMilestones } from "@/hooks/timeline/useMilestones";
@@ -13,6 +13,64 @@ import {
   TextAreaField,
   FileField,
 } from "@/components/timeline/NewTimelineFormField";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// Componente sortable aislado para evitar re-render innecesarios
+const SortablePhoto = React.memo(function SortablePhoto({
+  id,
+  file,
+  index,
+  onRemove,
+}: {
+  id: string;
+  file: File;
+  index: number;
+  onRemove: (idx: number) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    width: "100%",
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="relative"
+    >
+      <img
+        src={URL.createObjectURL(file)}
+        alt={`Foto ${index + 1}`}
+        className="w-full h-20 object-cover rounded border"
+      />
+      <button
+        type="button"
+        onClick={() => onRemove(index)}
+        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+      >
+        ×
+      </button>
+    </div>
+  );
+});
 
 interface NewTimelineFormProps {
   petId: string;
@@ -51,7 +109,28 @@ export default function NewTimelineForm({
   const DESC_MAX = 200;
   const PHOTOS_MAX = 5;
 
-  // Handlers
+  // sensores de DnD-kit, memoizados para no recrear en cada render
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  // IDs estables memoizados para selectedPhotos
+  const photoIds = useMemo(
+    () => selectedPhotos.map((f) => `${f.name}-${f.lastModified}`),
+    [selectedPhotos]
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (over && active.id !== over.id) {
+        const oldIndex = photoIds.indexOf(active.id as string);
+        const newIndex = photoIds.indexOf(over.id as string);
+        setSelectedPhotos((photos) => arrayMove(photos, oldIndex, newIndex));
+      }
+    },
+    [photoIds]
+  );
+
+  // CRUD handlers
   const toggleMilestone = (id: string) =>
     setSelectedMilestones((prev) =>
       prev.includes(id)
@@ -68,49 +147,32 @@ export default function NewTimelineForm({
     }
     const picked = Array.from(files).slice(0, PHOTOS_MAX);
     setSelectedPhotos(picked);
-    // No borramos aquí errors.photos: mantendremos el error hasta el siguiente submit
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const removePhoto = (idx: number) => {
+  const handleRemovePhoto = useCallback((idx: number) => {
     setSelectedPhotos((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const movePhoto = (idx: number, dir: "left" | "right") => {
-    const arr = [...selectedPhotos];
-    const target = dir === "left" ? idx - 1 : idx + 1;
-    [arr[idx], arr[target]] = [arr[target], arr[idx]];
-    setSelectedPhotos(arr);
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Limpiar errores anteriores
     setErrors({});
 
-    // 1) Validar título
     if (!title.trim()) {
       setErrors({ title: "El título es obligatorio." });
       formRef.current?.scrollIntoView({ behavior: "smooth" });
       return;
     }
-
-    // 2) Validar descripción o fotos
     if (!description.trim() && selectedPhotos.length === 0) {
-      setErrors({
-        description: "Agrega una descripción o al menos una foto.",
-      });
+      setErrors({ description: "Agrega una descripción o al menos una foto." });
       formRef.current?.scrollIntoView({ behavior: "smooth" });
       return;
     }
 
-    // 3) Subida de fotos
     const photoUrls = selectedPhotos.length
       ? await uploadTimelinePhotos(selectedPhotos as unknown as FileList)
       : [];
 
-    // 4) Crear entrada y revalidar
     await createEntry({
       title: title.trim(),
       description: description.trim() || undefined,
@@ -119,7 +181,6 @@ export default function NewTimelineForm({
       milestoneIds: selectedMilestones,
     });
 
-    // 5) Callback y reset
     onSuccess?.();
     setTitle("");
     setDescription("");
@@ -138,12 +199,9 @@ export default function NewTimelineForm({
           label="Título"
           value={title}
           onChange={(v) => {
-            if (v.length <= TITLE_MAX) {
-              setTitle(v);
-            }
+            if (v.length <= TITLE_MAX) setTitle(v);
           }}
           placeholder="Ej: Primer paseo"
-          required
           error={errors.title}
         />
         <p className="absolute top-2 right-2 text-xs text-muted-foreground">
@@ -189,44 +247,27 @@ export default function NewTimelineForm({
         </p>
       </div>
 
-      {/* PREVIEW FOTOS */}
+      {/* PREVIEW FOTOS DRAG & DROP */}
       {selectedPhotos.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-          {selectedPhotos.map((file, idx) => (
-            <div key={idx} className="relative">
-              {idx > 0 && (
-                <button
-                  type="button"
-                  onClick={() => movePhoto(idx, "left")}
-                  className="absolute top-1 left-1 bg-white/70 rounded-full p-1"
-                >
-                  ‹
-                </button>
-              )}
-              {idx < selectedPhotos.length - 1 && (
-                <button
-                  type="button"
-                  onClick={() => movePhoto(idx, "right")}
-                  className="absolute top-1 right-1 bg-white/70 rounded-full p-1"
-                >
-                  ›
-                </button>
-              )}
-              <img
-                src={URL.createObjectURL(file)}
-                alt={`Foto ${idx + 1}`}
-                className="w-full h-20 object-cover rounded border"
-              />
-              <button
-                type="button"
-                onClick={() => removePhoto(idx)}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-              >
-                ×
-              </button>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={photoIds} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+              {selectedPhotos.map((file, idx) => (
+                <SortablePhoto
+                  key={photoIds[idx]}
+                  id={photoIds[idx]}
+                  file={file}
+                  index={idx}
+                  onRemove={handleRemovePhoto}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* HITOS */}

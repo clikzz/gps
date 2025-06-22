@@ -17,11 +17,9 @@ function Pets() {
   const [selectedPet] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  console.log(pets);
-
   return (
     <motion.div
-      className="p-4 md:p-6 max-w-7xl mx-auto"
+      className="max-w-7xl mx-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -60,7 +58,6 @@ function Pets() {
         </motion.div>
       )}
 
-      {/* Hidden EditPetDrawer that gets triggered programmatically */}
       {selectedPet && (
         <EditPetDrawer
           pet={selectedPet}

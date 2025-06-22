@@ -42,8 +42,6 @@ export function EditPetDrawer({
     handleClose();
   };
 
-  console.log("edit", pet);
-
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>

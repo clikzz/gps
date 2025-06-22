@@ -1,6 +1,6 @@
 import HeaderAuth from "@/components/header-auth";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { Geist } from "next/font/google";
+import { Poppins } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import Link from "next/link";
@@ -16,9 +16,10 @@ export const metadata = {
   description: "Descripción Página",
 };
 
-const geistSans = Geist({
-  display: "swap",
+const poppinsSans = Poppins({
   subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
 });
 
 export default function RootLayout({
@@ -27,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={geistSans.className} suppressHydrationWarning>
+    <html lang="en" className={poppinsSans.className} suppressHydrationWarning>
       <body className="bg-background text-foreground" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
@@ -45,7 +46,7 @@ export default function RootLayout({
                   <HeaderAuth />
                 </div>
               </nav>
-              <div className="flex flex-col gap-20 max-w-5xl p-5">
+              <div className="flex flex-col gap-20 max-w-5xl w-full mx-auto p-5">
                 {children}
               </div>
 

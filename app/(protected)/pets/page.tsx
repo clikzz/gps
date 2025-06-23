@@ -33,7 +33,7 @@ function Pets() {
       >
         <div className="flex items-center gap-2">
           <PawPrint className="h-6 w-6 text-primary" />
-          <h2 className="font-bold text-2xl md:text-3xl">Mis mascotas</h2>
+          <h1 className="font-bold text-2xl md:text-3xl">Mis mascotas</h1>
         </div>
         <NewPetDrawer
           open={isNewPetDrawerOpen}

@@ -77,7 +77,9 @@ export default async function TopicPage({
             Inicio
           </Link>
           {" > "}
-          <span>{topic.Subforums.name}</span>
+          <Link href={`/forum/subforum/${slug}`} className="hover:underline">
+            {topic.Subforums.name}
+          </Link>
           {" > "}
           <span className="truncate">{topic.title}</span>
         </div>

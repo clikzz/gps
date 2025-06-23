@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { useState } from "react"
 import { useEffect } from "react"
+import { useUserProfile } from "@/stores/userProfile"
 
 export interface Reply {
   id: number
@@ -22,8 +23,6 @@ export interface Reply {
 
 export interface ReplyListProps {
   replies: Reply[]
-  currentUserId?: string
-  userRole?: "user" | "moderator" | "admin"
 }
 
 const getUserTitle = (messageCount: number): string => {
@@ -36,11 +35,14 @@ const getUserTitle = (messageCount: number): string => {
   return "Mascota Nueva"
 }
 
-export function ReplyList({ replies, userRole = "user", currentUserId }: ReplyListProps) {
+export function ReplyList({ replies }: ReplyListProps) {
 
   const [editingReply, setEditingReply] = useState<number | null>(null)
   const [editContent, setEditContent] = useState("")
   const [replyList, setReplyList] = useState(replies)
+
+  const currentUserId = useUserProfile((state) => state.user?.id)
+  const userRole = useUserProfile((state) => state.user?.role)
 
   useEffect(() => {
     setReplyList(replies)
@@ -107,11 +109,13 @@ export function ReplyList({ replies, userRole = "user", currentUserId }: ReplyLi
     )
   }
 
+  console.log("currentUserId:", currentUserId)
+
   return (
     <div className="space-y-4">
       {replyList.map((reply) => {
 
-        const canDelete = currentUserId === reply.author.id || userRole === "admin"
+        const isAuthor = currentUserId === reply.author.id
         const isEditing = editingReply === reply.id
 
         return (
@@ -177,19 +181,11 @@ export function ReplyList({ replies, userRole = "user", currentUserId }: ReplyLi
                     </div>
 
 
-                    {(
+                    {isAuthor && (
                       <div className="absolute bottom-4 right-4 flex gap-1 text-sm">
-                        {
-                          <button onClick={() => handleEdit(reply)} className="hover:underline">
-                            Editar
-                          </button>
-                        }
-                        {<span> | </span>}
-                        {
-                          <button onClick={() => handleDelete(reply.id)} className="hover:underline">
-                            Eliminar
-                          </button>
-                        }
+                        <button onClick={() => handleEdit(reply)} className="hover:underline">Editar</button>
+                        <span> | </span>
+                        <button onClick={() => handleDelete(reply.id)} className="hover:underline">Eliminar</button>
                       </div>
                     )}
                   </>

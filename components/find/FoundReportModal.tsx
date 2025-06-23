@@ -1,0 +1,128 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
+import { MissingReport } from '@/types/find';
+
+interface FoundReportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  report: MissingReport;
+  onSubmitted: () => void;
+}
+
+export default function FoundReportModal({
+  isOpen,
+  onClose,
+  report,
+  onSubmitted,
+}: FoundReportModalProps) {
+  const [description, setDescription] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+
+  const uploadAll = async (): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const file of files) {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('type', 'found');
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      if (!res.ok) throw new Error('Error al subir foto de hallazgo');
+      const { url } = await res.json();
+      urls.push(url);
+    }
+    return urls;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let photo_urls: string[] = [];
+    if (files.length) {
+      try {
+        photo_urls = await uploadAll();
+      } catch (err) {
+        console.error(err);
+        alert('Error subiendo fotos de hallazgo');
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch('/api/find?mode=found-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          missingPetId: Number(report.id),
+          description: description || undefined,
+          photo_urls: photo_urls.length ? photo_urls : undefined,
+          latitude: report.latitude,
+          longitude: report.longitude,
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+      onSubmitted();
+    } catch (err: any) {
+      alert('Error al enviar hallazgo: ' + err.message);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <Card className="w-full max-w-md mx-4">
+        <CardHeader>
+          <CardTitle>Reportar hallazgo de {report.pet.name}</CardTitle>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="found-photo-input">Fotos de hallazgo</Label>
+              <Input
+                id="found-photo-input"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  const chosen = Array.from(e.target.files || []);
+                  setFiles(chosen.slice(0, 3)); // límite 3
+                }}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="found-description">Descripción</Label>
+              <textarea
+                id="found-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder="Detalles del hallazgo"
+              />
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Ubicación original de reporte: ({report.latitude.toFixed(5)}, {report.longitude.toFixed(5)})
+            </p>
+          </CardContent>
+
+          <CardFooter className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={onClose} type="button">
+              Cancelar
+            </Button>
+            <Button type="submit">Enviar hallazgo</Button>
+          </CardFooter>
+        </form>
+      </Card>
+    </div>
+  );
+}

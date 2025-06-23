@@ -14,9 +14,10 @@ interface ReportPopupProps {
   setPhotoIndex: (i: number) => void;
   onClose: () => void;
   onFound: ()  => void;
+  onOpenFoundModal: (report: MissingReport) => void;
 }
 
-export default function ReportPopup({ selected, userId, photoIndex, setPhotoIndex, onClose, onFound }: ReportPopupProps) {
+export default function ReportPopup({ selected, userId, photoIndex, setPhotoIndex, onClose, onFound, onOpenFoundModal }: ReportPopupProps) {
   const [loading, setLoading] = React.useState(false);
 
   useEffect(() => {
@@ -121,7 +122,7 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
             {new Date(selected.reported_at).toLocaleString()}
           </p>
 
-          {isMyReport && (
+          {isMyReport ? (
             <Button
               variant="outline"
               size="sm"
@@ -130,6 +131,18 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
               className="w-full mt-2"
             >
               {loading ? "Marcando..." : "Marcar encontrada"}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onClose();
+                onOpenFoundModal(selected);
+              }}
+              className="w-full mt-2"
+            >
+              Reportar hallazgo
             </Button>
           )}
         </CardContent>

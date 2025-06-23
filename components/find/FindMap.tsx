@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, use } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Marker } from 'react-map-gl/mapbox';
@@ -12,9 +12,9 @@ import ActionsMenu from '@/components/find/ActionsMenu';
 import ReportModal, { LatLng } from '@/components/find/ReportModal';
 import MyReports from '@/components/find/MyReports';
 import OthersReports from '@/components/find/OthersReports';
+import FoundReportModal from '@/components/find/FoundReportModal';
 import MapMarkers from '@/components/find/MapMarkers';
 import ReportPopup from '@/components/find/MapPopups';
-import { set } from 'zod';
 
 const Map = dynamic(
   () => import("react-map-gl/mapbox").then((mod) => mod.default),
@@ -38,6 +38,9 @@ export default function FindMap() {
   const [pickLocationMode, setPickLocationMode] = useState(false);
   const [pickedLocation, setPickedLocation] = useState<LatLng | null>(null);
 
+  const [isFoundModalOpen, setIsFoundModalOpen] = useState(false);
+  const [targetReport, setTargetReport] = useState<MissingReport | null>(null);
+
   useEffect(() => {
     setPhotoIndex(0);
   }, [selected]);
@@ -58,6 +61,11 @@ export default function FindMap() {
     }
     setSelected(report);
   };
+
+  function openFoundModal(report: MissingReport) {
+    setTargetReport(report);
+    setIsFoundModalOpen(true);
+  }
 
   function refreshReports() {
     fetch("/api/find?mode=recent")
@@ -209,7 +217,20 @@ export default function FindMap() {
             setSelected(null);
             refreshReports();
           }}
+          onOpenFoundModal={openFoundModal}
         />
+
+      {targetReport && (
+        <FoundReportModal
+          isOpen={isFoundModalOpen}
+          onClose={() => setIsFoundModalOpen(false)}
+          report={targetReport}
+          onSubmitted={() => {
+            setIsFoundModalOpen(false);
+            alert("¡Aviso de hallazgo enviado!");
+          }}
+        />
+      )}
 
         {/* Marcador de ubicación marcada */}
         {pickedLocation && (

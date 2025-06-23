@@ -5,9 +5,9 @@ import {
   findPetsByUser,
   listMyMissingPets,
   listOtherMissingPets,
-  markPetAsFound
+  markPetAsFound,
+  createFoundReport
 } from "@/server/services/find.service";
-import { Prisma } from "@prisma/client";
 import { reportMissingPetSchema } from "@/server/validations/find.validation";
 
 export const reportMissingPet = async (reporterId: string, body: any) => {
@@ -198,4 +198,38 @@ export const fetchUserPets = async (userId: string) => {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
+};
+
+export const reportFoundReport = async (
+  userId: string,
+  body: {
+    missingPetId: number;
+    photo_urls?: string[];
+    description?: string;
+    latitude: number;
+    longitude: number;
+  }
+) => {
+  try {
+    const rec = await createFoundReport(
+      userId,
+      body.missingPetId,
+      {
+        photo_urls: body.photo_urls,
+        description: body.description,
+        latitude: body.latitude,
+        longitude: body.longitude,
+      }
+    );
+    return new Response(JSON.stringify(rec), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    console.error(err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 };

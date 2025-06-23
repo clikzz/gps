@@ -172,3 +172,28 @@ export const findPetsByUser = async (userId: string) => {
     orderBy: { name: "asc" },
   });
 };
+
+/**
+ * Reportar a otro usuario que su mascota posiblemente fué encontrada.
+ */
+export const createFoundReport = async (
+  helperId: string,
+  missingPetId: number,
+  data: {
+    photo_urls?: string[];
+    description?: string;
+    latitude: number;
+    longitude: number; 
+  }
+) => {
+  return prisma.foundReports.create({
+    data: {
+      helperId,
+      missingPetId,
+      photo_urls: data.photo_urls ?? [],
+      description: data.description,
+      latitude: data.latitude,
+      longitude: data.longitude,
+    },
+  });
+};

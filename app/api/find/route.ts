@@ -9,6 +9,7 @@ import {
   reportPetFound,
   fetchOtherMissingPets
 } from "@/server/controllers/find.controller";
+import { report } from "process";
 
 /**
  * GET  /api/find?mode=recent → lista reportes del último mes
@@ -19,53 +20,51 @@ import {
  */
 export async function GET(req: NextRequest) {
   const user = await authenticateUser(req);
-  if (user instanceof Response) {
-    const body = await user.text();
-    return new NextResponse(body, {
-      status: user.status,
-      headers: user.headers,
-    });
+  if (user instanceof Response) return new NextResponse(await user.text(), { status: user.status, headers: user.headers });
+
+  const mode = new URL(req.url).searchParams.get("mode") || "recent";
+
+  switch (mode) {
+    case "all": return fetchAllMissingPets();               // /api/find?mode=all
+    case "pets": return fetchUserPets(user.id);             // /api/find?mode=pets
+    case "my": return fetchMyMissingPets(user.id);          // /api/find?mode=my
+    case "others": return fetchOtherMissingPets(user.id);   // /api/find?mode=others
+    default: return fetchRecentMissingPets();               // /api/find?mode=recent
   }
 
-  const url = new URL(req.url);
-  const mode = url.searchParams.get("mode") || "recent";
+  // if (mode === "all") {
+  //   // /api/find?mode=all
+  //   return fetchAllMissingPets();
+  // }
 
-  if (mode === "all") {
-    // /api/find?mode=all
-    return fetchAllMissingPets();
-  }
+  // if (mode === "pets") {
+  //   // /api/find?mode=pets
+  //   return fetchUserPets(user.id);
+  // }
 
-  if (mode === "pets") {
-    // /api/find?mode=pets
-    return fetchUserPets(user.id);
-  }
+  // if (mode === "my") {
+  //   // /api/find?mode=my
+  //   return fetchMyMissingPets(user.id);
+  // }
 
-  if (mode === "my") {
-    // /api/find?mode=my
-    return fetchMyMissingPets(user.id);
-  }
+  // if (mode === "others") {
+  //   // /api/find?mode=others
+  //   return fetchOtherMissingPets(user.id);
+  // }
 
-  if (mode === "others") {
-    // /api/find?mode=others
-    return fetchOtherMissingPets(user.id);
-  }
-
-  // /api/find?mode=recent
-  return fetchRecentMissingPets();
+  // // /api/find?mode=recent
+  // return fetchRecentMissingPets();
 }
 
 /**
  * POST /api/find → crea un nuevo reporte
+ *      /api/find?mode=found → reporta una mascota de otro usuario como encontrada
  */
 export async function POST(req: NextRequest) {
   const user = await authenticateUser(req);
-  if (user instanceof Response) {
-    const body = await user.text();
-    return new NextResponse(body, {
-      status: user.status,
-      headers: user.headers,
-    });
-  }
+  if (user instanceof Response) return new NextResponse(await user.text(), { status: user.status, headers: user.headers });
+
+  const mode = new URL(req.url).searchParams.get("mode");
 
   let payload: any;
   try {
@@ -77,7 +76,10 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return reportMissingPet(user.id, payload);
+  switch (mode) {
+    case "found": return reportPetFound(user.id, payload);
+    default: return reportMissingPet(user.id, payload);
+  }
 }
 
 /**
@@ -85,10 +87,7 @@ export async function POST(req: NextRequest) {
  */
 export async function PUT(req: NextRequest) {
   const user = await authenticateUser(req);
-  if (user instanceof Response) {
-    const body = await user.text();
-    return new NextResponse(body, { status: user.status, headers: user.headers });
-  }
+  if (user instanceof Response) return new NextResponse(await user.text(), { status: user.status, headers: user.headers });
 
   const url = new URL(req.url);
   const mode = url.searchParams.get("mode");

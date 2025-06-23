@@ -81,7 +81,15 @@ export default function NewTimelineForm({
   petId,
   onSuccess,
 }: NewTimelineFormProps) {
-  const today = new Date().toISOString().split("T")[0];
+  function getTodayLocalISO() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  const today = getTodayLocalISO();
+
 
   // Hooks
   const { milestones } = useMilestones();
@@ -155,41 +163,48 @@ export default function NewTimelineForm({
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
+  e.preventDefault();
+  setErrors({});
 
-    if (!title.trim()) {
-      setErrors({ title: "El título es obligatorio." });
-      formRef.current?.scrollIntoView({ behavior: "smooth" });
-      return;
-    }
-    if (!description.trim() && selectedPhotos.length === 0) {
-      setErrors({ description: "Agrega una descripción o al menos una foto." });
-      formRef.current?.scrollIntoView({ behavior: "smooth" });
-      return;
-    }
+  if (!title.trim()) {
+    setErrors({ title: "El título es obligatorio." });
+    formRef.current?.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+  if (!description.trim() && selectedPhotos.length === 0) {
+    setErrors({ description: "Agrega una descripción o al menos una foto." });
+    formRef.current?.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
 
-    const photoUrls = selectedPhotos.length
-      ? await uploadTimelinePhotos(selectedPhotos as unknown as FileList)
-      : [];
+  // Convertir eventDate local ("YYYY-MM-DD") a UTC "YYYY-MM-DDT00:00:00.000Z"
+  const localDate = new Date(eventDate + "T00:00:00");
+  const utcDateString = new Date(
+    Date.UTC(localDate.getFullYear(), localDate.getMonth(), localDate.getDate())
+  ).toISOString();
 
-    await createEntry({
-      title: title.trim(),
-      description: description.trim() || undefined,
-      eventDate,
-      photos: selectedPhotos as unknown as FileList,
-      milestoneIds: selectedMilestones,
-    });
+  const photoUrls = selectedPhotos.length
+    ? await uploadTimelinePhotos(selectedPhotos as unknown as FileList)
+    : [];
 
-    onSuccess?.();
-    setTitle("");
-    setDescription("");
-    setEventDate(today);
-    setSelectedMilestones([]);
-    setSelectedPhotos([]);
-    setErrors({});
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  await createEntry({
+    title: title.trim(),
+    description: description.trim() || undefined,
+    // Usar el string ISO UTC
+    eventDate: utcDateString,
+    photos: selectedPhotos as unknown as FileList,
+    milestoneIds: selectedMilestones,
+  });
+
+  onSuccess?.();
+  setTitle("");
+  setDescription("");
+  setEventDate(today);
+  setSelectedMilestones([]);
+  setSelectedPhotos([]);
+  setErrors({});
+  if (fileInputRef.current) fileInputRef.current.value = "";
+};
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">

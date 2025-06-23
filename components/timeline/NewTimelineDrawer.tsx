@@ -13,15 +13,18 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import NewTimelineForm from "@/components/timeline/NewTimelineForm";
-import { useTimelineData } from "@/hooks/timeline/useTimelineData";
 
 interface NewTimelineDrawerProps {
   petId: string;
+  /** Se dispara justo después de crear con éxito la entrada */
+  onSuccess?: () => void;
 }
 
-export default function NewTimelineDrawer({ petId }: NewTimelineDrawerProps) {
+export default function NewTimelineDrawer({
+  petId,
+  onSuccess,
+}: NewTimelineDrawerProps) {
   const [open, setOpen] = useState(false);
-  const { mutateEntries } = useTimelineData(petId);
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
@@ -42,7 +45,9 @@ export default function NewTimelineDrawer({ petId }: NewTimelineDrawerProps) {
             <NewTimelineForm
               petId={petId}
               onSuccess={() => {
-                mutateEntries();
+                // 1) notificamos a la página
+                onSuccess?.();
+                // 2) cerramos el Drawer
                 setOpen(false);
               }}
             />

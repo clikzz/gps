@@ -2,27 +2,40 @@ import useSWR from 'swr';
 import { Pets as Pet } from '@prisma/client';
 import { TimelineEntryWithPhotos } from '@/types/timeline';
 
-// Genérico fetcher para llamadas a la API
 const fetcher = async <T>(url: string): Promise<T> => {
   const res = await fetch(url);
   if (!res.ok) throw new Error('Error al cargar los datos.');
   return res.json();
 };
 
-// Resultado expuesto por el hook
+export interface UseTimelineDataFilters {
+  startDate?: string;
+  endDate?: string;
+  milestoneId?: string;
+  skip?: number;
+  take?: number;
+}
+
 export interface UseTimelineDataResult {
   pet?: Pet;
   entries: TimelineEntryWithPhotos[];
+  total: number;
   isLoading: boolean;
   error?: Error;
-  mutateEntries: () => Promise<TimelineEntryWithPhotos[] | undefined>;
+  mutateEntries: () => Promise<any>;
 }
 
-/**
- * Carga los datos de la mascota y sus entradas de timeline.
- * @param petId ID de la mascota a consultar.
- */
-export const useTimelineData = (petId: string): UseTimelineDataResult => {
+// Convierte fecha local a UTC ISO puro
+function toUtcIso(dateStr?: string): string | undefined {
+  if (!dateStr) return undefined;
+  const d = new Date(dateStr + "T00:00:00");
+  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString();
+}
+
+export const useTimelineData = (
+  petId: string,
+  filters: UseTimelineDataFilters = {}
+): UseTimelineDataResult => {
   // Mascota
   const {
     data: pet,
@@ -33,22 +46,31 @@ export const useTimelineData = (petId: string): UseTimelineDataResult => {
     fetcher
   );
 
-  // Entradas del timeline
+  // Entradas del timeline (con filtros y paginación)
+  const queryParams = new URLSearchParams({
+    ...(filters.startDate && { startDate: toUtcIso(filters.startDate) }),
+    ...(filters.endDate && { endDate: toUtcIso(filters.endDate) }),
+    ...(filters.milestoneId && { milestoneId: filters.milestoneId }),
+    ...(typeof filters.skip === "number" ? { skip: filters.skip.toString() } : {}),
+    ...(typeof filters.take === "number" ? { take: filters.take.toString() } : {}),
+  }).toString();
+
   const {
-    data: entries,
+    data,
     error: entriesError,
     isLoading: isLoadingEntries,
     mutate: mutateEntries,
-  } = useSWR<TimelineEntryWithPhotos[]>(
-    petId ? `/api/timeline/${petId}/entries` : null,
+  } = useSWR<{ entries: TimelineEntryWithPhotos[]; total: number }>(
+    petId ? `/api/timeline/${petId}/entries?${queryParams}` : null,
     fetcher
   );
 
   return {
     pet,
-    entries: entries ?? [],
+    entries: data?.entries ?? [],
+    total: data?.total ?? 0,
     isLoading: isLoadingPet || isLoadingEntries,
     error: petError || entriesError,
-    mutateEntries: mutateEntries as () => Promise<TimelineEntryWithPhotos[] | undefined>,
+    mutateEntries,
   };
 };

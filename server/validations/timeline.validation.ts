@@ -8,17 +8,31 @@ export const NewTimelineEntrySchema = z.object({
   description: z.string().max(200, 'La descripción no puede exceder los 200 caracteres.').optional(),
   
   eventDate: z.string()
-    .refine((date) => date && !isNaN(new Date(date).getTime()), {
-      message: 'La fecha del evento es requerida y debe ser válida.',
-    })
     .refine((date) => {
       const inputDate = new Date(date);
-      const today = new Date();
-      today.setHours(23, 59, 59, 999); 
-      return inputDate <= today;
+      const nowUTC = new Date();
+      // Compara solo la parte de la fecha (no la hora) en UTC
+      const inputYMD = [
+        inputDate.getUTCFullYear(),
+        inputDate.getUTCMonth(),
+        inputDate.getUTCDate(),
+      ];
+      const nowYMD = [
+        nowUTC.getUTCFullYear(),
+        nowUTC.getUTCMonth(),
+        nowUTC.getUTCDate(),
+      ];
+      // Permite hoy o días anteriores (en UTC)
+      if (inputYMD[0] < nowYMD[0]) return true;
+      if (inputYMD[0] > nowYMD[0]) return false;
+      if (inputYMD[1] < nowYMD[1]) return true;
+      if (inputYMD[1] > nowYMD[1]) return false;
+      if (inputYMD[2] <= nowYMD[2]) return true;
+      return false;
     }, {
       message: 'La fecha del evento no puede ser futura.',
     }),
+
   
   photoUrls: z.array(z.string().url('Cada foto debe tener una URL válida.')).optional(),
 

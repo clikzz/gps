@@ -32,7 +32,15 @@ export default function PetTimelineHeader({
   const age = petData.date_of_birth
     ? calculateAge(petData.date_of_birth)
     : null;
-  const today = new Date().toISOString().split("T")[0];
+  function getTodayLocalISO() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  const today = getTodayLocalISO();
+
 
   return (
     <div className="w-full flex flex-col gap-4 py-4">

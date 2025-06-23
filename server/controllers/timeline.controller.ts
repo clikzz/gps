@@ -4,7 +4,6 @@ import { NewTimelineEntrySchema } from '@/server/validations/timeline.validation
 import { TimelineEntryWithPhotos } from '@/types/timeline';
 import { createClient } from '@/utils/supabase/server';
 
-
 function serializeEntry(entry: TimelineEntryWithPhotos) {
   return {
     ...entry,
@@ -25,7 +24,7 @@ function serializeEntry(entry: TimelineEntryWithPhotos) {
   };
 }
 
-export async function getEntries(userId: string, petIdStr: string) {
+export async function getEntries(userId: string, petIdStr: string, request?: any) {
     try {
         const petId = BigInt(petIdStr);
 
@@ -37,10 +36,35 @@ export async function getEntries(userId: string, petIdStr: string) {
             return NextResponse.json({ error: 'No autorizado para ver este timeline.' }, { status: 403 });
         }
 
-        const entries = await timelineService.getTimelineEntriesByPetId(petId);
+        // SOPORTE FILTROS
+        let searchParams;
+        if (request?.nextUrl?.searchParams) {
+            searchParams = request.nextUrl.searchParams;
+        } else if (request?.url) {
+            searchParams = new URL(request.url, process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").searchParams;
+        } else {
+            searchParams = new URLSearchParams();
+        }
+
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
+        const milestoneId = searchParams.get('milestoneId') || undefined;
+        const skip = Number(searchParams.get('skip')) || 0;
+        const take = Number(searchParams.get('take')) || 20;
+
+        // Nuevo: Llama al service pasando los filtros
+        const { entries, total } = await timelineService.getTimelineEntriesByPetId(petId, {
+            startDate,
+            endDate,
+            milestoneId,
+            skip,
+            take
+        });
+
         const serializedEntries = entries.map(serializeEntry);
 
-        return NextResponse.json(serializedEntries);
+        // Cambia la respuesta para soportar paginación
+        return NextResponse.json({ entries: serializedEntries, total });
 
     } catch (error) {
         console.error(`[TimelineController] Error en getEntries:`, error);

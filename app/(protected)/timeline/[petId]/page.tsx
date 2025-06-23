@@ -7,38 +7,33 @@ import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer";
 import TimelineEntriesList from "@/components/timeline/TimelineEntriesList";
 import { useTimelineData } from "@/hooks/timeline/useTimelineData";
 import { useMilestones } from "@/hooks/timeline/useMilestones";
-import { useTimelineFilters } from "@/hooks/timeline/useTimelineFilters";
+// Elimina este import:
+// import { useTimelineFilters } from "@/hooks/timeline/useTimelineFilters";
 
 export default function PetTimelinePage() {
   const { petId } = useParams() as { petId: string };
 
-  // Carga datos principales
+  // 1) Datos de la mascota
   const {
     pet,
-    entries,
     isLoading: isLoadingData,
     error: dataError,
-    mutateEntries,
   } = useTimelineData(petId);
 
-  // Carga hitos
+  // 2) Hitos
   const {
     milestones,
     isLoading: isLoadingMilestones,
     error: milestonesError,
   } = useMilestones();
 
-  // Estados de filtro
+  // 3) Filtros
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [selectedMilestone, setSelectedMilestone] = useState<string>("");
 
-  // Aplicar filtros
-  const { filteredEntries } = useTimelineFilters(entries, {
-    startDate,
-    endDate,
-    selectedMilestone,
-  });
+  // 4) Señal para recarga automática
+  const [reloadSignal, setReloadSignal] = useState(0);
 
   const isLoading = isLoadingData || isLoadingMilestones;
   const error = dataError || milestonesError;
@@ -46,7 +41,6 @@ export default function PetTimelinePage() {
   if (isLoading) {
     return <div className="text-center p-8">Cargando timeline...</div>;
   }
-
   if (error || !pet) {
     return (
       <div className="text-center p-8 text-destructive">
@@ -56,9 +50,7 @@ export default function PetTimelinePage() {
   }
 
   return (
-    // ← Aquí eliminamos `max-w-4xl` para heredar el ancho del layout global
     <div className="w-full px-4">
-      {/* Header con filtros y botón */}
       <TimelineHeader
         petData={pet}
         startDate={startDate}
@@ -69,15 +61,21 @@ export default function PetTimelinePage() {
         selectedMilestone={selectedMilestone}
         onMilestoneChange={setSelectedMilestone}
       >
-        {/* Pasamos el botón como children para que quede alineado */}
-        <NewTimelineDrawer petId={pet.id.toString()} />
+        {/* 5) Pasamos onSuccess al Drawer */}
+        <NewTimelineDrawer
+          petId={pet.id.toString()}
+          onSuccess={() => setReloadSignal((n) => n + 1)}
+        />
       </TimelineHeader>
 
       <hr className="my-6 border-border" />
 
+      {/* 6) Lista recibe reloadSignal para revalidar */}
       <TimelineEntriesList
-        entries={filteredEntries}
-        onEntryDeleted={mutateEntries}
+        startDate={startDate}
+        endDate={endDate}
+        milestoneId={selectedMilestone}
+        reloadSignal={reloadSignal}
       />
     </div>
   );

@@ -39,6 +39,7 @@ export const fetchTopics = async (req: Request) => {
       name: t.author.name,
       tag: t.author.tag,
       menssageCount: t.author.menssageCount,
+      avatar_url: t.author.avatar_url,
     },
     Subforums: {
       name: t.Subforums.name,
@@ -74,6 +75,7 @@ export const fetchPosts = async (req: Request) => {
       name: p.author.name,
       tag: p.author.tag,
       menssageCount: p.author.menssageCount,
+      avatar_url: p.author.avatar_url,
     },
   }));
 

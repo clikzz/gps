@@ -13,7 +13,7 @@ export const listTopics = async (
   (
     Topics & {
       postsCount: number;
-      author: Pick<users, "id" | "name" | "tag" | "menssageCount">;
+      author: Pick<users, "id" | "name" | "tag" | "menssageCount" | "avatar_url">;
       Subforums: Pick<Subforums, "name" | "category">;
     }
   )[]
@@ -24,7 +24,7 @@ export const listTopics = async (
     where,
     include: {
       users: 
-        { select: { id: true, name: true, tag: true, menssageCount: true } },
+        { select: { id: true, name: true, tag: true, menssageCount: true, avatar_url: true } },
       Posts: 
         { select: { id: true } },
       Subforums: 
@@ -46,14 +46,14 @@ export const listPosts = async (
 ): Promise<
   (
     Posts & {
-      author: Pick<users, "id" | "name" | "tag" | "menssageCount">;
+      author: Pick<users, "id" | "name" | "tag" | "menssageCount" | "avatar_url">;
     }
   )[]
 > => {
   return prisma.posts.findMany({
     where: { topic_id: topicId },
     include: { 
-      users: { select: { id: true, name: true, tag: true, menssageCount: true}} 
+      users: { select: { id: true, name: true, tag: true, menssageCount: true, avatar_url: true } } 
     },
     orderBy: { created_at: "asc" },
   }).then(posts =>

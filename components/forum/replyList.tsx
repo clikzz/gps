@@ -16,6 +16,7 @@ export interface Reply {
     id: string
     tag: number
     menssageCount: number
+    avatar_url: string
   }
 }
 
@@ -71,8 +72,8 @@ export function ReplyList({ replies, userRole = "user", currentUserId }: ReplyLi
       ))
       toast.success("Respuesta editada correctamente")
       setEditingReply(null)
-      } catch (err: any) {
-        toast.error(err.message)
+    } catch (err: any) {
+      toast.error(err.message)
     }
   }
 
@@ -109,7 +110,7 @@ export function ReplyList({ replies, userRole = "user", currentUserId }: ReplyLi
   return (
     <div className="space-y-4">
       {replyList.map((reply) => {
-        
+
         const canDelete = currentUserId === reply.author.id || userRole === "admin"
         const isEditing = editingReply === reply.id
 
@@ -126,18 +127,26 @@ export function ReplyList({ replies, userRole = "user", currentUserId }: ReplyLi
               <div className="w-48 border-r p-4 text-center space-y-3">
                 <div>
                   <Link href={`/forum/user/${reply.author.id}`} className="font-medium hover:underline text-sm">
-                    {reply.author.name}#{reply.author.tag}
+                    {reply.author.name} #{reply.author.tag}
                   </Link>
                 </div>
 
                 <div className="text-xs font-medium">{getUserTitle(reply.author.menssageCount)}</div>
 
                 <div className="flex justify-center">
-                  <img
-                    src="/placeholder.svg?height=120&width=120"
-                    alt={`Avatar de ${reply.author.name}`}
-                    className="w-24 h-24 rounded border"
-                  />
+                  {reply.author.avatar_url ? (
+                    <img
+                      src={reply.author.avatar_url}
+                      alt={`Avatar de ${reply.author.name}`}
+                      className="w-24 h-24 rounded border"
+                    />
+                  ) : (
+                    <img
+                      src="/placeholder.svg?height=120&width=120"
+                      alt={`Avatar de ${reply.author.name}`}
+                      className="w-24 h-24 rounded border"
+                    />
+                  )}
                 </div>
 
                 <div className="text-xs">Mensajes: {reply.author.menssageCount.toLocaleString()}</div>
@@ -167,7 +176,7 @@ export function ReplyList({ replies, userRole = "user", currentUserId }: ReplyLi
                       <p className="whitespace-pre-wrap">{reply.content}</p>
                     </div>
 
-                    
+
                     {(
                       <div className="absolute bottom-4 right-4 flex gap-1 text-sm">
                         {
@@ -175,7 +184,7 @@ export function ReplyList({ replies, userRole = "user", currentUserId }: ReplyLi
                             Editar
                           </button>
                         }
-                        { <span> | </span>}
+                        {<span> | </span>}
                         {
                           <button onClick={() => handleDelete(reply.id)} className="hover:underline">
                             Eliminar

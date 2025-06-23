@@ -11,6 +11,7 @@ interface TopicDetailProps {
       id: string
       tag: number
       menssageCount: number
+      avatar_url: string
     }
   }
   mainPost: {
@@ -21,6 +22,7 @@ interface TopicDetailProps {
       id: string
       tag: number
       menssageCount: number
+      avatar_url: string
     }
   } | null
 }
@@ -57,29 +59,38 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
         <div className="w-48 border-r p-4 text-center space-y-3">
           <div>
             <Link href={`/forum/user/${topic.author.id}`} className="font-medium hover:underline text-sm">
-              {topic.author.name}#{topic.author.tag}
+              {topic.author.name} #{topic.author.tag}
             </Link>
           </div>
 
           <div className="text-xs font-medium">{getUserTitle(topic.author.menssageCount)}</div>
 
           <div className="flex justify-center">
-            <img
-              src="/placeholder.svg?height=120&width=120"
-              alt={`Avatar de ${topic.author.name}`}
-              className="w-24 h-24 rounded border"
-            />
+            {topic.author.avatar_url ? (
+              <img
+                src={topic.author.avatar_url}
+                alt={`Avatar de ${topic.author.name}`}
+                className="w-24 h-24 rounded border"
+              />
+            ) : (
+              <img
+                src="/placeholder.svg?height=120&width=120"
+                alt={`Avatar de ${topic.author.name}`}
+                className="w-24 h-24 rounded border"
+              />
+            )}
           </div>
+
 
           <div className="text-xs">Mensajes: {topic.author.menssageCount.toLocaleString()}</div>
         </div>
 
-        <div className="flex-1 p-4 min-h-[200px] relative"> 
-            <>
-              <div className="prose max-w-none mb-8">
-                <p>{mainPost.content}</p>
-              </div>
-            </>
+        <div className="flex-1 p-4 min-h-[200px] relative">
+          <>
+            <div className="prose max-w-none mb-8">
+              <p>{mainPost.content}</p>
+            </div>
+          </>
         </div>
       </div>
     </div>

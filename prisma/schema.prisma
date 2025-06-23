@@ -84,10 +84,9 @@ longitude   Float
 description String?
 reported_at DateTime @default(now())
 photo_urls  String[]
+resolved    Boolean? @default(false)
 Pets        Pets     @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 users       users    @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
-
-@@unique([pet_id, reporter_id])
 }
 
 model Pets {

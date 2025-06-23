@@ -61,9 +61,8 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
                 {formatDateLabel(topic.updatedAt)}
                 </div>
               <div>
-                por {topic.author.name}#{topic.author.tag} 
+                por {topic.author.name} #{topic.author.tag} 
                 <Link href={`/forum/user/${topic.author.id}`} className="hover:underline">
-                  {topic.author.name}
                 </Link>
               </div>
             </div>

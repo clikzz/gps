@@ -9,10 +9,8 @@ export async function GET(
   const user = await authenticateUser(request);
   if (user instanceof Response) return user;
 
-  // Esperamos params antes de usarlo
   const { petId } = await params;
 
-  // Pasamos `request` para que el controlador lea los filtros (searchParams)
   return timelineController.getEntries(user.id, petId, request);
 }
 
@@ -23,11 +21,9 @@ export async function POST(
   const user = await authenticateUser(request);
   if (user instanceof Response) return user;
 
-  // Await params aquí también
   const { petId } = await params;
   const payload = await request.json();
 
-  // --- INICIO NORMALIZACIÓN DE FECHA A MEDIANOCHE UTC ---
   if (payload.eventDate) {
     try {
       const dateObj = new Date(payload.eventDate);
@@ -42,10 +38,9 @@ export async function POST(
         payload.eventDate = normalized;
       }
     } catch {
-      // Si falla, dejamos payload.eventDate sin cambios
     }
   }
-  // --- FIN NORMALIZACIÓN DE FECHA ---
+
 
   return timelineController.createEntry(user.id, petId, payload);
 }
@@ -57,7 +52,6 @@ export async function DELETE(
   const user = await authenticateUser(request);
   if (user instanceof Response) return user;
 
-  // Await params aquí también
   const { petId } = await params;
 
   const url = new URL(request.url);

@@ -104,30 +104,8 @@ export default function Map({ userLocation }: MapProps) {
               </div>
             </div>
           </Popup>
-        )}
-        {mapLoaded && <PetService userLocation={userLocation} />}
+        )}        {mapLoaded && <PetService userLocation={userLocation} />}
       </MapGL>
-      <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg text-sm text-gray-700 max-w-xs hidden md:block border border-gray-200">
-        <h4 className="font-semibold mb-2 text-purple-700">🗺️ Controles del mapa</h4>
-        <ul className="space-y-1 text-xs">
-          <li className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-            Arrastra para mover el mapa
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-            Rueda del mouse para zoom
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-            Doble clic para zoom rápido
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-            Clic en marcadores para info
-          </li>
-        </ul>
-      </div>
       {!mapLoaded && (
         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
           <div className="text-center">

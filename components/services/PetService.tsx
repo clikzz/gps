@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Marker, Popup, Source, Layer } from "react-map-gl/mapbox"
-import { MapPin, Navigation, Star, Clock, X, Car } from "lucide-react"
+import { MapPin, Navigation, Star, Clock, X, Car, Info } from "lucide-react"
 import { toast } from "sonner"
 
 interface PetServiceProps {
@@ -20,6 +20,7 @@ interface RealPetService {
   isCustom?: boolean
   routeDistance?: string
   routeDuration?: string
+  description?: string
 }
 
 interface CustomService {
@@ -70,8 +71,7 @@ export default function PetService({ userLocation }: PetServiceProps) {
 
   const fetchCustomServices = async () => {
     setCustomServicesLoading(true)
-    try {
-      const response = await fetch(
+    try {      const response = await fetch(
         `/api/services?latitude=${userLocation.lat}&longitude=${userLocation.lng}&radius=${SEARCH_RADIUS_KM}`,
       )
 
@@ -84,12 +84,13 @@ export default function PetService({ userLocation }: PetServiceProps) {
           return {
             id: `custom-${service.id}-${Date.now()}`,
             name: service.name,
-            address: service.description,
+            address: `${service.latitude.toFixed(4)}, ${service.longitude.toFixed(4)}`,
             lat: service.latitude,
             lng: service.longitude,
             category: service.category,
             distance: distance,
             isCustom: true,
+            description: service.description,
           }
         })
 
@@ -98,9 +99,8 @@ export default function PetService({ userLocation }: PetServiceProps) {
           const combinedServices = [...mapboxServices, ...customServices]
           return combinedServices.sort((a, b) => (a.distance || 0) - (b.distance || 0))
         })
-      }
-    } catch (error) {
-      toast.error("Error al cargar servicios personalizados")
+      }    } catch (error) {
+      console.error("Error al cargar servicios personalizados:", error)
     } finally {
       setCustomServicesLoading(false)
     }
@@ -185,9 +185,7 @@ export default function PetService({ userLocation }: PetServiceProps) {
             }
           })
         }
-      }
-
-      allServices.sort((a, b) => (a.distance || 0) - (b.distance || 0))
+      }      allServices.sort((a, b) => (a.distance || 0) - (b.distance || 0))
       setPetServices((prevServices) => {
         const customServices = prevServices.filter((service) => service.isCustom)
         const combinedServices = [...allServices, ...customServices]
@@ -195,12 +193,11 @@ export default function PetService({ userLocation }: PetServiceProps) {
       })
 
       if (allServices.length > 0) {
-        toast.success(`${allServices.length} servicios encontrados`)
+        console.log(`${allServices.length} servicios encontrados`)
       } else {
-        toast.info("No se encontraron servicios cercanos")
-      }
-    } catch (error) {
-      toast.error("Error en la búsqueda")
+        console.log("No se encontraron servicios cercanos")
+      }    } catch (error) {
+      console.error("Error en la búsqueda:", error)
     } finally {
       setLoading(false)
     }
@@ -262,16 +259,17 @@ export default function PetService({ userLocation }: PetServiceProps) {
         return "text-purple-600 hover:text-purple-800"
     }
   }
-
   const getServiceIcon = (category: string, isCustom = false): string => {
     if (isCustom) {
-      return "🐾"
+      return "⭐"
     }
 
     switch (category.toLowerCase()) {
       case "veterinaria booster":
         return "🚀"
       case "veterinaria":
+      case "clínica veterinaria":
+      case "hospital veterinario":
         return "🏥"
       case "tienda de mascotas":
         return "🛒"
@@ -287,7 +285,7 @@ export default function PetService({ userLocation }: PetServiceProps) {
 
     try {
       const response = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.lng},${userLocation.lat};${service.lng},${service.lat}?geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN_SERVICES}`,
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.lng},${userLocation.lat};${service.lng},${service.lat}?geometries=geojson&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`,
       )
 
       if (response.ok) {
@@ -322,9 +320,9 @@ export default function PetService({ userLocation }: PetServiceProps) {
 
           toast.success(`Ruta: ${distance} km - ${duration} min`)
         }
-      }
-    } catch (error) {
-      toast.error("Error al calcular ruta")
+      }    } catch (error) {
+      console.error("Error al calcular ruta:", error)
+      toast.error("Error al calcular la ruta")
     } finally {
       setLoadingRoute(false)
     }
@@ -363,17 +361,22 @@ export default function PetService({ userLocation }: PetServiceProps) {
             </span>
           </div>
         </div>
-      )}
-
-      {routeInfo && (
-        <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 z-20 max-w-xs">
+      )}      {routeInfo && (
+        <div className="absolute bottom-4 left-4 bg-white backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 z-20 max-w-sm">
           <div className="flex items-start justify-between">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-lg">
                   {getServiceIcon(routeInfo.service.category, routeInfo.service.isCustom)}
-                </span>
-                <h4 className="font-semibold text-gray-800 text-sm truncate">{routeInfo.service.name}</h4>
+                </span>                <h4 className="font-semibold text-gray-800 text-sm leading-tight break-words overflow-hidden"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      maxHeight: '2.5rem'
+                    }}>
+                  {routeInfo.service.name}
+                </h4>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center text-sm text-blue-800 font-medium">
@@ -424,18 +427,12 @@ export default function PetService({ userLocation }: PetServiceProps) {
           onClick={() => handleMarkerClick(service)}
         >
           <div className="cursor-pointer transform hover:scale-110 transition-transform">
-            <div className="relative">
-              <div
-                className={`w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center ${
-                  service.isCustom ? "bg-yellow-400" : "bg-purple-500"
-                } ${getServiceColor(service.category, service.isCustom)}`}
-                style={{
-                  backgroundColor: service.isCustom ? "#fbbf24" : "#8b5cf6",
-                }}
+            <div className="relative">              <div
+                className={`w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold ${
+                  service.isCustom ? "bg-yellow-500" : "bg-purple-500"
+                }`}
               >
-                <span className="text-white text-xs font-bold">
-                  {getServiceIcon(service.category, service.isCustom)}
-                </span>
+                {getServiceIcon(service.category, service.isCustom)}
               </div>
               {selectedService && selectedService.id === service.id && (
                 <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-50"></div>
@@ -443,9 +440,7 @@ export default function PetService({ userLocation }: PetServiceProps) {
             </div>
           </div>
         </Marker>
-      ))}
-
-      {selectedService && (
+      ))}      {selectedService && (
         <Popup
           latitude={selectedService.lat}
           longitude={selectedService.lng}
@@ -459,7 +454,7 @@ export default function PetService({ userLocation }: PetServiceProps) {
           className="service-popup"
           maxWidth="320px"
         >
-          <div className="p-3 space-y-3 max-w-[300px]">
+          <div className="bg-white p-3 space-y-3 max-w-[300px] rounded-lg shadow-lg border border-gray-200">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-gray-800 text-sm flex items-center flex-wrap">
@@ -468,17 +463,22 @@ export default function PetService({ userLocation }: PetServiceProps) {
                 </h3>
                 {selectedService.isCustom && (
                   <span className="inline-block mt-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                    Personalizado
+                    Servicio personalizado
                   </span>
                 )}
               </div>
-            </div>
-
-            <div className="space-y-2">
+            </div>            <div className="space-y-2">
               <div className="flex items-center text-xs text-gray-600">
                 <Star className="w-3 h-3 mr-2 text-yellow-500 flex-shrink-0" />
                 <span className="font-medium break-words">{selectedService.category}</span>
               </div>
+
+              {selectedService.isCustom && selectedService.description ? (
+                <div className="flex items-start text-xs text-gray-600">
+                  <Info className="w-3 h-3 mr-2 mt-0.5 text-purple-400 flex-shrink-0" />
+                  <span className="flex-1 break-words">{selectedService.description}</span>
+                </div>
+              ) : null}
 
               <div className="flex items-start text-xs text-gray-600">
                 <MapPin className="w-3 h-3 mr-2 mt-0.5 text-gray-400 flex-shrink-0" />

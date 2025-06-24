@@ -35,7 +35,7 @@ export const modifyUserProfile = async (
     name,
     email,
     avatar_url,
-  }: { name: string; email: string; avatar_url: string }
+  }: { name: string; email: string; avatar_url: string | null }
 ) => {
   const updatedProfile = await updateUserProfile(userId, {
     name,

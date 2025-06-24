@@ -75,6 +75,6 @@ export const useProfileImageUpload = () => {
     handleFileChange,
     uploadImage,
     resetImage,
-    setImagePreview, 
+    setImagePreview,
   };
 };

@@ -217,7 +217,7 @@ model users {
 id               String             @id @db.Uuid
 email            String?
 name             String?
-avatar_url       String?
+avatar_url       String?            @default("https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/images/profile/defaultpfp.png")
 created_at       DateTime           @default(now())
 tag              Int                @unique @default(autoincrement())
 lastMessageAt    DateTime?          @map("lastMessageAt")

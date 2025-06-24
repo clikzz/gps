@@ -85,8 +85,24 @@ description String?
 reported_at DateTime @default(now())
 photo_urls  String[]
 resolved    Boolean? @default(false)
+FoundReports FoundReports[]
+
 Pets        Pets     @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 users       users    @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+}
+
+model FoundReports {
+id             BigInt      @id @default(autoincrement())
+missingPetId   BigInt
+helperId       String      @db.Uuid
+photo_urls     String[]
+description    String?
+latitude       Float
+longitude      Float
+created_at     DateTime    @default(now())
+
+MissingPets    MissingPets @relation(fields: [missingPetId], references: [id], onDelete: Cascade)
+users          users       @relation(fields: [helperId], references: [id], onDelete: Cascade)
 }
 
 model Pets {
@@ -209,6 +225,7 @@ menssageCount    Int                @default(0)
 role             Role               @default(USER)
 MarketplaceItems MarketplaceItems[]
 MissingPets      MissingPets[]
+FoundReports     FoundReports[]
 Pets             Pets[]
 Posts            Posts[]
 Reviews          Reviews[]

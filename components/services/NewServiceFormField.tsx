@@ -158,7 +158,6 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   );
 };
 
-// Opciones para categorías de servicios
 export const CATEGORY_OPTIONS: SelectOption[] = [
   { value: "veterinaria", label: "Veterinaria" },
   { value: "peluqueria", label: "Peluquería" },

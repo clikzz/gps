@@ -26,6 +26,7 @@ type UserProfile = {
   lostPets: LostPet[];
   marketplaceItems: MarketplaceItem[];
   role: Role;
+  menssageCount: number;
 };
 
 type UserProfileStore = {

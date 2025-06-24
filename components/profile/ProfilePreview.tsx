@@ -14,6 +14,7 @@ interface ProfilePreviewProps {
 export function ProfilePreview({ onClose }: ProfilePreviewProps) {
   const router = useRouter()
   const { user } = useUserProfile()
+  const menssageCount = useUserProfile(state => state.user?.menssageCount ?? 0)
 
   if (!user) {
     return (
@@ -102,7 +103,7 @@ export function ProfilePreview({ onClose }: ProfilePreviewProps) {
           </div>
           <div className="text-sm">
             <span className="font-medium">Mensajes:</span>
-            <span className="text-muted-foreground ml-2">10.600</span>
+            <span className="text-muted-foreground ml-2">{user.menssageCount.toLocaleString()}</span>
           </div>
         </div>
       </CardContent>

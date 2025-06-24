@@ -16,6 +16,7 @@ type UserProfile = {
   updated_at: string;
   name?: string;
   avatar_url?: string;
+  tag?: string;
   Pets: Pet[];
   photoLogs: PhotoLog[];
   forums: Forum[];

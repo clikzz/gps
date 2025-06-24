@@ -235,7 +235,7 @@ HealthAlerts     HealthAlerts[]
 }
 
 enum Role {
-    USER
-    MODERATOR
-    ADMIN
+  USER
+  MODERATOR
+  ADMIN
 }

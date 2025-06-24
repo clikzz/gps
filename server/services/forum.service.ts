@@ -184,5 +184,25 @@ export async function deleteOwnTopic(
   });
 }
 
+export async function assignModerator(userId: string) {
+  return prisma.users.update({
+    where: { id: userId },
+    data: { role: "MODERATOR" },
+  });
+}
 
+export async function revokeModerator(userId: string) {
+  return prisma.users.update({
+    where: { id: userId },
+    data: { role: "USER" },
+  });
+}
+
+export async function deletePostAny(postId: number) {
+  return prisma.posts.delete({ where: { id: postId } });
+}
+
+export async function deleteTopicAny(topicId: number) {
+  return prisma.topics.delete({ where: { id: topicId } });
+}
 

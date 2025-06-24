@@ -1,8 +1,22 @@
 import prisma from "@/lib/db"; 
 import { ZodError } from "zod";
-import { listSubforums, listTopics, listPosts, createTopic, createPost, deleteOwnPost, deleteOwnTopic, updateOwnPost, updateOwnTopic } from "../services/forum.service";
+import { 
+  listSubforums, 
+  listTopics, 
+  listPosts, 
+  createTopic, 
+  createPost, 
+  deleteOwnPost, 
+  deleteOwnTopic, 
+  updateOwnPost, 
+  updateOwnTopic, 
+  assignModerator, 
+  revokeModerator,
+  deletePostAny,
+  deleteTopicAny
+} from "../services/forum.service";
 import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema} from "../validations/forum.validation";
-import { authenticateUser } from "../middlewares/auth.middleware";
+import { authenticateUser, ensureAdmin } from "../middlewares/auth.middleware";
 import { NextResponse } from "next/server";
 
 
@@ -313,4 +327,56 @@ export async function removeOwnTopic(req: Request) {
     );
   }
   return new NextResponse(null, { status: 204 });
+}
+
+export async function addModerator(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+  try {
+    ensureAdmin(user);
+    const { userId } = await req.json();
+    await assignModerator(userId);
+    return new Response(null, { status: 204 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 403 });
+  }
+}
+
+export async function removeModerator(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+  try {
+    ensureAdmin(user);
+    const { userId } = await req.json();
+    await revokeModerator(userId);
+    return new Response(null, { status: 204 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 403 });
+  }
+}
+
+export async function deleteAnyPostHandler(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+  try {
+    ensureAdmin(user);
+    const postId = Number(new URL(req.url).pathname.split("/").pop());
+    await deletePostAny(postId);
+    return new Response(null, { status: 204 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function deleteAnyTopicHandler(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+  try {
+    ensureAdmin(user);
+    const topicId = Number(new URL(req.url).pathname.split("/").pop());
+    await deleteTopicAny(topicId);
+    return new Response(null, { status: 204 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

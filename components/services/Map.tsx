@@ -23,7 +23,7 @@ export default function Map({ userLocation }: MapProps) {
   const [showUserPopup, setShowUserPopup] = useState(false)
   const [mapLoaded, setMapLoaded] = useState(false)
 
-  const mapToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN_SERVICES || ""
+  const mapToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
 
   const toggleUserPopup = () => {
     setShowUserPopup(!showUserPopup)

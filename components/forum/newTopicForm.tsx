@@ -12,6 +12,7 @@ interface NewTopicFormProps {
   subforumId: number
 }
 
+
 export function NewTopicForm({ subforumSlug, subforumId }: NewTopicFormProps) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -43,7 +44,7 @@ export function NewTopicForm({ subforumSlug, subforumId }: NewTopicFormProps) {
 
       if (res.status === 429) {
         const { error: msg } = (await res.json().catch(() => ({}))) as { error?: string }
-        setError(msg || "Debes esperar 2 minutos antes de crear otro tema.")
+        setError(msg || "Debes esperar 10 segundos antes de crear otro tema.")
         return
       }
 

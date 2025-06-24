@@ -11,6 +11,7 @@ interface Topic {
   author: {
     name: string
     id: string
+    tag: number
   }
   postsCount: number
 }

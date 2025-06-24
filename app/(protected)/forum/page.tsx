@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { ForumCategory } from "@/components/forum/forumCategory"
 import { fetcher } from "@/lib/utils"
+import ForumFooter  from "@/components/forum/forumFooter"
 
 interface Subforum {
   id: number
@@ -15,6 +16,7 @@ interface Subforum {
     author: {
       name: string
       id: string
+      tag: number
     }
   } | null
 }
@@ -86,27 +88,23 @@ async function getSubforums(): Promise<Subforum[]> {
 
 async function getTopicsAndPostsData(subforumId: number) {
   try {
-    console.log("Fetching topics for subforum:", subforumId);
     const topics = await fetcher<any[]>(`/api/forum/topics?subforumId=${subforumId}`);
-    console.log("Topics result:", topics);
-
-
     const topicsCount = topics.length
     const postsCount = topics.reduce((sum, t) => sum + (t.postsCount || 0), 0)
 
     const latest = topics
-      .flatMap(t => ({
-        updatedAt: new Date(t.updatedAt),
+      .map(t => ({
+        updatedAt: t.updatedAt,   
         author: t.author,
       }))
-      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0]
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
 
     return {
       topicsCount,
       postsCount,
       lastPost: latest
         ? {
-          date: latest.updatedAt.toLocaleString(),
+          date: latest.updatedAt,
           author: latest.author,
         }
         : null,
@@ -169,6 +167,8 @@ export default async function ForumPage() {
           <ForumCategory key={category.id} category={category} />
         ))}
       </main>
+      
+      <ForumFooter />
     </div>
   )
 }

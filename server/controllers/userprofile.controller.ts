@@ -20,9 +20,6 @@ export const fetchUserProfile = async (userId: string) => {
       headers: { "Content-Type": "application/json" },
     });
   }
-
-  console.log("Formatted user profile:", userProfile);
-
   return new Response(JSON.stringify(userProfile), {
     status: 200,
     headers: { "Content-Type": "application/json" },

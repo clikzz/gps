@@ -33,7 +33,6 @@ export const createPet = async ({
   const activePetsCount = await prisma.pets.count({
     where: {
       user_id: user.id,
-      active: true,
       deleted: false,
     },
   });

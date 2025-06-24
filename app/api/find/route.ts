@@ -8,7 +8,8 @@ import {
   fetchUserPets,
   reportPetFound,
   fetchOtherMissingPets,
-  reportFound
+  reportFound,
+  fetchFoundReports
 } from "@/server/controllers/find.controller";
 
 /**
@@ -17,6 +18,7 @@ import {
  *      /api/find?mode=pets   → lista mascotas del usuario autenticado
  *      /api/find?mode=my     → lista reportes de mascotas desaparecidas del usuario autenticado
  *      /api/find?mode=others → lista reportes de mascotas desaparecidas de otros usuarios
+ *      /api/find?mode=found  → lista reportes de mascotas encontradas
  */
 export async function GET(req: NextRequest) {
   const user = await authenticateUser(req);
@@ -29,6 +31,7 @@ export async function GET(req: NextRequest) {
     case "pets": return fetchUserPets(user.id);             // /api/find?mode=pets
     case "my": return fetchMyMissingPets(user.id);          // /api/find?mode=my
     case "others": return fetchOtherMissingPets(user.id);   // /api/find?mode=others
+    case "found": return fetchFoundReports(user.id);        // /api/find?mode=found
     default: return fetchRecentMissingPets();               // /api/find?mode=recent
   }
 }

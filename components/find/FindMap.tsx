@@ -15,6 +15,7 @@ import OthersReports from '@/components/find/OthersReports';
 import FoundReportModal from '@/components/find/FoundReportModal';
 import MapMarkers from '@/components/find/MapMarkers';
 import ReportPopup from '@/components/find/MapPopups';
+import FoundReports from '@/components/find/FoundReports';
 
 const Map = dynamic(
   () => import("react-map-gl/mapbox").then((mod) => mod.default),
@@ -34,6 +35,7 @@ export default function FindMap() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isMyReportsModalOpen, setIsMyReportsModalOpen] = useState(false);
   const [isOthersReportsModalOpen, setIsOthersReportsModalOpen] = useState(false);
+  const [isFoundReportsModalOpen, setIsFoundReportsModalOpen] = useState(false);
 
   const [pickLocationMode, setPickLocationMode] = useState(false);
   const [pickedLocation, setPickedLocation] = useState<LatLng | null>(null);
@@ -151,6 +153,7 @@ export default function FindMap() {
           onReportClick={() => setIsReportModalOpen(true)}
           onMyReportsClick={() => setIsMyReportsModalOpen(true)}
           onOthersReportsClick={() => setIsOthersReportsModalOpen(true)}
+          onFoundReportsClick={() => setIsFoundReportsModalOpen(true)}
         />
       </div>
 
@@ -174,6 +177,10 @@ export default function FindMap() {
         isOpen={isOthersReportsModalOpen}
         onClose={() => setIsOthersReportsModalOpen(false)}
         onGoTo={(r) => goToReportLocation(r)}
+      />
+      <FoundReports
+        isOpen={isFoundReportsModalOpen}
+        onClose={() => setIsFoundReportsModalOpen(false)}
       />
 
       {/* Mapa */}

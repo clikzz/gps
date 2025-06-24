@@ -6,7 +6,8 @@ import {
   listMyMissingPets,
   listOtherMissingPets,
   markPetAsFound,
-  createFoundReport
+  createFoundReport,
+  listFoundReportsForUser
 } from "@/server/services/find.service";
 import { 
   reportMissingPetSchema,
@@ -246,4 +247,31 @@ export const reportFound = async (
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
+};
+
+export const fetchFoundReports = async (userId: string) => {
+  const list = await listFoundReportsForUser(userId);
+
+  const output = list.map((r) => ({
+    id: r.id.toString(),
+    missingPetId: r.missingPetId.toString(),
+    helper: {
+      id: r.users.id.toString(),
+      name: r.users.name
+    },
+    pet: {
+      id: r.MissingPets.pet_id.toString(),
+      name: r.MissingPets.Pets.name,
+      photo_url: r.MissingPets.Pets.photo_url
+    },
+    description: r.description,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    reported_at: r.created_at.toISOString()
+  }));
+
+  return new Response(JSON.stringify(output), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  });
 };

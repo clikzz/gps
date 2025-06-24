@@ -197,3 +197,42 @@ export const createFoundReport = async (
     },
   });
 };
+
+/**
+ * Listar reportes de hallazgo a la mascota desaparecida.
+ */
+export const listFoundReportsForUser = async (userId: string) => {
+  return prisma.foundReports.findMany({
+    where: {
+      MissingPets: {
+        reporter_id: userId,
+      },
+    },
+    include: {
+      MissingPets: {
+        select: {
+          id: true,
+          pet_id: true,
+          latitude: true,
+          longitude: true,
+          reported_at: true,
+          Pets: {
+            select: {
+              name: true,
+              photo_url: true,
+            },
+          },
+        },
+      },
+      users: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      created_at: "desc",
+    },
+  });
+};

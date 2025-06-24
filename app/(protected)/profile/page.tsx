@@ -35,13 +35,14 @@ export default function ProfileConfigPage() {
   useEffect(() => {
     fetchProfile()
   }, [])
-
   useEffect(() => {
     if (user) {
       setName(user.name || "")
-      setImagePreview(user.avatar_url || "")
+      if (!selectedFile) {
+        setImagePreview(null)
+      }
     }
-  }, [user, setImagePreview])
+  }, [user, setImagePreview, selectedFile])
 
   const fetchProfile = async () => {
     try {
@@ -69,6 +70,7 @@ export default function ProfileConfigPage() {
         email: user?.email || "",
         avatar_url: updatedData?.avatar_url !== undefined ? updatedData?.avatar_url : user?.avatar_url,
       }
+
       const response = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,7 +88,7 @@ export default function ProfileConfigPage() {
   }
 
   const handleRemoveAvatar = async () => {
-    if (!user?.avatar_url) return
+    if (!user?.avatar_url || user.avatar_url.includes("defaultpfp.png")) return
 
     setIsDeleting(true)
     try {
@@ -100,14 +102,13 @@ export default function ProfileConfigPage() {
         }),
       })
 
-      if (response.ok) {
-        resetImage()
-        const success = await updateProfile({ avatar_url: undefined })
-        if (success) {
-          toast.success("Avatar eliminado correctamente")
-        }
-      } else {
-        throw new Error("Error al eliminar la imagen")
+      if (!response.ok) {
+        throw new Error("Error al eliminar la imagen del storage")
+      }
+      resetImage()
+      const success = await updateProfile({ avatar_url: null as any })
+      if (success) {
+        toast.success("Avatar eliminado correctamente")
       }
     } catch (error) {
       toast.error("Error al eliminar la imagen")
@@ -127,7 +128,7 @@ export default function ProfileConfigPage() {
         const uploadResult = await uploadImage()
         if (uploadResult.url) {
           avatarUrl = uploadResult.url
-          if (user.avatar_url && user.avatar_url !== avatarUrl) {
+          if (user.avatar_url && user.avatar_url !== avatarUrl && !user.avatar_url.includes("defaultpfp.png")) {
             try {
               await fetch("/api/upload", {
                 method: "DELETE",
@@ -211,18 +212,19 @@ export default function ProfileConfigPage() {
     <div>
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto">
-
           <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold">Configuración del Perfil</h1>
-              <Button variant="outline" size="sm" onClick={fetchProfile} className="ml-5">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Recargar
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => router.back()} className="ml-5">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver
-              </Button>
+              <div className="flex items-center gap-3 ml-8">
+                <Button variant="outline" size="sm" onClick={fetchProfile}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Recargar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => router.back()}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Volver
+                </Button>
+              </div>
             </div>
 
             <Tabs defaultValue="profile" className="w-full">
@@ -231,98 +233,98 @@ export default function ProfileConfigPage() {
                 <TabsTrigger value="badges">Insignias</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="profile" className="space-y-6 mt-6">
-                <div className="space-y-4">
-                  <Label className="text-base font-semibold">Foto de Perfil</Label>
-                  <div className="w-full flex justify-center">
-                    <div className="flex items-center gap-4">
-                      <div className="w-32 h-32 bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
-                        {imagePreview ? (
+              <div className="mt-6 min-h-[480px]">
+                <TabsContent value="profile" className="space-y-6 m-0 h-full">
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold">Foto de Perfil</Label>
+                    <div className="w-full flex justify-center">
+                      <div className="flex items-center gap-4">
+                        <div className="w-32 h-32 bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
                           <img
-                            src={imagePreview || "/placeholder.svg"}
+                            src={imagePreview || user.avatar_url || "/placeholder.svg"}
                             alt="Preview"
                             className="w-full h-full object-cover"
                           />
-                        ) : (
-                          <span className="text-2xl">👤</span>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="flex items-center gap-2"
-                            disabled={isUploadingAvatar}
-                          >
-                            <Upload className="w-4 h-4" />
-                            {isUploadingAvatar ? "Subiendo..." : "Subir Imagen"}
-                          </Button>
-                          {user.avatar_url && (
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
                             <Button
                               type="button"
                               variant="outline"
-                              onClick={handleRemoveAvatar}
-                              disabled={isDeleting}
-                              className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="flex items-center gap-2"
+                              disabled={isUploadingAvatar}
                             >
-                              <Trash2 className="w-4 h-4" />
-                              {isDeleting ? "Eliminando..." : "Eliminar"}
+                              <Upload className="w-4 h-4" />
+                              {isUploadingAvatar ? "Subiendo..." : "Subir Imagen"}
                             </Button>
-                          )}
+                            {user.avatar_url && !user.avatar_url.includes("defaultpfp.png") && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleRemoveAvatar}
+                                disabled={isDeleting}
+                                className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                {isDeleting ? "Eliminando..." : "Eliminar"}
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máximo 2MB.</p>
                         </div>
-                        <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máximo 2MB.</p>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
                       </div>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
                     </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nombre a Mostrar</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ingresa tu nombre a mostrar en el foro"
-                    maxLength={50}
-                  />
-                  <p className="text-xs text-muted-foreground">Este será tu nombre visible en el foro</p>
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nombre a Mostrar</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Ingresa tu nombre a mostrar en el foro"
+                      maxLength={50}
+                    />
+                    <p className="text-xs text-muted-foreground">Este será tu nombre visible en el foro</p>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" value={user.email} disabled className="bg-muted" />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" value={user.email} disabled className="bg-muted" />
+                  </div>
 
-                <Button onClick={handleSave} disabled={isLoading || isUploadingAvatar} className="w-full">
-                  <Save className="w-4 h-4 mr-2" />
-                  {isLoading ? "Guardando..." : "Guardar Cambios"}
-                </Button>
-              </TabsContent>
+                  <Button onClick={handleSave} disabled={isLoading || isUploadingAvatar} className="w-full">
+                    <Save className="w-4 h-4 mr-2" />
+                    {isLoading ? "Guardando..." : "Guardar Cambios"}
+                  </Button>
+                </TabsContent>
 
-              <TabsContent value="badges" className="space-y-4 mt-6">
-                <div>
-                  <Label className="text-base font-semibold">Insignias</Label>
-                  <p className="text-sm text-muted-foreground mt-1">Las insignias estarán disponibles próximamente</p>
-                </div>
+                <TabsContent value="badges" className="space-y-4 m-0 h-full flex flex-col">
+                  <div>
+                    <Label className="text-base font-semibold">Insignias</Label>
+                    <p className="text-sm text-muted-foreground mt-1">Las insignias estarán disponibles próximamente</p>
+                  </div>
 
-                <Card className="p-8 text-center">
-                  <div className="text-4xl mb-4">🏆</div>
-                  <h3 className="text-lg font-semibold mb-2">Insignias en Desarrollo</h3>
-                  <p className="text-muted-foreground">
-                    El sistema de insignias estará disponible próximamente. Aquí podrás seleccionar hasta 6 insignias
-                    para mostrar en tu perfil.
-                  </p>
-                </Card>
-              </TabsContent>
+                  <div className="flex-1 flex items-center justify-center">
+                    <Card className="p-8 text-center max-w-md">
+                      <div className="text-4xl mb-4">🏆</div>
+                      <h3 className="text-lg font-semibold mb-3">Insignias en Desarrollo</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        El sistema de insignias estará disponible próximamente. Aquí podrás seleccionar hasta 6
+                        insignias para mostrar en tu perfil.
+                      </p>
+                    </Card>
+                  </div>
+                </TabsContent>
+              </div>
             </Tabs>
           </Card>
         </div>

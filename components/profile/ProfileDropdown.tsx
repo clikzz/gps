@@ -45,17 +45,12 @@ export function ProfileDropdown() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">
-            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
-              {user.avatar_url ? (
-                <img
-                  src={user.avatar_url || "/placeholder.svg"}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-sm font-medium text-slate-600">{displayName.charAt(0).toUpperCase()}</span>
-              )}
+          <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
+              <img
+                src={user.avatar_url || "/placeholder.svg"}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="flex flex-col items-start">
               <span className="text-sm font-medium">Hola, {displayName}</span>

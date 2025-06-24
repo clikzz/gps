@@ -19,7 +19,7 @@ const UPLOAD_CONFIGS = {
     maxSize: 3 * 1024 * 1024, // 3MB
   },
   profile: {
-    folder: "profiles",
+    folder: "profile",
     maxWidth: 400,
     quality: 90,
     maxSize: 2 * 1024 * 1024, // 2MB

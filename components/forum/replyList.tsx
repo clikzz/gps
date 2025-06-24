@@ -17,7 +17,7 @@ export interface Reply {
     id: string
     tag: number
     menssageCount: number
-    avatar_url: string
+    avatar_url?: string
   }
 }
 
@@ -139,7 +139,7 @@ export function ReplyList({ replies }: ReplyListProps) {
                 <div className="flex justify-center">
                   {reply.author.avatar_url ? (
                     <img
-                      src={reply.author.avatar_url}
+                      src={reply.author.avatar_url ?? "/placeholder.svg"}
                       alt={`Avatar de ${reply.author.name}`}
                       className="w-24 h-24 rounded border"
                     />

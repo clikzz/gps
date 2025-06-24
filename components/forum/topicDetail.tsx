@@ -20,7 +20,7 @@ interface TopicDetailProps {
       id: string
       tag: number
       menssageCount: number
-      avatar_url: string
+      avatar_url?: string
     }
   }
   mainPost: {
@@ -32,7 +32,7 @@ interface TopicDetailProps {
       id: string
       tag: number
       menssageCount: number
-      avatar_url: string
+      avatar_url?: string
     }
   } | null
 }
@@ -128,7 +128,7 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
           <div className="flex justify-center">
             {topic.author.avatar_url ? (
               <img
-                src={topic.author.avatar_url}
+                src={topic.author.avatar_url ?? "/placeholder.svg"}
                 alt={`Avatar de ${topic.author.name}`}
                 className="w-24 h-24 rounded border"
               />

@@ -16,7 +16,6 @@ import NewTimelineForm from "@/components/timeline/NewTimelineForm";
 
 interface NewTimelineDrawerProps {
   petId: string;
-  /** Se dispara justo después de crear con éxito la entrada */
   onSuccess?: () => void;
 }
 
@@ -45,9 +44,7 @@ export default function NewTimelineDrawer({
             <NewTimelineForm
               petId={petId}
               onSuccess={() => {
-                // 1) notificamos a la página
                 onSuccess?.();
-                // 2) cerramos el Drawer
                 setOpen(false);
               }}
             />

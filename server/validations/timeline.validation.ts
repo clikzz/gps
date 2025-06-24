@@ -11,7 +11,6 @@ export const NewTimelineEntrySchema = z.object({
     .refine((date) => {
       const inputDate = new Date(date);
       const nowUTC = new Date();
-      // Compara solo la parte de la fecha (no la hora) en UTC
       const inputYMD = [
         inputDate.getUTCFullYear(),
         inputDate.getUTCMonth(),
@@ -22,7 +21,6 @@ export const NewTimelineEntrySchema = z.object({
         nowUTC.getUTCMonth(),
         nowUTC.getUTCDate(),
       ];
-      // Permite hoy o días anteriores (en UTC)
       if (inputYMD[0] < nowYMD[0]) return true;
       if (inputYMD[0] > nowYMD[0]) return false;
       if (inputYMD[1] < nowYMD[1]) return true;
@@ -39,7 +37,6 @@ export const NewTimelineEntrySchema = z.object({
   milestoneIds: z.array(z.string()).max(4, 'Máximo 4 hitos por recuerdo.').optional(),
 
 }).superRefine((data, ctx) => {
-  // RF-006: La descripción es obligatoria si no hay fotos.
   const hasPhotos = data.photoUrls && data.photoUrls.length > 0;
   const hasDescription = data.description && data.description.trim() !== '';
 

@@ -1,17 +1,12 @@
-// components/ui/Calendar.tsx
 "use client";
 
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CalendarProps {
-  /** Fecha que aparecerá seleccionada inicialmente */
   initialDate?: Date | null;
-  /** Callback al hacer clic en un día válido */
   onDateSelect?: (date: Date) => void;
-  /** Clase Tailwind para el fondo del día seleccionado */
   selectedBgColorClass?: string;
-  /** Fecha máxima permitida (días posteriores quedarán deshabilitados) */
   maxDate?: Date;
 }
 
@@ -40,7 +35,7 @@ export default function Calendar({
     new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
   const firstDayIndex = (d: Date) => {
     const dow = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
-    return dow === 0 ? 6 : dow - 1; // Domingo → índice 6
+    return dow === 0 ? 6 : dow - 1;
   };
 
   const navigate = (dir: "prev" | "next") => {
@@ -51,7 +46,7 @@ export default function Calendar({
     });
   };
 
-  // Generación de celdas del calendario
+
   const cells: { date: Date; isCurrent: boolean }[] = [];
   const dim = daysInMonth(currentDate);
   const fdi = firstDayIndex(currentDate);
@@ -59,7 +54,7 @@ export default function Calendar({
     new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
   );
 
-  // Días mes anterior
+
   for (let i = fdi - 1; i >= 0; i--) {
     cells.push({
       date: new Date(
@@ -70,7 +65,7 @@ export default function Calendar({
       isCurrent: false,
     });
   }
-  // Días mes actual
+
   for (let d = 1; d <= dim; d++) {
     cells.push({
       date: new Date(
@@ -81,7 +76,7 @@ export default function Calendar({
       isCurrent: true,
     });
   }
-  // Días mes siguiente
+
   while (cells.length < 42) {
     const nextDay = cells.length - dim - fdi + 1;
     cells.push({
@@ -104,7 +99,6 @@ export default function Calendar({
 
   return (
     <div className="w-80 bg-card border border-border rounded-lg shadow-sm p-4">
-      {/* Navegación de mes */}
       <div className="flex items-center justify-between mb-4">
         <button
           type="button"
@@ -126,7 +120,6 @@ export default function Calendar({
         </button>
       </div>
 
-      {/* Encabezado de días */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayNames.map((dn) => (
           <div
@@ -140,7 +133,6 @@ export default function Calendar({
         ))}
       </div>
 
-      {/* Grilla de días */}
       <div className="grid grid-cols-7 gap-1">
         {cells.map(({ date, isCurrent }, idx) => {
           const sel = isSelected(date);

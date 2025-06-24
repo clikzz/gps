@@ -7,32 +7,27 @@ import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer";
 import TimelineEntriesList from "@/components/timeline/TimelineEntriesList";
 import { useTimelineData } from "@/hooks/timeline/useTimelineData";
 import { useMilestones } from "@/hooks/timeline/useMilestones";
-// Elimina este import:
-// import { useTimelineFilters } from "@/hooks/timeline/useTimelineFilters";
+
 
 export default function PetTimelinePage() {
   const { petId } = useParams() as { petId: string };
 
-  // 1) Datos de la mascota
   const {
     pet,
     isLoading: isLoadingData,
     error: dataError,
   } = useTimelineData(petId);
 
-  // 2) Hitos
   const {
     milestones,
     isLoading: isLoadingMilestones,
     error: milestonesError,
   } = useMilestones();
 
-  // 3) Filtros
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [selectedMilestone, setSelectedMilestone] = useState<string>("");
 
-  // 4) Señal para recarga automática
   const [reloadSignal, setReloadSignal] = useState(0);
 
   const isLoading = isLoadingData || isLoadingMilestones;
@@ -61,7 +56,6 @@ export default function PetTimelinePage() {
         selectedMilestone={selectedMilestone}
         onMilestoneChange={setSelectedMilestone}
       >
-        {/* 5) Pasamos onSuccess al Drawer */}
         <NewTimelineDrawer
           petId={pet.id.toString()}
           onSuccess={() => setReloadSignal((n) => n + 1)}
@@ -70,7 +64,6 @@ export default function PetTimelinePage() {
 
       <hr className="my-6 border-border" />
 
-      {/* 6) Lista recibe reloadSignal para revalidar */}
       <TimelineEntriesList
         startDate={startDate}
         endDate={endDate}

@@ -27,7 +27,7 @@ export async function getTimelineEntriesByPetId(
   const skip = typeof filters?.skip === "number" ? filters.skip : 0;
   const take = typeof filters?.take === "number" ? filters.take : 20;
 
-  // Consulta paginada
+
   const [entries, total] = await Promise.all([
     prisma.timelineEntries.findMany({
       where,
@@ -91,7 +91,6 @@ export async function getPetOwnerId(petId: bigint): Promise<string | null> {
 
 export async function deleteTimelineEntry(entryId: string): Promise<string[]> {
   return await prisma.$transaction(async (tx) => {
-    // 1. Obtener la entrada con sus fotos
     const entry = await tx.timelineEntries.findUnique({
       where: { id: entryId },
       include: { TimelineEntryPhotos: true },
@@ -100,20 +99,16 @@ export async function deleteTimelineEntry(entryId: string): Promise<string[]> {
       throw new Error('Entrada de timeline no encontrada');
     }
 
-    // 2. Recoger URLs antes de borrar
     const photoUrls = entry.TimelineEntryPhotos.map(photo => photo.photo_url);
 
-    // 3. Borrar registros de photos
     await tx.timelineEntryPhotos.deleteMany({
       where: { timeline_entry_id: entryId },
     });
 
-    // 4. Borrar la entrada
     await tx.timelineEntries.delete({
       where: { id: entryId },
     });
 
-    // 5. Devolver las URLs para que el controller las procese
     return photoUrls;
   });
 }

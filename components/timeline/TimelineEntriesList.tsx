@@ -13,7 +13,7 @@ interface TimelineEntriesListProps {
   reloadSignal?: number;
 }
 
-// Helper: convierte "YYYY-MM-DDTHH:MM:SS.ZZZZ" o Date a Date local a medianoche
+
 function parseEventDateLocal(input: string | Date): Date {
   if (typeof input === "string") {
     const [y, m, d] = input.split("T")[0].split("-").map(Number);
@@ -26,7 +26,7 @@ function parseEventDateLocal(input: string | Date): Date {
   }
 }
 
-const TAKE = 10; // Entradas por página
+const TAKE = 10;
 
 export default function TimelineEntriesList({
   startDate,
@@ -55,7 +55,7 @@ export default function TimelineEntriesList({
 
   const { isDeleting, deleteEntry } = useDeleteTimelineEntry(petId);
 
-  // Al cambiar reloadSignal, forzamos SWR a recargar datos
+
   useEffect(() => {
     if (reloadSignal !== undefined) {
       mutateEntries();
@@ -67,7 +67,7 @@ export default function TimelineEntriesList({
     mutateEntries();
   };
 
-  // Reset paginación si modifican filtros
+
   useEffect(() => {
     setPage(0);
   }, [startDate, endDate, milestoneId]);

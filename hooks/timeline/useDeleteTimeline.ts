@@ -8,10 +8,6 @@ export interface UseDeleteTimelineEntryResult {
   deleteEntry: (entryId: string) => Promise<void>;
 }
 
-/**
- * Hook para eliminar una entrada del timeline con revalidación automática.
- * @param petId ID de la mascota.
- */
 export const useDeleteTimelineEntry = (
   petId: string
 ): UseDeleteTimelineEntryResult => {
@@ -23,7 +19,6 @@ export const useDeleteTimelineEntry = (
     setIsDeleting(true);
     setError(undefined);
 
-    // 1. Notificación de info (aparece y luego retrocede animada)
     toast.info("Eliminando recuerdo…");
 
     try {
@@ -36,10 +31,8 @@ export const useDeleteTimelineEntry = (
         throw new Error(errData?.error || "Error al eliminar el recuerdo.");
       }
 
-      // 2. Revalidación automática
       await mutateEntries();
 
-      // 3. Nueva notificación de éxito (entra animada encima)
       toast.success("Recuerdo eliminado correctamente.");
     } catch (err: any) {
       console.error("[useDeleteTimelineEntry] Error:", err);
@@ -49,7 +42,6 @@ export const useDeleteTimelineEntry = (
           : "Error inesperado al eliminar el recuerdo.";
       setError(err instanceof Error ? err : new Error(message));
 
-      // 4. Notificación de error (entra animada encima)
       toast.error(message);
     } finally {
       setIsDeleting(false);

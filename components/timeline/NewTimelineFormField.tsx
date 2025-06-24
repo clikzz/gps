@@ -13,7 +13,7 @@ import {
 import Calendar from "@/components/ui/calendar";
 import { Calendar as CalendarIcon } from "lucide-react";
 
-// Wrapper que muestra label, children y posible error
+
 interface FormFieldWrapperProps {
   label: string;
   required?: boolean;
@@ -35,7 +35,7 @@ export const FormFieldWrapper: React.FC<FormFieldWrapperProps> = ({
   </div>
 );
 
-// Campo de texto sencillo
+
 interface TextFieldProps {
   label: string;
   value: string;
@@ -62,13 +62,13 @@ export const TextField: React.FC<TextFieldProps> = ({
   </FormFieldWrapper>
 );
 
-// Convierte "YYYY-MM-DD" en Date local (mediodía local)
+
 function parseLocalDate(iso: string): Date {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 
-// Campo de fecha con botón, pop-over y calendario
+
 interface DateFieldProps {
   label: string;
   value: string;
@@ -140,7 +140,6 @@ export const DateField: React.FC<DateFieldProps> = ({
   );
 };
 
-// Campo de archivos (fotos)
 interface FileFieldProps {
   label: string;
   onChange: (files: FileList | null) => void;
@@ -166,7 +165,6 @@ export const FileField: React.FC<FileFieldProps> = ({
   </FormFieldWrapper>
 );
 
-// Selector sencillo
 interface SelectFieldProps {
   label: string;
   value: string;
@@ -201,7 +199,6 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   </FormFieldWrapper>
 );
 
-// Área de texto (ahora acepta error y required)
 interface TextAreaFieldProps {
   label: string;
   value: string;

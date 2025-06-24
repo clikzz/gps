@@ -25,7 +25,6 @@ export interface UseTimelineDataResult {
   mutateEntries: () => Promise<any>;
 }
 
-// Convierte fecha local a UTC ISO puro
 function toUtcIso(dateStr?: string): string | undefined {
   if (!dateStr) return undefined;
   const d = new Date(dateStr + "T00:00:00");
@@ -36,7 +35,6 @@ export const useTimelineData = (
   petId: string,
   filters: UseTimelineDataFilters = {}
 ): UseTimelineDataResult => {
-  // Mascota
   const {
     data: pet,
     error: petError,
@@ -46,7 +44,6 @@ export const useTimelineData = (
     fetcher
   );
 
-  // Entradas del timeline (con filtros y paginación)
   const queryParams = new URLSearchParams({
     ...(filters.startDate && { startDate: toUtcIso(filters.startDate) }),
     ...(filters.endDate && { endDate: toUtcIso(filters.endDate) }),

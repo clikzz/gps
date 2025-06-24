@@ -29,7 +29,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-// Componente sortable aislado para evitar re-render innecesarios
+
 const SortablePhoto = React.memo(function SortablePhoto({
   id,
   file,
@@ -91,16 +91,15 @@ export default function NewTimelineForm({
   const today = getTodayLocalISO();
 
 
-  // Hooks
   const { milestones } = useMilestones();
   const { isUploading, uploadTimelinePhotos } = useTimelineImageUpload();
   const { isSubmitting, createEntry } = useNewTimelineEntry(petId);
 
-  // Refs
+
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estado local
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState(today);
@@ -112,15 +111,14 @@ export default function NewTimelineForm({
     photos?: string;
   }>({});
 
-  // Límites
+
   const TITLE_MAX = 50;
   const DESC_MAX = 200;
   const PHOTOS_MAX = 5;
 
-  // sensores de DnD-kit, memoizados para no recrear en cada render
+
   const sensors = useSensors(useSensor(PointerSensor));
 
-  // IDs estables memoizados para selectedPhotos
   const photoIds = useMemo(
     () => selectedPhotos.map((f) => `${f.name}-${f.lastModified}`),
     [selectedPhotos]
@@ -138,7 +136,7 @@ export default function NewTimelineForm({
     [photoIds]
   );
 
-  // CRUD handlers
+
   const toggleMilestone = (id: string) =>
     setSelectedMilestones((prev) =>
       prev.includes(id)
@@ -190,7 +188,6 @@ export default function NewTimelineForm({
   await createEntry({
     title: title.trim(),
     description: description.trim() || undefined,
-    // Usar el string ISO UTC
     eventDate: utcDateString,
     photos: selectedPhotos as unknown as FileList,
     milestoneIds: selectedMilestones,
@@ -208,7 +205,6 @@ export default function NewTimelineForm({
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-      {/* TÍTULO + CONTADOR */}
       <div className="relative">
         <TextField
           label="Título"
@@ -224,7 +220,6 @@ export default function NewTimelineForm({
         </p>
       </div>
 
-      {/* FECHA */}
       <DateField
         label="Fecha del evento"
         value={eventDate}
@@ -232,7 +227,6 @@ export default function NewTimelineForm({
         max={today}
       />
 
-      {/* DESCRIPCIÓN + CONTADOR */}
       <div className="relative">
         <TextAreaField
           label="Descripción"
@@ -248,7 +242,6 @@ export default function NewTimelineForm({
         </p>
       </div>
 
-      {/* FOTOS + CONTADOR */}
       <div className="relative">
         <FileField
           label="Fotos (máx. 5)"
@@ -262,7 +255,6 @@ export default function NewTimelineForm({
         </p>
       </div>
 
-      {/* PREVIEW FOTOS DRAG & DROP */}
       {selectedPhotos.length > 0 && (
         <DndContext
           sensors={sensors}
@@ -285,7 +277,6 @@ export default function NewTimelineForm({
         </DndContext>
       )}
 
-      {/* HITOS */}
       <FormFieldWrapper label="Hitos (máx. 4)">
         <div className="flex flex-wrap gap-2 mt-1">
           {milestones.map((m) => (
@@ -306,7 +297,6 @@ export default function NewTimelineForm({
         </div>
       </FormFieldWrapper>
 
-      {/* BOTÓN GUARDAR */}
       <Button
         type="submit"
         className="w-full mt-4"

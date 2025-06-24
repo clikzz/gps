@@ -36,7 +36,6 @@ export async function getEntries(userId: string, petIdStr: string, request?: any
             return NextResponse.json({ error: 'No autorizado para ver este timeline.' }, { status: 403 });
         }
 
-        // SOPORTE FILTROS
         let searchParams;
         if (request?.nextUrl?.searchParams) {
             searchParams = request.nextUrl.searchParams;
@@ -52,7 +51,6 @@ export async function getEntries(userId: string, petIdStr: string, request?: any
         const skip = Number(searchParams.get('skip')) || 0;
         const take = Number(searchParams.get('take')) || 20;
 
-        // Nuevo: Llama al service pasando los filtros
         const { entries, total } = await timelineService.getTimelineEntriesByPetId(petId, {
             startDate,
             endDate,
@@ -63,7 +61,6 @@ export async function getEntries(userId: string, petIdStr: string, request?: any
 
         const serializedEntries = entries.map(serializeEntry);
 
-        // Cambia la respuesta para soportar paginación
         return NextResponse.json({ entries: serializedEntries, total });
 
     } catch (error) {
@@ -104,7 +101,6 @@ export async function deleteEntry(
   try {
     const petId = BigInt(petIdStr);
 
-    // Validar existencia y permisos sobre la mascota
     const ownerId = await timelineService.getPetOwnerId(petId);
     if (!ownerId) {
       return NextResponse.json({ error: 'Mascota no encontrada.' }, { status: 404 });
@@ -113,7 +109,6 @@ export async function deleteEntry(
       return NextResponse.json({ error: 'No autorizado para eliminar esta entrada.' }, { status: 403 });
     }
 
-    // Eliminar en DB y obtener URLs de fotos
     let photoUrls: string[];
     try {
       photoUrls = await timelineService.deleteTimelineEntry(entryId);
@@ -122,7 +117,6 @@ export async function deleteEntry(
       return NextResponse.json({ error: 'Entrada de timeline no encontrada.' }, { status: 404 });
     }
 
-    // Borrar imágenes en Supabase Storage
     const supabase = await createClient();
     const bucket = 'images';
     const pathPrefix = `/storage/v1/object/public/${bucket}/`;

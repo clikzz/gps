@@ -1,4 +1,3 @@
-// components/timeline/TimelineHeader.tsx
 "use client";
 
 import { Pets as Pet } from "@prisma/client";
@@ -44,7 +43,6 @@ export default function PetTimelineHeader({
 
   return (
     <div className="w-full flex flex-col gap-4 py-4">
-      {/* Fila 1: foto + nombre y botón */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {petData.photo_url ? (
@@ -72,10 +70,8 @@ export default function PetTimelineHeader({
         <div className="flex-shrink-0">{children}</div>
       </div>
 
-      {/* Fila 2: filtros */}
       <div className="border-b pb-4">
         <div className="flex flex-wrap items-start gap-6">
-          {/* Fecha Desde */}
           <div className="flex flex-col">
             <label htmlFor="startDate" className="text-xs font-medium">
               Desde
@@ -90,7 +86,6 @@ export default function PetTimelineHeader({
             />
           </div>
 
-          {/* Fecha Hasta */}
           <div className="flex flex-col">
             <label htmlFor="endDate" className="text-xs font-medium">
               Hasta
@@ -106,7 +101,6 @@ export default function PetTimelineHeader({
             />
           </div>
 
-          {/* Selector de Hito con tooltip */}
           <div className="flex flex-col">
             <label
               htmlFor="milestones"

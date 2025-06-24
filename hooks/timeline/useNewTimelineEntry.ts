@@ -19,11 +19,7 @@ export interface UseNewTimelineEntryResult {
   createEntry: (params: NewEntryParams) => Promise<void>;
 }
 
-/**
- * Hook para crear una nueva entrada en el timeline con revalidación automática.
- * Usa `/api/timeline/${petId}/entries` y revalida la lista de entradas tras crearlo.
- * @param petId ID de la mascota.
- */
+
 export const useNewTimelineEntry = (
   petId: string
 ): UseNewTimelineEntryResult => {
@@ -39,13 +35,11 @@ export const useNewTimelineEntry = (
     toast.info('Creando nueva entrada...');
 
     try {
-      // 1. Subir fotos si existen, usando hook dedicado
       const uploadedUrls: string[] =
         photos && photos.length > 0
           ? await uploadTimelinePhotos(photos)
           : [];
 
-      // 2. Validar payload con Zod
       const payload = NewTimelineEntrySchema.parse({
         title,
         description,
@@ -54,7 +48,6 @@ export const useNewTimelineEntry = (
         milestoneIds,
       });
 
-      // 3. Crear entrada en API
       const res = await fetch(`/api/timeline/${petId}/entries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,7 +58,7 @@ export const useNewTimelineEntry = (
         throw new Error(errData?.error || 'Error al crear la entrada.');
       }
 
-      // 4. Revalidación automática de las entradas
+
       await mutateEntries();
       toast.success('¡Recuerdo añadido con éxito!');
     } catch (err: any) {

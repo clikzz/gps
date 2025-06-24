@@ -6,10 +6,7 @@ export interface UseTimelineImageUploadResult {
     uploadTimelinePhotos: (photos: FileList) => Promise<string[]>;
 }
 
-/**
- * Hook para gestionar la subida de fotos en el módulo Timeline.
- * Extrae la lógica de POST a /api/upload y manejo de errores.
- */
+
 export const useTimelineImageUpload = (): UseTimelineImageUploadResult => {
     const [isUploading, setIsUploading] = useState(false);
 

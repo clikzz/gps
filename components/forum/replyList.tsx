@@ -56,7 +56,6 @@ export function ReplyList({ replies }: ReplyListProps) {
 
   const handleSaveEdit = async (replyId: number) => {
     setReplyList(replyList.map((reply) => (reply.id === replyId ? { ...reply, content: editContent } : reply)))
-    toast.success("Respuesta editada correctamente")
     setEditingReply(null)
     try {
       const res = await fetch(`/api/forum/posts/${replyId}`, {

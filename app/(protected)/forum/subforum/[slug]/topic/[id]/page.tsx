@@ -9,6 +9,8 @@ export interface Post {
   id: number
   content: string
   createdAt: string
+  updatedAt?: string
+  subforumId: number 
   author: {
     name: string
     id: string
@@ -84,7 +86,17 @@ export default async function TopicPage({
           <span className="truncate">{topic.title}</span>
         </div>
 
-        {mainPost && <TopicDetail topic={topic} mainPost={mainPost} />}
+        {mainPost && <TopicDetail 
+        topic={{
+          id: topic.id,
+          title: topic.title,
+          createdAt: topic.createdAt,
+          author: topic.author,
+          subforumId: topic.subforumId, 
+          subforumSlug: slug,
+        }}
+        mainPost={mainPost}
+        />}
         <h2 className="text-2xl font-bold">Respuestas</h2>
         <ReplyList replies={replies} />
 

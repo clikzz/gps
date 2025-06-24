@@ -83,7 +83,7 @@ export const handleSoftDelete = async (pet: Pet) => {
 export const handleDisablePet = async (pet: Pet) => {
   const user = useUserProfile.getState().user;
   if (!user) {
-    console.error("Usuario no autenticado");
+    toast.error("Usuario no autenticado");
     return;
   }
   try {
@@ -104,11 +104,44 @@ export const handleDisablePet = async (pet: Pet) => {
         p.id === pet.id ? updatedPet : p
       );
       useUserProfile.getState().setUser({ ...user, Pets: updatedPets });
-      toast.success("Mascota marcada como fallecida correctamente");
+      toast.success("Mascota deshabilitada correctamente");
     } else {
-      toast.error("Error al marcar la mascota como fallecida");
+      toast.error("Error al deshabilitar la mascota");
     }
   } catch (error) {
-    toast.error("Error al marcar la mascota como fallecida");
+    toast.error("Error al deshabilitar la mascota");
+  }
+};
+
+export const handleEnablePet = async (pet: Pet) => {
+  const user = useUserProfile.getState().user;
+  if (!user) {
+    toast.error("Usuario no autenticado");
+    return;
+  }
+  try {
+    const response = await fetch(`/api/pets`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...pet,
+        active: true,
+      }),
+    });
+
+    if (response.ok) {
+      const updatedPet = await response.json();
+      const updatedPets = user.Pets.map((p) =>
+        p.id === pet.id ? updatedPet : p
+      );
+      useUserProfile.getState().setUser({ ...user, Pets: updatedPets });
+      toast.success("Mascota habilitada correctamente");
+    } else {
+      toast.error("Error al habilitar la mascota");
+    }
+  } catch (error) {
+    toast.error("Error al habilitar la mascota");
   }
 };

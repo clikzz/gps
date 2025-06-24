@@ -24,6 +24,12 @@ const UPLOAD_CONFIGS = {
     quality: 90,
     maxSize: 2 * 1024 * 1024, // 2MB
   },
+  timeline_photo: { 
+    folder: "timeline",   
+    maxWidth: 1920,               
+    quality: 85,                 
+    maxSize: 5 * 1024 * 1024,     
+  },
   find: {
     folder: "find",
     maxWidth: 1024,

@@ -5,14 +5,18 @@ import { ReplyForm } from "@/components/forum/replyForm"
 import { fetcher } from "@/lib/utils"
 import { notFound } from "next/navigation"
 
-interface Post {
+export interface Post {
   id: number
   content: string
   createdAt: string
+  updatedAt?: string
+  subforumId: number
   author: {
     name: string
     id: string
+    tag: number
     menssageCount: number
+    avatar_url?: string
   }
 }
 
@@ -20,10 +24,13 @@ interface Topic {
   id: number
   title: string
   createdAt: string
+  subforumId: number
   author: {
     name: string
     id: string
+    tag: number
     menssageCount: number
+    avatar_url?: string
   }
   Subforums: {
     name: string
@@ -53,9 +60,9 @@ async function getPosts(topicId: number): Promise<Post[]> {
 export default async function TopicPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string; id: string }>;
 }) {
-  const { id } = await params;
+  const { slug, id } = await params;
   const topicId = parseInt(id, 10);
   if (isNaN(topicId)) notFound();
 
@@ -73,12 +80,27 @@ export default async function TopicPage({
             Inicio
           </Link>
           {" > "}
-          <span>{topic.Subforums.name}</span>
+          <Link href={`/forum/subforum/${slug}`} className="hover:underline">
+            {topic.Subforums.name}
+          </Link>
           {" > "}
           <span className="truncate">{topic.title}</span>
         </div>
 
-        {mainPost && <TopicDetail topic={topic} mainPost={mainPost} />}
+        {mainPost && <TopicDetail
+          topic={{
+            id: topic.id,
+            title: topic.title,
+            createdAt: topic.createdAt,
+            author: {
+              ...topic.author,
+              avatar_url: topic.author.avatar_url ?? ""  
+            },
+            subforumId: topic.subforumId,
+            subforumSlug: slug,
+          }}
+          mainPost={mainPost}
+        />}
         <h2 className="text-2xl font-bold">Respuestas</h2>
         <ReplyList replies={replies} />
 

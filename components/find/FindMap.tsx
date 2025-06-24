@@ -184,7 +184,7 @@ export default function FindMap() {
           longitude: initial.longitude,
           zoom: initial.zoom,
         }}
-        mapStyle="mapbox://styles/mapbox/outdoors-v11"
+        mapStyle="mapbox://styles/mapbox/outdoors-v12"
         style={{ width: "100%", height: "100%" }}
         onLoad={(e) => {
           mapRef.current = e.target;

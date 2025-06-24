@@ -33,7 +33,7 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/find?mode=found&pet=${selected.pet_id}`,
+        `/api/find?mode=resolved&pet=${selected.pet_id}`,
         { method: "PUT" }
       );
       if (!res.ok) throw new Error((await res.json()).error || res.statusText);

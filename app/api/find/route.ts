@@ -7,9 +7,9 @@ import {
   fetchMyMissingPets,
   fetchUserPets,
   reportPetFound,
-  fetchOtherMissingPets
+  fetchOtherMissingPets,
+  reportFound
 } from "@/server/controllers/find.controller";
-import { report } from "process";
 
 /**
  * GET  /api/find?mode=recent → lista reportes del último mes
@@ -31,29 +31,6 @@ export async function GET(req: NextRequest) {
     case "others": return fetchOtherMissingPets(user.id);   // /api/find?mode=others
     default: return fetchRecentMissingPets();               // /api/find?mode=recent
   }
-
-  // if (mode === "all") {
-  //   // /api/find?mode=all
-  //   return fetchAllMissingPets();
-  // }
-
-  // if (mode === "pets") {
-  //   // /api/find?mode=pets
-  //   return fetchUserPets(user.id);
-  // }
-
-  // if (mode === "my") {
-  //   // /api/find?mode=my
-  //   return fetchMyMissingPets(user.id);
-  // }
-
-  // if (mode === "others") {
-  //   // /api/find?mode=others
-  //   return fetchOtherMissingPets(user.id);
-  // }
-
-  // // /api/find?mode=recent
-  // return fetchRecentMissingPets();
 }
 
 /**
@@ -77,13 +54,13 @@ export async function POST(req: NextRequest) {
   }
 
   switch (mode) {
-    case "found": return reportPetFound(user.id, payload);
+    case "found": return reportFound(user.id, payload);
     default: return reportMissingPet(user.id, payload);
   }
 }
 
 /**
- * PUT /api/find/found → marca una mascota como encontrada
+ * PUT /api/find/resolved → marca una mascota propia como encontrada
  */
 export async function PUT(req: NextRequest) {
   const user = await authenticateUser(req);
@@ -93,7 +70,7 @@ export async function PUT(req: NextRequest) {
   const mode = url.searchParams.get("mode");
   const petIdRaw = url.searchParams.get("pet");
 
-  if (mode !== "found" || !petIdRaw) {
+  if (mode !== "resolved" || !petIdRaw) {
     return new NextResponse(
       JSON.stringify({ error: "Parámetros inválidos" }),
       { status: 400, headers: { "Content-Type": "application/json" } }

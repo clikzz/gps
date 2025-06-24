@@ -32,7 +32,7 @@ export default function FoundReportModal({
     for (const file of files) {
       const form = new FormData();
       form.append('file', file);
-      form.append('type', 'found');
+      form.append('type', 'find');
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       if (!res.ok) throw new Error('Error al subir foto de hallazgo');
       const { url } = await res.json();
@@ -55,7 +55,7 @@ export default function FoundReportModal({
     }
 
     try {
-      const res = await fetch('/api/find?mode=found-report', {
+      const res = await fetch('/api/find?mode=found', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -66,7 +66,11 @@ export default function FoundReportModal({
           longitude: report.longitude,
         }),
       });
-      if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+      if (!res.ok) {
+        const err = await res.json();
+        const msg = typeof err.error === 'string' ? err.error : JSON.stringify(err);
+        throw new Error(msg);
+      }
       onSubmitted();
     } catch (err: any) {
       alert('Error al enviar hallazgo: ' + err.message);

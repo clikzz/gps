@@ -8,7 +8,10 @@ import {
   markPetAsFound,
   createFoundReport
 } from "@/server/services/find.service";
-import { reportMissingPetSchema } from "@/server/validations/find.validation";
+import { 
+  reportMissingPetSchema,
+  reportFoundSchema
+} from "@/server/validations/find.validation";
 
 export const reportMissingPet = async (reporterId: string, body: any) => {
   const parseResult = reportMissingPetSchema.safeParse(body);
@@ -200,36 +203,47 @@ export const fetchUserPets = async (userId: string) => {
   });
 };
 
-export const reportFoundReport = async (
+export const reportFound = async (
   userId: string,
-  body: {
-    missingPetId: number;
-    photo_urls?: string[];
-    description?: string;
-    latitude: number;
-    longitude: number;
-  }
+  body: any
 ) => {
+  const parseResult = reportFoundSchema.safeParse(body);
+  if (!parseResult.success) {
+    return new Response(JSON.stringify({ error: parseResult.error.format() }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const { missingPetId, photo_urls, description, latitude, longitude } = parseResult.data;
   try {
-    const rec = await createFoundReport(
-      userId,
-      body.missingPetId,
-      {
-        photo_urls: body.photo_urls,
-        description: body.description,
-        latitude: body.latitude,
-        longitude: body.longitude,
-      }
-    );
-    return new Response(JSON.stringify(rec), {
+    const rec = await createFoundReport(userId, missingPetId, {
+        photo_urls,
+        description,
+        latitude,
+        longitude,
+      });
+    
+      const output = {
+        id: rec.id.toString(),
+        missingPetId: rec.missingPetId.toString(),
+        helperId: rec.helperId.toString(),
+        photo_urls: rec.photo_urls,
+        description: rec.description,
+        latitude: rec.latitude,
+        longitude: rec.longitude,
+        createdAt: rec.created_at.toISOString(),
+      };
+
+    return new Response(JSON.stringify(output), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
   } catch (err: any) {
     console.error(err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: err.message || "Error interno" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 };

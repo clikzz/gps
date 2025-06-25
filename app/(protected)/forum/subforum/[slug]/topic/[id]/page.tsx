@@ -4,6 +4,7 @@ import { ReplyList } from "@/components/forum/replyList"
 import { ReplyForm } from "@/components/forum/replyForm"
 import { fetcher } from "@/lib/utils"
 import { notFound } from "next/navigation"
+import { ForumNavigation } from "@/components/forum/forumNavigation"
 
 export interface Post {
   id: number
@@ -74,6 +75,7 @@ export default async function TopicPage({
 
   return (
     <div className="h-full w-full">
+      <ForumNavigation />
       <main className="h-full w-full px-4 py-6 space-y-6 max-w-6xl mx-auto">
         <div className="text-sm breadcrumbs">
           <Link href="/forum" className="hover:underline">

@@ -132,6 +132,8 @@ content    String
 created_at DateTime @default(now())
 topic_id   BigInt
 updated_at DateTime @updatedAt
+moderated_at DateTime?
+moderated_by String? 
 user_id    String   @db.Uuid
 Topics     Topics   @relation(fields: [topic_id], references: [id], onDelete: Cascade)
 users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -223,6 +225,7 @@ tag              Int                @unique @default(autoincrement())
 lastMessageAt    DateTime?          @map("lastMessageAt")
 menssageCount    Int                @default(0)
 role             Role               @default(USER)
+status           UserStatus         @default(ACTIVE)
 MarketplaceItems MarketplaceItems[]
 MissingPets      MissingPets[]
 FoundReports     FoundReports[]
@@ -238,4 +241,11 @@ enum Role {
   USER
   MODERATOR
   ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
 }

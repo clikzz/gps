@@ -55,6 +55,8 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
   const [editContent, setEditContent] = useState(mainPost?.content ?? "")
   const router = useRouter()
 
+  
+
   useEffect(() => {
     setDisplayContent(mainPost?.content ?? "")
     setEditContent(mainPost?.content ?? "")

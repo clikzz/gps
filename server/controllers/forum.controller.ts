@@ -12,11 +12,15 @@ import {
   updateOwnTopic, 
   assignModerator, 
   revokeModerator,
-  deletePostAny,
-  deleteTopicAny
+  deleteAnyPost,
+  deleteAnyTopic,
+  updateUserRole,
+  updateUserStatus,
+  listUsers, 
+  updateAnyPost,
 } from "../services/forum.service";
 import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema} from "../validations/forum.validation";
-import { authenticateUser, ensureAdmin } from "../middlewares/auth.middleware";
+import { authenticateUser, ensureAdmin, ensureModerator } from "../middlewares/auth.middleware";
 import { NextResponse } from "next/server";
 
 
@@ -31,6 +35,14 @@ export const fetchSubforums = async () => {
     status: 200,
     headers: { "Content-Type": "application/json" },
   })
+};
+
+export const fetchUsers = async () => {
+  const all = await listUsers();
+  return new Response(JSON.stringify(all), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 };
 
 
@@ -358,25 +370,78 @@ export async function removeModerator(req: Request) {
 export async function deleteAnyPostHandler(req: Request) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
-  try {
-    ensureAdmin(user);
-    const postId = Number(new URL(req.url).pathname.split("/").pop());
-    await deletePostAny(postId);
-    return new Response(null, { status: 204 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  try { ensureAdmin(user); } catch {
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
   }
+  const postId = Number(new URL(req.url).pathname.split("/").pop());
+  await deleteAnyPost(postId);
+  return new Response(null, { status: 204 });
 }
 
 export async function deleteAnyTopicHandler(req: Request) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
+  try { ensureAdmin(user); } catch {
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
+  }
+  const topicId = Number(new URL(req.url).pathname.split("/").pop());
+  await deleteAnyTopic(topicId);
+  return new Response(null, { status: 204 });
+}
+
+export async function editAnyPostHandler(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+  try { ensureModerator(user); } catch {
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
+  }
+  const postId = Number(new URL(req.url).pathname.split("/").pop());
+  const { content } = editPostSchema.parse(await req.json());
+  await updateAnyPost(user.id, postId, content);
+  return NextResponse.json(null, { status: 204 });
+}
+
+
+export async function changeUserStatus(req: Request) {
+  const auth = await authenticateUser(req)
+  if (auth instanceof Response) return auth
+
+  try { ensureModerator(auth) } catch {
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
+  }
+
+  const { targetUserId, status } = await req.json() as {
+    targetUserId: string
+    status: "ACTIVE" | "SUSPENDED" | "BANNED"
+  }
+
   try {
-    ensureAdmin(user);
-    const topicId = Number(new URL(req.url).pathname.split("/").pop());
-    await deleteTopicAny(topicId);
-    return new Response(null, { status: 204 });
+    await updateUserStatus(auth.id, targetUserId, status)
+    return NextResponse.json(null, { status: 204 })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const code = err.message === "CANNOT_MODIFY_ADMIN" ? 400 : 500
+    return NextResponse.json({ error: err.message }, { status: code })
+  }
+}
+
+export async function changeUserRole(req: Request) {
+  const auth = await authenticateUser(req)
+  if (auth instanceof Response) return auth
+
+  try { ensureAdmin(auth) } catch {
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
+  }
+
+  const { targetUserId, role } = await req.json() as {
+    targetUserId: string
+    role: "MODERATOR" | "USER"
+  }
+
+  try {
+    await updateUserRole(auth.id, targetUserId, role)
+    return NextResponse.json(null, { status: 204 })
+  } catch (err: any) {
+    const code = err.message === "CANNOT_MODIFY_ADMIN" ? 400 : 500
+    return NextResponse.json({ error: err.message }, { status: code })
   }
 }

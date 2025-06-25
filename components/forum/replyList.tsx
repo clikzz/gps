@@ -42,7 +42,7 @@ export function ReplyList({ replies }: ReplyListProps) {
   const [replyList, setReplyList] = useState(replies)
 
   const currentUserId = useUserProfile((state) => state.user?.id)
-  const userRole = useUserProfile((state) => state.user?.role)
+  const currentUserRole = useUserProfile((state) => state.user?.role)
 
   useEffect(() => {
     setReplyList(replies)
@@ -116,6 +116,9 @@ export function ReplyList({ replies }: ReplyListProps) {
 
         const isAuthor = currentUserId === reply.author.id
         const isEditing = editingReply === reply.id
+        const canEdit = isAuthor || currentUserRole === "MODERATOR" || currentUserRole === "ADMIN"
+        const canDelete = isAuthor || currentUserRole === "ADMIN"
+
 
         return (
           <div key={reply.id} className="border rounded-lg overflow-hidden">
@@ -182,9 +185,13 @@ export function ReplyList({ replies }: ReplyListProps) {
 
                     {isAuthor && (
                       <div className="absolute bottom-4 right-4 flex gap-1 text-sm">
-                        <button onClick={() => handleEdit(reply)} className="hover:underline">Editar</button>
+                        {canEdit && (
+                          <button onClick={() => handleEdit(reply)}>Editar</button>
+                        )}
                         <span> | </span>
-                        <button onClick={() => handleDelete(reply.id)} className="hover:underline">Eliminar</button>
+                        {canDelete && (
+                          <button onClick={() => handleDelete(reply.id)}>Eliminar</button>
+                        )}
                       </div>
                     )}
                   </>

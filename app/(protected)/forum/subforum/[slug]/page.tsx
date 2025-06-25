@@ -2,6 +2,7 @@ import Link from "next/link"
 import { TopicList } from "@/components/forum/topicList"
 import { fetcher } from "@/lib/utils"
 import { notFound } from "next/navigation"
+import { ForumNavigation } from "@/components/forum/forumNavigation"
 
 interface Topic {
   id: number
@@ -68,6 +69,7 @@ export default async function SubforumPage({
 
   return (
     <div className="min-h-screen w-full">
+      <ForumNavigation />
       <main className="w-full max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="text-sm breadcrumbs">
           <Link href="/forum" className="hover:underline">

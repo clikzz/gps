@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { Topics, Posts, users, Subforums } from "@prisma/client";
+import { Topics, Posts, users, Subforums, Role, UserStatus } from "@prisma/client";
 
 export const listSubforums = async (): Promise<Subforums[]> => {
   return prisma.subforums.findMany({
@@ -198,11 +198,97 @@ export async function revokeModerator(userId: string) {
   });
 }
 
-export async function deletePostAny(postId: number) {
-  return prisma.posts.delete({ where: { id: postId } });
+export async function deleteAnyPost(postId: number) {
+  return prisma.$transaction(async tx => {
+    const post = await tx.posts.findUnique({ where: { id: postId } });
+    if (!post) throw new Error("NOT_FOUND");
+    await tx.posts.delete({ where: { id: postId } });
+    await tx.users.update({
+      where: { id: post.user_id },
+      data: { menssageCount: { decrement: 1 } },
+    });
+  });
 }
 
-export async function deleteTopicAny(topicId: number) {
-  return prisma.topics.delete({ where: { id: topicId } });
+export async function deleteAnyTopic(topicId: number) {
+  return prisma.$transaction(async tx => {
+    const posts = await tx.posts.findMany({ where: { topic_id: topicId } });
+    await tx.posts.deleteMany({ where: { topic_id: topicId } });
+    for (const p of posts) {
+      await tx.users.update({
+        where: { id: p.user_id },
+        data: { menssageCount: { decrement: 1 } },
+      });
+    }
+    await tx.topics.delete({ where: { id: topicId } });
+  });
 }
 
+export async function updateAnyPost(
+  editorId: string,
+  postId: number,
+  content: string
+) {
+  return prisma.posts.update({
+    where: { id: postId },
+    data: {
+      content,
+      moderated_at: new Date(),    
+      moderated_by: editorId,      
+    },
+  });
+}
+
+
+export async function updateUserStatus(
+  currentUserId: string,
+  targetUserId: string,
+  status: UserStatus
+) {
+  const me = await prisma.users.findUnique({ where: { id: currentUserId } });
+  if (!me || (me.role !== "MODERATOR" && me.role !== "ADMIN")) {
+    throw new Error("FORBIDDEN_MODERATOR");
+  }
+  const target = await prisma.users.findUnique({ where: { id: targetUserId } });
+  if (!target || target.role === "ADMIN") {
+    throw new Error("CANNOT_MODIFY_ADMIN");
+  }
+  return prisma.users.update({
+    where: { id: targetUserId },
+    data: { status },
+  });
+}
+
+export async function updateUserRole(
+  currentUserId: string,
+  targetUserId: string,
+  role: Role
+) {
+  const me = await prisma.users.findUnique({ where: { id: currentUserId } });
+  if (!me || me.role !== "ADMIN") {
+    throw new Error("FORBIDDEN_ADMIN");
+  }
+  return prisma.users.update({
+    where: { id: targetUserId },
+    data: { role },
+  });
+}
+
+export async function listUsers(): Promise<
+  Array<Pick<
+    users,
+    "id" | "name" | "tag" | "menssageCount" | "role" | "status"
+  >>
+> {
+  return prisma.users.findMany({
+    select: {
+      id: true,
+      name: true,
+      tag: true,
+      menssageCount: true,
+      role: true,
+      status: true,
+    },
+    orderBy: { name: "asc" },
+  });
+}

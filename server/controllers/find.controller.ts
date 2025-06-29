@@ -267,7 +267,8 @@ export const fetchFoundReports = async (userId: string) => {
     description: r.description,
     latitude: r.latitude,
     longitude: r.longitude,
-    reported_at: r.created_at.toISOString()
+    reported_at: r.created_at.toISOString(),
+    photo_urls: r.photo_urls,
   }));
 
   return new Response(JSON.stringify(output), {

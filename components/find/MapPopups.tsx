@@ -58,7 +58,7 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
       closeButton={false}
       maxWidth="none"
     >
-      <Card className="w-60 mx-auto overflow-hidden">
+      <Card className="w-72 mx-auto overflow-hidden">
         <button
           onClick={onClose}
           className="absolute top-2 right-2 z-10 text-gray-600 hover:text-gray-800"
@@ -89,8 +89,8 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
             <div className="relative">
               <img
                 src={selected.photo_urls[photoIndex]}
-                alt={`respaldo ${photoIndex + 1}`}
-                className="w-full h-32 object-cover rounded"
+                alt={`Referencia ${photoIndex + 1}`}
+                className="w-full h-52 object-cover rounded"
               />
               {photoIndex > 0 && (
                 <button

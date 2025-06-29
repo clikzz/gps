@@ -1,15 +1,16 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export interface FoundReport {
   id: string;
   missingPetId: string;
   helper: { id: string; name: string };
   pet: { id: string; name: string; photo_url?: string };
+  photo_urls?: string[];
   description?: string;
   latitude: number;
   longitude: number;
@@ -21,71 +22,140 @@ interface FoundReportsModalProps {
   onClose: () => void;
 }
 
-export default function FoundReportsModal({
-  isOpen, onClose
+export default function FoundReports({
+  isOpen,
+  onClose,
 }: FoundReportsModalProps) {
   const [foundReports, setFoundReports] = useState<FoundReport[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [photoIdx, setPhotoIdx] = useState(0);
+
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    fetch('/api/find?mode=found')
+    fetch("/api/find?mode=found")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then((data: FoundReport[]) => setFoundReports(data))
+      .then((data: FoundReport[]) => {
+        setFoundReports(data);
+        setCurrentIdx(0);
+        setPhotoIdx(0);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [isOpen]);
 
+  useEffect(() => {
+    setPhotoIdx(0);
+  }, [currentIdx]);
+
   if (!isOpen) return null;
+
+  const total = foundReports.length;
+  const report = foundReports[currentIdx];
+
+  const prevReport = () =>
+    setCurrentIdx((i) => (i > 0 ? i - 1 : total - 1));
+  const nextReport = () =>
+    setCurrentIdx((i) => (i < total - 1 ? i + 1 : 0));
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
-      <Card className="w-full max-w-3xl mx-4">
+      <Card className="w-full max-w-3xl mx-4 relative">
         <CardHeader>
           <CardTitle>Avisos de Hallazgo</CardTitle>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="space-y-4">
           {loading ? (
             <p>Cargando…</p>
-          ) : foundReports.length === 0 ? (
+          ) : total === 0 ? (
             <p>No tienes avisos de hallazgos aún.</p>
           ) : (
-            <ul className="space-y-4">
-              {foundReports.map((r) => (
-                <Card key={r.id} className="border flex space-x-4 p-4">
+            <>
+              <div className="flex justify-between items-center">
+                <p className="text-lg font-semibold">🐾 {report.pet.name}</p>
+                <Badge variant="secondary">Aviso</Badge>
+              </div>
+
+              {report.photo_urls && report.photo_urls.length > 0 ? (
+                <div className="relative w-full h-80 mb-4">
                   <img
-                    src={r.pet.photo_url}
-                    alt={r.pet.name}
-                    className="w-16 h-16 rounded-full object-cover border"
+                    src={report.photo_urls[photoIdx]}
+                    alt={`evidencia ${photoIdx + 1}`}
+                    className="w-full h-full object-cover rounded"
                   />
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <p className="font-semibold">🐾 {r.pet.name}</p>
-                      <Badge variant="secondary">Aviso</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Por: {r.helper.name || "Desconocido"} • {new Date(r.reported_at).toLocaleString()}
-                    </p>
-                    {r.description && (
-                      <p className="text-sm mt-1">{r.description}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Ubicación: ({r.latitude.toFixed(5)}, {r.longitude.toFixed(5)})
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </ul>
+                  <button
+                    className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 p-1 rounded-full"
+                    onClick={() =>
+                      setPhotoIdx((i) =>
+                        i > 0 ? i - 1 : report.photo_urls!.length - 1
+                      )
+                    }
+                  >
+                    ‹
+                  </button>
+                  <button
+                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 p-1 rounded-full"
+                    onClick={() =>
+                      setPhotoIdx((i) =>
+                        i < report.photo_urls!.length - 1 ? i + 1 : 0
+                      )
+                    }
+                  >
+                    ›
+                  </button>
+                </div>
+              ) : (
+                report.pet.photo_url && (
+                  <img
+                    src={report.pet.photo_url}
+                    alt={report.pet.name}
+                    className="w-full h-48 object-cover rounded mb-4"
+                  />
+                )
+              )}
+              <p className="text-xs text-muted-foreground">
+                Por: {report.helper.name} •{" "}
+                {new Date(report.reported_at).toLocaleString()}
+              </p>
+              {report.description && (
+                <p className="text-sm mt-1">{report.description}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Ubicación: ({report.latitude.toFixed(5)},{" "}
+                {report.longitude.toFixed(5)})
+              </p>
+            </>
           )}
         </CardContent>
 
-        <CardFooter className="flex justify-end">
-          <Button variant="outline" onClick={onClose}>Cerrar</Button>
+        <CardFooter className="flex justify-between">
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={prevReport}
+              disabled={total <= 1}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={nextReport}
+              disabled={total <= 1}
+            >
+              Siguiente
+            </Button>
+          </div>
+          <Button variant="outline" onClick={onClose}>
+            Cerrar
+          </Button>
         </CardFooter>
       </Card>
     </div>

@@ -1,4 +1,5 @@
 import prisma from "@/lib/db";
+import { reverseGeocode } from "@/utils/geocode";
 
 export interface MissingPetInput {
   pet_id: number;
@@ -6,7 +7,7 @@ export interface MissingPetInput {
   longitude: number;
   photo_urls?: string[];
   description?: string;
-}
+};
 
 /**
  * Crea un reporte de mascota desaparecida.
@@ -27,6 +28,8 @@ export const createMissingPet = async (
       throw new Error("Ya tienes un reporte activo para esta mascota.");
     }
 
+    const addr = await reverseGeocode(data.latitude, data.longitude);
+
     const missing = await tx.missingPets.create({
       data: {
         reporter_id: reporterId,
@@ -35,6 +38,13 @@ export const createMissingPet = async (
         longitude: data.longitude,
         photo_urls: data.photo_urls ?? [],
         description: data.description,
+        full_address: addr.full_address,
+        address: addr.address,
+        street: addr.street,
+        city: addr.city,
+        region: addr.region,
+        postcode: addr.postcode,
+        country: addr.country,
       },
     });
 
@@ -186,6 +196,8 @@ export const createFoundReport = async (
     longitude: number; 
   }
 ) => {
+  const addr = await reverseGeocode(data.latitude, data.longitude);
+
   return prisma.foundReports.create({
     data: {
       helperId,
@@ -194,6 +206,13 @@ export const createFoundReport = async (
       description: data.description,
       latitude: data.latitude,
       longitude: data.longitude,
+      full_address: addr.full_address,
+      address: addr.address,
+      street: addr.street,
+      city: addr.city,
+      region: addr.region,
+      postcode: addr.postcode,
+      country: addr.country,
     },
   });
 };

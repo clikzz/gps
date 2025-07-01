@@ -10,11 +10,14 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { MissingReport } from '@/types/find';
+import { LatLng } from '@/components/find/ReportModal';
 
 interface FoundReportModalProps {
   isOpen: boolean;
-  onClose: () => void;
   report: MissingReport;
+  pickedLocation?: LatLng | null;
+  onPickLocation?: () => void;
+  onClose: () => void;
   onSubmitted: () => void;
 }
 
@@ -23,6 +26,8 @@ export default function FoundReportModal({
   onClose,
   report,
   onSubmitted,
+  pickedLocation,
+  onPickLocation,
 }: FoundReportModalProps) {
   const [description, setDescription] = useState('');
   const [files, setFiles] = useState<File[]>([]);
@@ -62,8 +67,8 @@ export default function FoundReportModal({
           missingPetId: Number(report.id),
           description: description || undefined,
           photo_urls: photo_urls.length ? photo_urls : undefined,
-          latitude: report.latitude,
-          longitude: report.longitude,
+          latitude: pickedLocation?.lat || report.latitude,
+          longitude: pickedLocation?.lng || report.longitude,
         }),
       });
       if (!res.ok) {
@@ -114,8 +119,22 @@ export default function FoundReportModal({
               />
             </div>
 
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={onPickLocation}
+              >
+                {pickedLocation
+                  ? `Ubicación hallazgo: (${pickedLocation.lat.toFixed(5)}, ${pickedLocation.lng.toFixed(5)})`
+                  : 'Marcar ubicación en el mapa'}
+              </Button>
+            </div>
             <p className="text-sm text-muted-foreground">
-              Ubicación original de reporte: ({report.latitude.toFixed(5)}, {report.longitude.toFixed(5)})
+              {pickedLocation
+                ? 'Si te gusta esa ubicación, continúa.'
+                : 'Si no marcas ubicación, se toma la original.'}
             </p>
           </CardContent>
 

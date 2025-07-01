@@ -4,18 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-export interface FoundReport {
-  id: string;
-  missingPetId: string;
-  helper: { id: string; name: string };
-  pet: { id: string; name: string; photo_url?: string };
-  photo_urls?: string[];
-  description?: string;
-  latitude: number;
-  longitude: number;
-  reported_at: string;
-}
+import { FoundReport } from "@/types/find";
 
 interface FoundReportsModalProps {
   isOpen: boolean;
@@ -127,8 +116,7 @@ export default function FoundReports({
                 <p className="text-sm mt-1">{report.description}</p>
               )}
               <p className="text-xs text-muted-foreground mt-1">
-                Ubicación: ({report.latitude.toFixed(5)},{" "}
-                {report.longitude.toFixed(5)})
+                📍 {`${report.address || report.street}, ${report.city}, ${report.region}` || "Ubicación no registrada"}
               </p>
             </>
           )}

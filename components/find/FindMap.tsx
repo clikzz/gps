@@ -43,6 +43,9 @@ export default function FindMap() {
   const [isFoundModalOpen, setIsFoundModalOpen] = useState(false);
   const [targetReport, setTargetReport] = useState<MissingReport | null>(null);
 
+  const [foundPickMode, setFoundPickMode] = useState(false);
+  const [foundLocation, setFoundLocation] = useState<LatLng | null>(null);
+
   useEffect(() => {
     setPhotoIndex(0);
   }, [selected]);
@@ -51,22 +54,26 @@ export default function FindMap() {
     refreshReports();
   }, []);
 
-  const goToReportLocation = (report: MissingReport) => {
+  const flyToReport = (report: MissingReport) => {
+    if (!mapRef.current) return;
+    mapRef.current.flyTo({
+      center: [report.longitude, report.latitude],
+      zoom: 16,
+      essential: true,
+      speed: 1.2,
+    });
+  };
+
+  const handleGoTo = (report: MissingReport) => {
     setIsOthersReportsModalOpen(false);
-    if (mapRef.current) {
-      mapRef.current.flyTo({
-        center: [report.longitude, report.latitude],
-        zoom: 16,
-        essential: true,
-        speed: 1.2,
-      });
-    }
-    setSelected(report);
+    setIsMyReportsModalOpen(false);
+    flyToReport(report);
   };
 
   function openFoundModal(report: MissingReport) {
     setTargetReport(report);
     setIsFoundModalOpen(true);
+    setFoundLocation(null);
   }
 
   function refreshReports() {
@@ -132,11 +139,17 @@ export default function FindMap() {
   }
 
   function handleMapClick(evt: any) {
-    if (!pickLocationMode) return;
     const [lng, lat] = evt.lngLat.toArray();
-    setPickedLocation({ lat, lng });
-    setPickLocationMode(false);
-    setIsReportModalOpen(true);
+    if (pickLocationMode) {
+      setPickedLocation({ lat, lng });
+      setPickLocationMode(false);
+      setIsReportModalOpen(true);
+    }
+    if (foundPickMode) {
+      setFoundLocation({ lat, lng });
+      setFoundPickMode(false);
+      setIsFoundModalOpen(true);
+    }
   }
 
   return (
@@ -172,11 +185,12 @@ export default function FindMap() {
       <MyReports
         isOpen={isMyReportsModalOpen}
         onClose={() => setIsMyReportsModalOpen(false)}
+        onGoTo={handleGoTo}
       />
       <OthersReports
         isOpen={isOthersReportsModalOpen}
         onClose={() => setIsOthersReportsModalOpen(false)}
-        onGoTo={(r) => goToReportLocation(r)}
+        onGoTo={handleGoTo}
       />
       <FoundReports
         isOpen={isFoundReportsModalOpen}
@@ -230,11 +244,21 @@ export default function FindMap() {
       {targetReport && (
         <FoundReportModal
           isOpen={isFoundModalOpen}
-          onClose={() => setIsFoundModalOpen(false)}
           report={targetReport}
+          pickedLocation={foundLocation}
+          onPickLocation={() => {
+            setIsFoundModalOpen(false);
+            setFoundPickMode(true);
+          }}
+          onClose={() => {
+            setIsFoundModalOpen(false);
+            setFoundLocation(null);
+          }}
           onSubmitted={() => {
             setIsFoundModalOpen(false);
+            setFoundLocation(null);
             alert("¡Aviso de hallazgo enviado!");
+            refreshReports();
           }}
         />
       )}

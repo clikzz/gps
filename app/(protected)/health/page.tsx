@@ -3,28 +3,58 @@
 import React from "react";
 import { useActivePet } from "@/stores/activePet";
 import { Hospital } from "lucide-react";
+import { TabSelector } from "@/components/health/TabSelector";
+import { useHealth } from "@/stores/health";
+import { handleGetHealth } from "@/hooks/health/useHealth";
 import dynamic from "next/dynamic";
-import { Button } from "@/components/ui/button";
+import { AddMedicationDrawer } from "@/components/health/medications/AddMedicationDrawer";
+import { AddVaccinationDrawer } from "@/components/health/vaccinations/AddVaccinationDrawer";
 
 function HealthPage() {
   const pet = useActivePet((state) => state.activePet);
-  const resetActivePet = useActivePet((state) => state.resetActivePet);
+  const setHealthResume = useHealth((state) => state.setHealthResume);
   const PetSelector = dynamic(() => import("@/components/PetSelector"), {
     ssr: false,
   });
 
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await handleGetHealth();
+        setHealthResume({
+          medications: data.medications,
+          vaccinations: data.vaccinations,
+          nextDoses: data.nextDoses,
+        });
+      } catch (error) {
+        console.error("Error fetching health data:", error);
+      }
+    };
+
+    if (pet) {
+      fetchData();
+    }
+  }, [pet, setHealthResume]);
+
   return (
     <div>
-      {!pet && <PetSelector />}
+      {!pet && <PetSelector opened={true} />}
       {pet && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="flex items-center gap-2 mb-6">
             <Hospital className="h-6 w-6 text-primary" />
             <h1 className="font-bold text-2xl md:text-3xl">
-              Resumen de Salud de {pet.name}
+              Salud de {pet.name}
             </h1>
           </div>
-          <Button onClick={resetActivePet}>Cambiar mascota</Button>
+          <TabSelector />
+          <div className="mt-6 flex flex-col gap-4 justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <AddMedicationDrawer />
+              <AddVaccinationDrawer />
+            </div>
+            <PetSelector />
+          </div>
         </div>
       )}
     </div>

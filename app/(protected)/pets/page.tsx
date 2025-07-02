@@ -6,7 +6,6 @@ import { NewPetDrawer } from "@/components/pets/NewPetDrawer";
 import { motion } from "framer-motion";
 import { PawPrint } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
-
 import { useState } from "react";
 import PetsStats from "@/components/pets/PetsStats";
 import PetsTable from "@/components/pets/PetsTable";

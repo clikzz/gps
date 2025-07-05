@@ -9,7 +9,8 @@ export const vaccinationSchema = z.object({
       invalid_type_error: "El nombre debe ser una cadena de texto",
     })
     .min(2, "El nombre debe contener al menos 2 caracteres")
-    .max(50, "El nombre debe contener máximo 50 caracteres"),
+    .max(50, "El nombre debe contener máximo 50 caracteres")
+    .trim(),
   type: z
     .enum(
       [
@@ -27,8 +28,8 @@ export const vaccinationSchema = z.object({
     .optional()
     .nullable(),
   application_date: z.date({
-    invalid_type_error: "La fecha de aplicación debe ser una fecha válida",
     required_error: "La fecha de aplicación es requerida",
+    invalid_type_error: "La fecha de aplicación debe ser una fecha válida",
   }),
   next_dose_date: z
     .date({
@@ -46,6 +47,7 @@ export const vaccinationSchema = z.object({
     .boolean({
       invalid_type_error: "Esta opción debe ser verdadero o falso",
     })
+    .default(true)
     .optional(),
   created_at: z
     .date({

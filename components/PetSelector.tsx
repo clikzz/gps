@@ -430,12 +430,10 @@ function PetSelector({
     </motion.div>
   );
 
-  // Si opened es true, renderiza directamente el contenido
   if (opened) {
     return <SelectorContent />;
   }
 
-  // Si no, renderiza el botón trigger y el modal
   return (
     <>
       {/* Botón trigger */}

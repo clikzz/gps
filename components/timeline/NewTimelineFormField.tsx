@@ -13,7 +13,6 @@ import {
 import Calendar from "@/components/ui/calendar";
 import { Calendar as CalendarIcon } from "lucide-react";
 
-
 interface FormFieldWrapperProps {
   label: string;
   required?: boolean;
@@ -34,7 +33,6 @@ export const FormFieldWrapper: React.FC<FormFieldWrapperProps> = ({
     {error && <p className="text-xs text-destructive">{error}</p>}
   </div>
 );
-
 
 interface TextFieldProps {
   label: string;
@@ -62,12 +60,10 @@ export const TextField: React.FC<TextFieldProps> = ({
   </FormFieldWrapper>
 );
 
-
 function parseLocalDate(iso: string): Date {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
-
 
 interface DateFieldProps {
   label: string;

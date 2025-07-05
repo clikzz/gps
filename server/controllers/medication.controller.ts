@@ -1,6 +1,6 @@
 import {
   createMedication,
-  updateMedication as updateMedicationService,
+  updateMedicationById as updateMedicationService,
   deleteMedication,
   getMedicationById,
 } from "@/server/services/medication.service";
@@ -17,7 +17,17 @@ export const fetchMedications = async (petId: number) => {
 
 export const addMedication = async (petId: number, data: Medication) => {
   try {
-    const parsedData = medicationSchema.parse(data);
+    const newData = {
+      ...data,
+      start_date: data.start_date ? new Date(data.start_date) : undefined,
+      next_dose_date: data.next_dose_date
+        ? new Date(data.next_dose_date)
+        : undefined,
+    };
+
+    console.log("Adding medication with data:", newData);
+
+    const parsedData = medicationSchema.parse(newData);
     if (!petId || !parsedData) {
       return new Response(
         JSON.stringify({ error: "Invalid pet ID or medication data" }),
@@ -29,7 +39,15 @@ export const addMedication = async (petId: number, data: Medication) => {
     }
 
     const newMedication = await createMedication(petId, data);
-    return new Response(JSON.stringify(newMedication), {
+    console.log("New medication created:", newMedication);
+
+    const fixedMedication = {
+      ...newMedication,
+      id: Number(newMedication.id),
+      pet_id: Number(newMedication.pet_id),
+    };
+
+    return new Response(JSON.stringify(fixedMedication), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });

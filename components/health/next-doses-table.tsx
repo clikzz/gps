@@ -1,7 +1,8 @@
+"use client";
+
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableFooter,
   TableHead,
@@ -9,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useHealth } from "@/stores/health";
 import { useActivePet } from "@/stores/activePet";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -18,24 +20,92 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  AlertTriangle,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import React from "react";
+import { format, isPast, isWithinInterval, addDays } from "date-fns";
+import { es } from "date-fns/locale";
 
-export function VaccinationsTable() {
+export function NextDosesTable() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isMobile = useMediaQuery("(max-width: 640px)");
   const activePet = useActivePet((state) => state.activePet);
-  const vaccinations = useHealth((state) => state.vaccinations).filter(
-    (dose) => dose.pet_id == activePet?.id
-  );
+  const { medications, vaccinations } = useHealth();
+
+  interface Dose {
+    global_id: string;
+    entry_type: string;
+    name: string;
+    next_dose_date: Date;
+    isOverdue: boolean;
+    isUpcoming: boolean;
+    details: string;
+  }
+
+  const nextDoses = useMemo(() => {
+    if (!activePet) return [] as Dose[];
+
+    const doses: Dose[] = [];
+    const today = new Date();
+
+    medications
+      .filter(
+        (med) =>
+          med.pet_id.toString() == activePet.id &&
+          med.active &&
+          med.next_dose_date
+      )
+      .forEach((med) => {
+        const nextDate = new Date(med.next_dose_date!);
+        doses.push({
+          global_id: `medication-${med.id}`,
+          entry_type: "Medicamento",
+          name: med.name,
+          next_dose_date: nextDate,
+          isOverdue: isPast(nextDate),
+          isUpcoming: isWithinInterval(nextDate, {
+            start: today,
+            end: addDays(today, 7),
+          }),
+          details: `Dosis: ${med.dose}`,
+        });
+      });
+
+    vaccinations
+      .filter(
+        (vac) =>
+          vac.pet_id.toString() == activePet.id &&
+          vac.active &&
+          vac.next_dose_date
+      )
+      .forEach((vac) => {
+        const nextDate = new Date(vac.next_dose_date!);
+        doses.push({
+          global_id: `vaccination-${vac.id}`,
+          entry_type: "Vacuna",
+          name: vac.name,
+          next_dose_date: nextDate,
+          isOverdue: isPast(nextDate),
+          isUpcoming: isWithinInterval(nextDate, {
+            start: today,
+            end: addDays(today, 7),
+          }),
+          details: vac.type ? `Tipo: ${vac.type}` : "",
+        });
+      });
+
+    return doses.sort(
+      (a, b) => a.next_dose_date.getTime() - b.next_dose_date.getTime()
+    );
+  }, [activePet, medications, vaccinations]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
-  const totalPages = Math.ceil(vaccinations.length / itemsPerPage);
+  const totalPages = Math.ceil(nextDoses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentVaccinations = vaccinations.slice(startIndex, endIndex);
+  const currentDoses = nextDoses.slice(startIndex, endIndex);
 
   const getPageNumbers = useMemo(() => {
     const delta = isMobile ? 1 : 2;
@@ -87,40 +157,80 @@ export function VaccinationsTable() {
               <TableHead>Tipo</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Próxima Dosis</TableHead>
+              <TableHead>Estado</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <AnimatePresence mode="wait">
-              {currentVaccinations.map((dose, index) => (
-                <motion.tr
-                  key={`${dose.id}-${currentPage}`}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ delay: 0.05 * index, duration: 0.3 }}
-                  className="group hover:bg-muted/50 transition-colors duration-200"
-                  whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
-                >
-                  <TableCell>{dose.type}</TableCell>
-                  <TableCell>{dose.name}</TableCell>
-                  <TableCell>
-                    {new Date(
-                      dose.next_dose_date ?? new Date()
-                    ).toLocaleDateString()}
+              {currentDoses.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    No hay próximas dosis programadas
                   </TableCell>
-                </motion.tr>
-              ))}
+                </TableRow>
+              ) : (
+                currentDoses.map((dose, index) => (
+                  <motion.tr
+                    key={`${dose.global_id}-${currentPage}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: 0.05 * index, duration: 0.3 }}
+                    className="group hover:bg-muted/50 transition-colors duration-200"
+                  >
+                    <TableCell>
+                      <Badge
+                        variant={
+                          dose.entry_type === "Medicamento"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {dose.entry_type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">{dose.name}</TableCell>
+                    <TableCell>
+                      {format(dose.next_dose_date, "PPP", { locale: es })}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {dose.isOverdue && (
+                          <>
+                            <AlertTriangle className="h-4 w-4 text-destructive" />
+                            <Badge variant="destructive">Vencido</Badge>
+                          </>
+                        )}
+                        {dose.isUpcoming && !dose.isOverdue && (
+                          <Badge
+                            variant="outline"
+                            className="border-orange-500 text-orange-600"
+                          >
+                            Próximo
+                          </Badge>
+                        )}
+                        {!dose.isOverdue && !dose.isUpcoming && (
+                          <Badge variant="outline">Programado</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                  </motion.tr>
+                ))
+              )}
             </AnimatePresence>
           </TableBody>
           <TableFooter>
             <TableRow>
               <TableCell
-                colSpan={3}
+                colSpan={4}
                 className={`text-right ${isMobile ? "text-sm" : ""}`}
               >
                 Mostrando {startIndex + 1}-
-                {Math.min(endIndex, vaccinations.length)} de{" "}
-                {vaccinations.length} vacunas
+                {Math.min(endIndex, nextDoses.length)} de {nextDoses.length}{" "}
+                próximas dosis
               </TableCell>
             </TableRow>
           </TableFooter>
@@ -135,16 +245,13 @@ export function VaccinationsTable() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          {/* Información de página en móvil */}
           {isMobile && (
             <div className="text-sm text-muted-foreground">
               Página {currentPage} de {totalPages}
             </div>
           )}
 
-          {/* Controles de navegación */}
           <div className="flex items-center gap-1">
-            {/* Botón primera página */}
             <Button
               variant="outline"
               size={isMobile ? "sm" : "default"}
@@ -156,7 +263,6 @@ export function VaccinationsTable() {
               {!isMobile && <span className="ml-1">Primera</span>}
             </Button>
 
-            {/* Botón página anterior */}
             <Button
               variant="outline"
               size={isMobile ? "sm" : "default"}
@@ -168,7 +274,6 @@ export function VaccinationsTable() {
               {!isMobile && <span className="ml-1">Anterior</span>}
             </Button>
 
-            {/* Números de página */}
             {!isMobile && (
               <div className="flex items-center gap-1 mx-2">
                 {getPageNumbers.map((pageNum, index) => (
@@ -192,7 +297,6 @@ export function VaccinationsTable() {
               </div>
             )}
 
-            {/* Botón página siguiente */}
             <Button
               variant="outline"
               size={isMobile ? "sm" : "default"}
@@ -204,7 +308,6 @@ export function VaccinationsTable() {
               <ChevronRight className="h-4 w-4" />
             </Button>
 
-            {/* Botón última página */}
             <Button
               variant="outline"
               size={isMobile ? "sm" : "default"}

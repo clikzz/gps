@@ -21,7 +21,7 @@ export const createVaccination = async (petId: number, data: Vaccination) => {
   });
 };
 
-export const updateVaccination = async (
+export const updateVaccinationById = async (
   id: number,
   data: Partial<Vaccination>
 ) => {

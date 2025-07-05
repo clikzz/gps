@@ -22,7 +22,7 @@ export const createMedication = async (petId: number, data: Medication) => {
   });
 };
 
-export const updateMedication = async (
+export const updateMedicationById = async (
   id: number,
   data: Partial<Medication>
 ) => {

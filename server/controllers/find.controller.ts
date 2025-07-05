@@ -285,6 +285,7 @@ export const fetchFoundReports = async (userId: string) => {
   const output = list.map((r) => ({
     id: r.id.toString(),
     missingPetId: r.missingPetId.toString(),
+    ownerId: r.MissingPets.reporter_id.toString(),
     helper: {
       id: r.users.id.toString(),
       name: r.users.name

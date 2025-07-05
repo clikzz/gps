@@ -21,6 +21,7 @@ export interface MissingReport {
 export interface FoundReport {
   id: string;
   missingPetId: string;
+  ownerId: string;
   helper: { id: string; name: string };
   pet: { id: string; name: string; photo_url?: string };
   photo_urls?: string[];

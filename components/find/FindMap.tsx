@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Marker } from 'react-map-gl/mapbox';
 import { useUserProfile } from '@/stores/userProfile';
-import { MissingReport } from '@/types/find';
+import { MissingReport, FoundReport } from '@/types/find';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { Circle, MapPinCheck } from 'lucide-react';
 import ActionsMenu from '@/components/find/ActionsMenu';
@@ -13,9 +13,11 @@ import ReportModal, { LatLng } from '@/components/find/ReportModal';
 import MyReports from '@/components/find/MyReports';
 import OthersReports from '@/components/find/OthersReports';
 import FoundReportModal from '@/components/find/FoundReportModal';
-import MapMarkers from '@/components/find/MapMarkers';
-import ReportPopup from '@/components/find/MapPopups';
+import { Markers } from '@/components/find/FindMarkers';
+import ReportPopup from '@/components/find/ReportPopup';
 import FoundReports from '@/components/find/FoundReports';
+import FoundPopup from '@/components/find/FoundPopup';
+import { fetcher } from "@/lib/utils";
 
 const Map = dynamic(
   () => import("react-map-gl/mapbox").then((mod) => mod.default),
@@ -46,12 +48,35 @@ export default function FindMap() {
   const [foundPickMode, setFoundPickMode] = useState(false);
   const [foundLocation, setFoundLocation] = useState<LatLng | null>(null);
 
+  const [foundReportsOnMap, setFoundReportsOnMap] = useState<FoundReport[]>([]);
+  const [foundSelected, setFoundSelected] = useState<FoundReport | null>(null);
+  const [foundPhotoIndex, setFoundPhotoIndex] = useState(0);
+
+  async function refreshReports() {
+    try {
+      const data = await fetcher<MissingReport[]>("/api/find?mode=recent");
+      setReports(data);
+    } catch (err: any) {
+      console.error("Error fetching recent reports:", err);
+    }
+  }
+
+  async function refreshFoundReports() {
+    try {
+      const data = await fetcher<FoundReport[]>("/api/find?mode=found");
+      setFoundReportsOnMap(data);
+    } catch (err: any) {
+      console.error("Error fetching found reports:", err);
+    }
+  }
+
   useEffect(() => {
     setPhotoIndex(0);
   }, [selected]);
 
   useEffect(() => {
     refreshReports();
+    refreshFoundReports();
   }, []);
 
   const flyToReport = (report: MissingReport) => {
@@ -74,16 +99,6 @@ export default function FindMap() {
     setTargetReport(report);
     setIsFoundModalOpen(true);
     setFoundLocation(null);
-  }
-
-  function refreshReports() {
-    fetch("/api/find?mode=recent")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data: MissingReport[]) => setReports(data))
-      .catch(console.error);
   }
 
   async function handleSubmitReport(data: {
@@ -221,10 +236,25 @@ export default function FindMap() {
           <Circle size={22} className="text-blue-600" />
         </Marker>
 
-        {/* Marcadores */}
-        <MapMarkers
+        {/* Marcadores de desapariciones */}
+        <Markers
           reports={reports}
-          onSelect={(report) => setSelected(report)}
+          onSelect={(r) => {
+            setSelected(r);
+            setFoundSelected(null);
+          }}
+        />
+
+        {/* Marcadores de hallazgos */}
+        <Markers
+          key="found-markers"
+          reports={foundReportsOnMap}
+          variant="found"
+          onSelect={(r) => {
+            setFoundPhotoIndex(0);
+            setFoundSelected(r);
+            setSelected(null);
+          }}
         />
 
         {/* Popup */}
@@ -240,6 +270,20 @@ export default function FindMap() {
           }}
           onOpenFoundModal={openFoundModal}
         />
+
+        {foundSelected && (
+          <FoundPopup
+            selected={foundSelected}
+            userId={userId}
+            photoIndex={foundPhotoIndex}
+            setPhotoIndex={setFoundPhotoIndex}
+            onClose={() => setFoundSelected(null)}
+            onMarkResolved={(petId) => {
+              refreshReports();
+              refreshFoundReports();
+            }}
+          />
+        )}
 
       {targetReport && (
         <FoundReportModal

@@ -5,36 +5,39 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FoundReport } from "@/types/find";
+import { fetcher } from "@/lib/utils";
 
 interface FoundReportsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onMarkedFound?: () => void;
 }
 
 export default function FoundReports({
   isOpen,
   onClose,
+  onMarkedFound,
 }: FoundReportsModalProps) {
   const [foundReports, setFoundReports] = useState<FoundReport[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [currentIdx, setCurrentIdx] = useState(0);
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [marking, setMarking] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    fetch("/api/find?mode=found")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data: FoundReport[]) => {
+
+    fetcher<FoundReport[]>("/api/find?mode=found")
+      .then((data) => {
         setFoundReports(data);
         setCurrentIdx(0);
         setPhotoIdx(0);
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error("Error cargando avisos de hallazgo:", err);
+      })
       .finally(() => setLoading(false));
   }, [isOpen]);
 
@@ -51,6 +54,29 @@ export default function FoundReports({
     setCurrentIdx((i) => (i > 0 ? i - 1 : total - 1));
   const nextReport = () =>
     setCurrentIdx((i) => (i < total - 1 ? i + 1 : 0));
+
+  const handleMarkFound = async () => {
+    if (!report) return;
+    setMarking(true);
+    try {
+      const res = await fetch(
+        `/api/find?mode=resolved&pet=${report.pet.id}`,
+        { method: "PUT" }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || res.statusText);
+      }
+      alert("¡Tu mascota ha sido marcada como encontrada!");
+      if (onMarkedFound) onMarkedFound();
+      onClose();
+    } catch (e: any) {
+      console.error(e);
+      alert("Error marcando encontrada: " + e.message);
+    } finally {
+      setMarking(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
@@ -141,9 +167,22 @@ export default function FoundReports({
               Siguiente
             </Button>
           </div>
-          <Button variant="outline" onClick={onClose}>
-            Cerrar
-          </Button>
+
+          <div className="flex items-center space-x-2">
+            {/* Botón para marcar encontrada */}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleMarkFound}
+              disabled={marking}
+            >
+              {marking ? "Marcando..." : "Marcar encontrada"}
+            </Button>
+
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Cerrar
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>

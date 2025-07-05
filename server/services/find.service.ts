@@ -225,6 +225,7 @@ export const listFoundReportsForUser = async (userId: string) => {
     where: {
       MissingPets: {
         reporter_id: userId,
+        resolved: false,
       },
     },
     include: {
@@ -232,6 +233,7 @@ export const listFoundReportsForUser = async (userId: string) => {
         select: {
           id: true,
           pet_id: true,
+          reporter_id: true,
           latitude: true,
           longitude: true,
           reported_at: true,

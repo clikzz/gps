@@ -63,6 +63,7 @@ const SortablePhoto = React.memo(function SortablePhoto({
       />
       <button
         type="button"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={() => onRemove(index)}
         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
       >

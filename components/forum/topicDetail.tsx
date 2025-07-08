@@ -49,13 +49,16 @@ const getUserTitle = (messageCount: number): string => {
 
 export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
   const currentUserId = useUserProfile((s) => s.user?.id)
+  const currentUserRole = useUserProfile((s) => s.user?.role)
+
   const isAuthor = currentUserId === topic.author.id
-  const [displayContent, setDisplayContent] = useState(mainPost?.content ?? "")
+  const canEdit  = isAuthor || currentUserRole === "MODERATOR" || currentUserRole === "ADMIN"
+  const canDelete= isAuthor || currentUserRole === "ADMIN"
+
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(mainPost?.content ?? "")
+  const [displayContent, setDisplayContent] = useState(mainPost?.content ?? "")
   const router = useRouter()
-
-  
 
   useEffect(() => {
     setDisplayContent(mainPost?.content ?? "")
@@ -155,29 +158,21 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
                 className="w-full min-h-[100px] p-3 border rounded-lg resize-none"
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveContent}>
-                  Guardar
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
-                  Cancelar
-                </Button>
+                <Button size="sm" onClick={handleSaveContent}>Guardar</Button>
+                <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
               </div>
             </div>
           ) : (
             <>
               <div className="prose max-w-none mb-8">
-                <p className="whitespace-pre-wrap">{mainPost.content}</p>
+                <p className="whitespace-pre-wrap">{displayContent}</p>
               </div>
 
-              {isAuthor && (
+              {(canEdit || canDelete) && (
                 <div className="absolute bottom-4 right-4 flex gap-2 text-sm">
-                  <button onClick={() => setIsEditing(true)} className="hover:underline">
-                    Editar
-                  </button>
-                  <span>|</span>
-                  <button onClick={handleDeleteTopic} className="hover:underline">
-                    Eliminar
-                  </button>
+                  {canEdit && <button onClick={() => setIsEditing(true)}>Editar</button>}
+                  {canEdit && canDelete && <span>|</span>}
+                  {canDelete && <button onClick={handleDeleteTopic}>Eliminar tema</button>}
                 </div>
               )}
             </>

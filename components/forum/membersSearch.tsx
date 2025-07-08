@@ -51,7 +51,6 @@ export function MembersSearch({ users }: MembersSearchProps) {
   const [userList, setUserList] = useState(users)
   const [statusFilter, setStatusFilter] = useState("all")
 
-
   const [banDialogOpen, setBanDialogOpen] = useState(false)
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<ForumUser | null>(null)
@@ -169,25 +168,71 @@ export function MembersSearch({ users }: MembersSearchProps) {
     }
   }
 
-  const handlePromoteToModerator = (user: ForumUser) => {
-    if (!isAdmin) {
-      toast.error("Solo los administradores pueden designar moderadores")
-      return
+const handlePromoteToModerator = async (user: ForumUser) => {
+  if (!isAdmin) {
+    toast.error("Solo los administradores pueden designar moderadores")
+    return
+  }
+
+  try {
+    const res = await fetch("/api/forum/users/role", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        targetUserId: user.id,
+        role: "MODERATOR",
+      }),
+    })
+
+    if (res.status !== 204) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || "Error al promover moderador")
     }
 
-    setUserList(userList.map((u) => (u.id === user.id ? { ...u, role: Role.MODERATOR } : u)))
+    setUserList((list) =>
+      list.map((u) =>
+        u.id === user.id ? { ...u, role: Role.MODERATOR } : u
+      )
+    )
     toast.success(`${user.name} ha sido designado como moderador`)
+  } catch (err: any) {
+    toast.error(err.message)
+  }
+}
+
+const handleRevokeModerator = async (user: ForumUser) => {
+  if (!isAdmin) {
+    toast.error("Solo los administradores pueden revocar moderadores")
+    return
   }
 
-  const handleRevokeModerator = (user: ForumUser) => {
-    if (!isAdmin) {
-      toast.error("Solo los administradores pueden revocar moderadores")
-      return
+  try {
+    const res = await fetch("/api/forum/users/role", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        targetUserId: user.id,
+        role: "USER",
+      }),
+    })
+
+    if (res.status !== 204) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error || "Error al revocar moderador")
     }
 
-    setUserList(userList.map((u) => (u.id === user.id ? { ...u, role: Role.USER } : u)))
+    setUserList((list) =>
+      list.map((u) =>
+        u.id === user.id ? { ...u, role: Role.USER } : u
+      )
+    )
     toast.success(`Se han revocado los privilegios de moderador de ${user.name}`)
+  } catch (err: any) {
+    toast.error(err.message)
   }
+}
 
   const openBanDialog = (user: ForumUser) => {
     setSelectedUser(user)

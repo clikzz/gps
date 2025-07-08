@@ -133,6 +133,21 @@ export async function updateOwnPost(
   });
 }
 
+export async function updateAnyPost(
+  editorId: string,
+  postId: number,
+  content: string
+) {
+  return prisma.posts.update({
+    where: { id: postId },
+    data: {
+      content,
+      moderated_at: new Date(),    
+      moderated_by: editorId,      
+    },
+  });
+}
+
 export async function deleteOwnPost(
   userId: string,
   postId: number
@@ -151,6 +166,18 @@ export async function deleteOwnPost(
   });
 }
 
+export async function deleteAnyPost(postId: number) {
+  return prisma.$transaction(async tx => {
+    const post = await tx.posts.findUnique({ where: { id: postId } });
+    if (!post) throw new Error("NOT_FOUND");
+    await tx.posts.delete({ where: { id: postId } });
+    await tx.users.update({
+      where: { id: post.user_id },
+      data: { menssageCount: { decrement: 1 } },
+    });
+  });
+}
+
 export async function updateOwnTopic(
   userId: string,
   topicId: number,
@@ -162,6 +189,21 @@ export async function updateOwnTopic(
   });
 }
 
+export async function updateAnyTopic(
+  editorId: string,
+  topicId: number,
+  title: string
+) {
+  return prisma.topics.update({
+    where: { id: topicId },
+    data: {
+      title,
+      updated_at: new Date(),
+      // moderado_por: editorId,
+      // moderado_en: new Date(),
+    },
+  });
+}
 
 export async function deleteOwnTopic(
   userId: string,
@@ -184,32 +226,6 @@ export async function deleteOwnTopic(
   });
 }
 
-export async function assignModerator(userId: string) {
-  return prisma.users.update({
-    where: { id: userId },
-    data: { role: "MODERATOR" },
-  });
-}
-
-export async function revokeModerator(userId: string) {
-  return prisma.users.update({
-    where: { id: userId },
-    data: { role: "USER" },
-  });
-}
-
-export async function deleteAnyPost(postId: number) {
-  return prisma.$transaction(async tx => {
-    const post = await tx.posts.findUnique({ where: { id: postId } });
-    if (!post) throw new Error("NOT_FOUND");
-    await tx.posts.delete({ where: { id: postId } });
-    await tx.users.update({
-      where: { id: post.user_id },
-      data: { menssageCount: { decrement: 1 } },
-    });
-  });
-}
-
 export async function deleteAnyTopic(topicId: number) {
   return prisma.$transaction(async tx => {
     const posts = await tx.posts.findMany({ where: { topic_id: topicId } });
@@ -224,21 +240,19 @@ export async function deleteAnyTopic(topicId: number) {
   });
 }
 
-export async function updateAnyPost(
-  editorId: string,
-  postId: number,
-  content: string
-) {
-  return prisma.posts.update({
-    where: { id: postId },
-    data: {
-      content,
-      moderated_at: new Date(),    
-      moderated_by: editorId,      
-    },
+export async function assignModerator(userId: string) {
+  return prisma.users.update({
+    where: { id: userId },
+    data: { role: "MODERATOR" },
   });
 }
 
+export async function revokeModerator(userId: string) {
+  return prisma.users.update({
+    where: { id: userId },
+    data: { role: "USER" },
+  });
+}
 
 export async function updateUserStatus(
   currentUserId: string,

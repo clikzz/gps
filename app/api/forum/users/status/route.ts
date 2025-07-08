@@ -1,31 +1,22 @@
+import prisma from "@/lib/db"
 import { NextResponse } from "next/server"
-import { authenticateUser, ensureModerator } from "@/server/middlewares/auth.middleware"
-import { updateUserStatus } from "@/server/services/forum.service"
+import { authenticateUser } from "@/server/middlewares/auth.middleware"
+import { changeUserStatusHandler } from "@/server/controllers/forum.controller"
 
 export async function PATCH(req: Request) {
+  return changeUserStatusHandler(req)
+}
+
+export async function GET(req: Request) {
   const auth = await authenticateUser(req)
-  if (auth instanceof Response) return auth
-
-  try {
-    ensureModerator(auth)
-  } catch {
-    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
+  if (auth instanceof Response) {
+    return auth
   }
 
-  const { targetUserId, status } = await req.json() as {
-    targetUserId: string
-    status: "ACTIVE" | "SUSPENDED" | "BANNED"
-  }
+  const profile = await prisma.users.findUnique({
+    where: { id: auth.id },
+    select: { status: true, suspensionUntil: true },
+  })
 
-  try {
-    await updateUserStatus(auth.id, targetUserId, status)
-    return NextResponse.json(null, { status: 204 })
-  } catch (err: any) {
-    const msg = err.message === "CANNOT_MODIFY_ADMIN"
-      ? "No puedes modificar al administrador"
-      : err.message === "FORBIDDEN_MODERATOR"
-        ? "No tienes permisos"
-        : "Error interno"
-    return NextResponse.json({ error: msg }, { status: 400 })
-  }
+  return NextResponse.json(profile)
 }

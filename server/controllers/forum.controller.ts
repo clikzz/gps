@@ -8,8 +8,10 @@ import {
   createPost, 
   deleteOwnPost, 
   deleteOwnTopic, 
-  updateOwnPost, 
+  updateOwnPost,
+  updateAnyPost,
   updateOwnTopic, 
+  updateAnyTopic,
   assignModerator, 
   revokeModerator,
   deleteAnyPost,
@@ -17,12 +19,45 @@ import {
   updateUserRole,
   updateUserStatus,
   listUsers, 
-  updateAnyPost,
 } from "../services/forum.service";
-import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema} from "../validations/forum.validation";
-import { authenticateUser, ensureAdmin, ensureModerator } from "../middlewares/auth.middleware";
+import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema} from "@/server/validations/forum.validation";
+import { authenticateUser, ensureAdmin, ensureModerator } from "@/server/middlewares/auth.middleware";
+import type { AuthUser } from "@/server/middlewares/auth.middleware";
 import { NextResponse } from "next/server";
 
+export async function enforceForumAccess(user: AuthUser) {
+  const profile = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { status: true, suspensionUntil: true },
+  });
+
+  if (!profile) {
+    return NextResponse.json(
+      { error: "Usuario no encontrado" },
+      { status: 404 }
+    );
+  }
+
+  if (profile.status === "BANNED") {
+    return NextResponse.json(
+      { error: "Estás baneado del foro" },
+      { status: 403 }
+    );
+  }
+
+  if (
+    profile.status === "SUSPENDED" &&
+    profile.suspensionUntil &&
+    profile.suspensionUntil > new Date()
+  ) {
+    return NextResponse.json(
+      { error: "Estás suspendido temporalmente" },
+      { status: 403 }
+    );
+  }
+
+  return null;
+}
 
 export const fetchSubforums = async () => {
   const subs = await listSubforums();
@@ -44,7 +79,6 @@ export const fetchUsers = async () => {
     headers: { "Content-Type": "application/json" },
   });
 };
-
 
 export const fetchTopics = async (req: Request) => {
   const { searchParams } = new URL(req.url);
@@ -177,7 +211,6 @@ export const addTopic = async (req: Request) => {
 }
 }
 
-
 export const addPost = async (req: Request) => {
   const authUser = await authenticateUser(req);
   if (authUser instanceof Response) return authUser;
@@ -237,108 +270,126 @@ export const addPost = async (req: Request) => {
 }
 }
 
-export async function editOwnPost(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+export async function editPostHandler(req: Request) {
+  const user = await authenticateUser(req)
+  if (user instanceof Response) return user
 
-  const postId = Number(new URL(req.url).pathname.split("/").pop());
+  const postId = Number(new URL(req.url).pathname.split("/").pop())
   if (isNaN(postId)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 })
   }
 
   try {
-    const { content } = editPostSchema.parse(await req.json());
-    const result = await updateOwnPost(user.id, postId, content);
+    const { content } = editPostSchema.parse(await req.json())
+
+    if (user.role === "MODERATOR" || user.role === "ADMIN") {
+      await updateAnyPost(user.id, postId, content)
+      return new NextResponse(null, { status: 204 })
+    }
+
+    const result = await updateOwnPost(user.id, postId, content)
     if (result.count === 0) {
       return NextResponse.json(
         { error: "No tienes permiso o mensaje no existe" },
         { status: 403 }
-      );
+      )
     }
-    return new NextResponse(null, { status: 204 });
-  } catch (err) {
+    return new NextResponse(null, { status: 204 })
+
+  } catch (err: unknown) {
     if (err instanceof ZodError) {
-      return NextResponse.json(
-        { errors: err.errors },
-        { status: 422 }
-      );
+      return NextResponse.json({ errors: err.errors }, { status: 422 })
     }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Error interno" },
       { status: 500 }
-    );
+    )
   }
 }
 
-export async function removeOwnPost(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+export async function deletePostHandler(req: Request) {
+  const user = await authenticateUser(req)
+  if (user instanceof Response) return user
 
-  const postId = Number(new URL(req.url).pathname.split("/").pop());
+  const postId = Number(new URL(req.url).pathname.split("/").pop())
   if (isNaN(postId)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 })
   }
 
-  const result = await deleteOwnPost(user.id, postId);
+  if (user.role === "ADMIN") {
+    await deleteAnyPost(postId)
+    return new NextResponse(null, { status: 204 })
+  }
+
+  const result = await deleteOwnPost(user.id, postId)
   if (result.count === 0) {
     return NextResponse.json(
       { error: "No tienes permiso o mensaje no existe" },
       { status: 403 }
-    );
+    )
   }
-  return new NextResponse(null, { status: 204 });
+  return new NextResponse(null, { status: 204 })
 }
 
-export async function editOwnTopic(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+export async function editTopicHandler(req: Request) {
+  const user = await authenticateUser(req)
+  if (user instanceof Response) return user
 
-  const topicId = Number(new URL(req.url).pathname.split("/").pop());
+  const topicId = Number(new URL(req.url).pathname.split("/").pop())
   if (isNaN(topicId)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 })
   }
 
   try {
-    const { title } = editTopicSchema.parse(await req.json());
-    const result = await updateOwnTopic(user.id, topicId, title);
+    const { title } = editTopicSchema.parse(await req.json())
+
+    if (user.role === "MODERATOR" || user.role === "ADMIN") {
+      await updateAnyTopic(user.id, topicId, title)
+      return new NextResponse(null, { status: 204 })
+    }
+
+    const result = await updateOwnTopic(user.id, topicId, title)
     if (result.count === 0) {
       return NextResponse.json(
         { error: "No tienes permiso o tema no existe" },
         { status: 403 }
-      );
+      )
     }
-    return new NextResponse(null, { status: 204 });
-  } catch (err) {
+    return new NextResponse(null, { status: 204 })
+
+  } catch (err: unknown) {
     if (err instanceof ZodError) {
-      return NextResponse.json(
-        { errors: err.errors },
-        { status: 422 }
-      );
+      return NextResponse.json({ errors: err.errors }, { status: 422 })
     }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Error interno" },
       { status: 500 }
-    );
+    )
   }
 }
 
-export async function removeOwnTopic(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+export async function deleteTopicHandler(req: Request) {
+  const user = await authenticateUser(req)
+  if (user instanceof Response) return user
 
-  const topicId = Number(new URL(req.url).pathname.split("/").pop());
+  const topicId = Number(new URL(req.url).pathname.split("/").pop())
   if (isNaN(topicId)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 })
   }
 
-  const result = await deleteOwnTopic(user.id, topicId);
+  if (user.role === "ADMIN") {
+    await deleteAnyTopic(topicId)
+    return new NextResponse(null, { status: 204 })
+  }
+
+  const result = await deleteOwnTopic(user.id, topicId)
   if (result.count === 0) {
     return NextResponse.json(
       { error: "No tienes permiso o tema no existe" },
       { status: 403 }
-    );
+    )
   }
-  return new NextResponse(null, { status: 204 });
+  return new NextResponse(null, { status: 204 })
 }
 
 export async function addModerator(req: Request) {
@@ -367,50 +418,17 @@ export async function removeModerator(req: Request) {
   }
 }
 
-export async function deleteAnyPostHandler(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
-  try { ensureAdmin(user); } catch {
-    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
-  }
-  const postId = Number(new URL(req.url).pathname.split("/").pop());
-  await deleteAnyPost(postId);
-  return new Response(null, { status: 204 });
-}
-
-export async function deleteAnyTopicHandler(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
-  try { ensureAdmin(user); } catch {
-    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
-  }
-  const topicId = Number(new URL(req.url).pathname.split("/").pop());
-  await deleteAnyTopic(topicId);
-  return new Response(null, { status: 204 });
-}
-
-export async function editAnyPostHandler(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
-  try { ensureModerator(user); } catch {
-    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
-  }
-  const postId = Number(new URL(req.url).pathname.split("/").pop());
-  const { content } = editPostSchema.parse(await req.json());
-  await updateAnyPost(user.id, postId, content);
-  return NextResponse.json(null, { status: 204 });
-}
-
-
-export async function changeUserStatus(req: Request) {
+export async function changeUserStatusHandler(req: Request) {
   const auth = await authenticateUser(req)
   if (auth instanceof Response) return auth
 
-  try { ensureModerator(auth) } catch {
+  try {
+    ensureModerator(auth)
+  } catch {
     return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
   }
 
-  const { targetUserId, status } = await req.json() as {
+  const { targetUserId, status } = (await req.json()) as {
     targetUserId: string
     status: "ACTIVE" | "SUSPENDED" | "BANNED"
   }
@@ -419,29 +437,46 @@ export async function changeUserStatus(req: Request) {
     await updateUserStatus(auth.id, targetUserId, status)
     return NextResponse.json(null, { status: 204 })
   } catch (err: any) {
-    const code = err.message === "CANNOT_MODIFY_ADMIN" ? 400 : 500
-    return NextResponse.json({ error: err.message }, { status: code })
+    let code = 500
+    let msg  = "Error interno"
+
+    if (err.message === "CANNOT_MODIFY_ADMIN") {
+      code = 400
+      msg  = "No puedes modificar al administrador"
+    } else if (err.message === "FORBIDDEN_MODERATOR") {
+      code = 403
+      msg  = "No tienes permisos"
+    }
+
+    return NextResponse.json({ error: msg }, { status: code })
   }
 }
 
-export async function changeUserRole(req: Request) {
+export async function changeUserRoleHandler(req: Request) {
   const auth = await authenticateUser(req)
   if (auth instanceof Response) return auth
 
-  try { ensureAdmin(auth) } catch {
+  try {
+    ensureAdmin(auth)
+  } catch {
     return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
   }
 
-  const { targetUserId, role } = await req.json() as {
+  const { targetUserId, role } = (await req.json()) as {
     targetUserId: string
     role: "MODERATOR" | "USER"
   }
 
   try {
     await updateUserRole(auth.id, targetUserId, role)
-    return NextResponse.json(null, { status: 204 })
+    return new NextResponse(null, { status: 204 })
   } catch (err: any) {
-    const code = err.message === "CANNOT_MODIFY_ADMIN" ? 400 : 500
-    return NextResponse.json({ error: err.message }, { status: code })
+    const msg =
+      err.message === "CANNOT_MODIFY_ADMIN"
+        ? "No puedes modificar al administrador"
+        : err.message === "FORBIDDEN_ADMIN"
+        ? "No tienes permisos"
+        : "Error interno"
+    return NextResponse.json({ error: msg }, { status: 400 })
   }
 }

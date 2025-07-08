@@ -9,7 +9,7 @@ import {
   SelectField,
   CheckboxField,
   ImageUploadField,
-} from "@/components/pets/NewPetFormField";
+} from "@/components/pets/PetFormField";
 import { SPECIES_OPTIONS, SEX_OPTIONS } from "@/types/pet";
 
 interface NewPetFormProps {

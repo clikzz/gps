@@ -72,11 +72,7 @@ export const useNewPetForm = ({
       });
 
       if (!response.ok) {
-        console.log(response);
-
         const error = await response.json();
-        console.log("Error creating pet:", error);
-
         toast.error(error.error || "Error al crear la mascota");
         return;
       }

@@ -257,6 +257,8 @@ lastMessageAt    DateTime?          @map("lastMessageAt")
 menssageCount    Int                @default(0)
 role             Role               @default(USER)
 status           UserStatus         @default(ACTIVE)
+suspensionUntil  DateTime?
+suspensionReason String?
 MarketplaceItems MarketplaceItem[]
 MissingPets      MissingPets[]
 FoundReports     FoundReports[]

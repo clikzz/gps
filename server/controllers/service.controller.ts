@@ -36,7 +36,8 @@ export const addService = async ({
     latitude: number
     longitude: number
     description: string
-    category: ServiceCategory
+    categories: ServiceCategory[] 
+    phone: string
   }
 }) => {
   const newService = await createService(service)
@@ -80,13 +81,15 @@ export const updateServiceById = async (
     latitude,
     longitude,
     description,
-    category,
+    categories,
+    phone,
   }: {
     name?: string
     latitude?: number
     longitude?: number
     description?: string
-    category?: ServiceCategory
+    categories?: ServiceCategory[]
+    phone?: string
   },
 ) => {
   const service = await getServiceById(serviceId)
@@ -103,7 +106,8 @@ export const updateServiceById = async (
     latitude,
     longitude,
     description,
-    category,
+    categories,
+    phone,
   })
 
   if (!updatedService) {

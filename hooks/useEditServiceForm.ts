@@ -4,33 +4,44 @@ import { useForm } from "@tanstack/react-form"
 import { useState } from "react"
 import { toast } from "sonner"
 
-interface UseNewServiceFormProps {
+interface Service {
+  id: string
+  name: string
+  categories: string[]
+  description: string
+  latitude: number
+  longitude: number
+  phone: string
+}
+
+interface UseEditServiceFormProps {
+  service: Service
   onSuccess?: () => void
 }
 
-export const useNewServiceForm = ({ onSuccess }: UseNewServiceFormProps) => {
+export const useEditServiceForm = ({ service, onSuccess }: UseEditServiceFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm({
     defaultValues: {
-      name: "",
-      categories: [] as string[],
-      description: "",
-      latitude: "",
-      longitude: "",
-      phone: "",
+      name: service.name || "",
+      categories: service.categories || [],
+      description: service.description || "",
+      latitude: service.latitude.toString(),
+      longitude: service.longitude.toString(),
+      phone: service.phone || "",
     },
     onSubmit: async ({ value }) => {
       setIsSubmitting(true)
       try {
-        const response = await fetch("/api/services", {
-          method: "POST",
+        const response = await fetch(`/api/services?id=${service.id}`, {
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             name: value.name,
-            categories: Array.isArray(value.categories) ? value.categories : [],
+            categories: value.categories, 
             description: value.description,
             latitude: Number.parseFloat(value.latitude),
             longitude: Number.parseFloat(value.longitude),
@@ -39,17 +50,15 @@ export const useNewServiceForm = ({ onSuccess }: UseNewServiceFormProps) => {
         })
 
         if (response.ok) {
-          const newService = await response.json()
-          toast.success("Servicio creado exitosamente")
-          form.reset()
+          toast.success("Servicio actualizado correctamente")
           onSuccess?.()
         } else {
           const error = await response.json()
-          toast.error(error.error || "Error al crear el servicio")
+          toast.error(error.error || "Error al actualizar el servicio")
         }
       } catch (error) {
         console.error("Error:", error)
-        toast.error("Error al crear el servicio")
+        toast.error("Error al actualizar el servicio")
       } finally {
         setIsSubmitting(false)
       }

@@ -23,12 +23,54 @@ users          users    @relation(fields: [user_id], references: [id], onDelete:
 }
 
 model Medications {
-id       BigInt  @id @default(autoincrement())
-pet_id   BigInt
-name     String?
-dose     String?
-duration String?
-Pets     Pets    @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+id             BigInt   @id @default(autoincrement())
+pet_id         BigInt
+name           String
+dose           String
+duration       String
+start_date     DateTime
+next_dose_date DateTime?
+notes          String?
+active         Boolean   @default(true)
+created_at     DateTime  @default(now())
+updated_at     DateTime  @updatedAt
+Pets           Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+HealthAlerts   HealthAlerts[]
+}
+
+model Vaccinations {
+id               BigInt    @id @default(autoincrement())
+pet_id           BigInt
+name             String
+type             String?
+application_date DateTime
+next_dose_date   DateTime?
+notes            String?
+active           Boolean   @default(true)
+created_at       DateTime  @default(now())
+updated_at       DateTime  @updatedAt
+Pets             Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+HealthAlerts     HealthAlerts[]
+}
+
+model HealthAlerts {
+id           BigInt      @id @default(autoincrement())
+user_id      String      @db.Uuid
+pet_id       BigInt
+alert_type   String
+medication_id BigInt?
+vaccination_id BigInt?
+title        String
+message      String
+alert_date   DateTime
+sent         Boolean     @default(false)
+created_at   DateTime    @default(now())
+users        users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+Medications  Medications? @relation(fields: [medication_id], references: [id], onDelete: Cascade)
+Vaccinations Vaccinations? @relation(fields: [vaccination_id], references: [id], onDelete: Cascade)
+
+@@index([alert_date, sent])
 }
 
 model Milestones {
@@ -39,18 +81,47 @@ TimelineEntries TimelineEntries[] @relation("MilestoneToTimelineEntry")
 }
 
 model MissingPets {
-id          BigInt   @id @default(autoincrement())
-pet_id      BigInt
-reporter_id String   @db.Uuid
-latitude    Float
-longitude   Float
-description String?
-reported_at DateTime @default(now())
-photo_urls  String[]
+id           BigInt   @id @default(autoincrement())
+pet_id       BigInt
+reporter_id  String   @db.Uuid
+latitude     Float
+longitude    Float
+full_address String?
+address      String?
+street       String?
+city         String?
+region       String?
+postcode     String?
+country      String?
+description  String?
+reported_at  DateTime @default(now())
+photo_urls   String[]
+resolved     Boolean? @default(false)
+FoundReports FoundReports[]
+
 Pets        Pets     @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 users       users    @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
+}
 
-@@unique([pet_id, reporter_id])
+model FoundReports {
+id             BigInt      @id @default(autoincrement())
+missingPetId   BigInt
+helperId       String      @db.Uuid
+photo_urls     String[]
+description    String?
+latitude       Float
+longitude      Float
+full_address   String?
+address        String?
+street         String?
+city           String?
+region         String?
+postcode       String?
+country        String?
+created_at     DateTime    @default(now())
+
+MissingPets    MissingPets @relation(fields: [missingPetId], references: [id], onDelete: Cascade)
+users          users       @relation(fields: [helperId], references: [id], onDelete: Cascade)
 }
 
 model Pets {
@@ -71,6 +142,7 @@ MissingPets      MissingPets[]
 users            users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
 TimelineEntries  TimelineEntries[]
 Vaccinations     Vaccinations[]
+HealthAlerts     HealthAlerts[]
 }
 
 model Posts {
@@ -79,6 +151,8 @@ content    String
 created_at DateTime @default(now())
 topic_id   BigInt
 updated_at DateTime @updatedAt
+moderated_at DateTime?
+moderated_by String?
 user_id    String   @db.Uuid
 Topics     Topics   @relation(fields: [topic_id], references: [id], onDelete: Cascade)
 users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -121,7 +195,7 @@ title               String?
 description         String?
 event_date          DateTime
 created_at          DateTime              @default(now())
-updated_at          DateTime              @default(now()) @updatedAt
+updated_at          DateTime              @default(now()) @updatedAt
 Pets                Pets                  @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 users               users                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
 TimelineEntryPhotos TimelineEntryPhotos[]
@@ -149,15 +223,6 @@ Subforums   Subforums @relation(fields: [subforum_id], references: [id], onDelet
 users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model Vaccinations {
-id               BigInt    @id @default(autoincrement())
-pet_id           BigInt
-type             String?
-application_date DateTime?
-next_dose_date   DateTime?
-Pets             Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
-}
-
 model debug_logs {
 id            Int       @id @default(autoincrement())
 event_type    String?
@@ -173,16 +238,33 @@ model users {
 id               String             @id @db.Uuid
 email            String?
 name             String?
-avatar_url       String?
+avatar_url       String?            @default("https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/images/profile/defaultpfp.png")
 created_at       DateTime           @default(now())
 tag              Int                @unique @default(autoincrement())
 lastMessageAt    DateTime?          @map("lastMessageAt")
 menssageCount    Int                @default(0)
+role             Role               @default(USER)
+status           UserStatus         @default(ACTIVE)
 MarketplaceItems MarketplaceItems[]
 MissingPets      MissingPets[]
+FoundReports     FoundReports[]
 Pets             Pets[]
 Posts            Posts[]
 Reviews          Reviews[]
 TimelineEntries  TimelineEntries[]
 Topics           Topics[]
+HealthAlerts     HealthAlerts[]
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
 }

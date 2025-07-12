@@ -7,7 +7,7 @@ import { Marker } from 'react-map-gl/mapbox';
 import { useUserProfile } from '@/stores/userProfile';
 import { MissingReport, FoundReport } from '@/types/find';
 import { useUserLocation } from '@/hooks/useUserLocation';
-import { Circle, MapPinCheck } from 'lucide-react';
+import { MapPinCheck, Plus, Minus, Compass } from 'lucide-react';
 import ActionsMenu from '@/components/find/ActionsMenu';
 import ReportModal, { LatLng } from '@/components/find/ReportModal';
 import MyReports from '@/components/find/MyReports';
@@ -167,6 +167,26 @@ export default function FindMap() {
     }
   }
 
+  const handleZoomIn = () => {
+    if (!mapRef.current) return;
+    mapRef.current.zoomIn({ duration: 300 });
+  };
+
+  const handleZoomOut = () => {
+    if (!mapRef.current) return;
+    mapRef.current.zoomOut({ offset: [80, 60], duration: 300 });
+  };
+
+  const handleCenter = () => {
+    if (!mapRef.current) return;
+    mapRef.current.flyTo({
+      center: [initial.longitude, initial.latitude],
+      zoom: initial.zoom,
+      essential: true,
+      speed: 1.2,
+    });
+  };
+
   return (
     <div className="relative w-full h-full">
       {error && (
@@ -228,13 +248,6 @@ export default function FindMap() {
         }}
         onClick={handleMapClick}
       >
-        <Marker
-          latitude={initial.latitude}
-          longitude={initial.longitude}
-          anchor="bottom"
-        >
-          <Circle size={22} className="text-blue-600" />
-        </Marker>
 
         {/* Marcadores de desapariciones */}
         <Markers
@@ -318,6 +331,27 @@ export default function FindMap() {
           </Marker>
         )}
       </Map>
+
+        <div className="absolute bottom-4 right-4 flex flex-col space-y-2 z-20">
+          <button
+            onClick={handleZoomIn}
+            className="p-2 bg-white rounded shadow hover:bg-gray-100"
+          >
+            <Plus size={20} />
+          </button>
+          <button
+            onClick={handleZoomOut}
+            className="p-2 bg-white rounded shadow hover:bg-gray-100"
+          >
+            <Minus size={20} />
+          </button>
+          <button
+            onClick={handleCenter}
+            className="p-2 bg-white rounded shadow hover:bg-gray-100"
+          >
+            <Compass size={20} />
+          </button>
+        </div>
     </div>
   );
 }

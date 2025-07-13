@@ -2,30 +2,48 @@
 
 import React from "react"
 import { Button } from "@/components/ui/button"
-import { useNewServiceForm } from "@/hooks/useNewServiceForm"
+import { useEditServiceForm } from "@/hooks/useEditServiceForm"
 import { TextField, MultiSelectField, CATEGORY_OPTIONS } from "@/components/services/ServiceFormField"
-import { Check, MapPin, Loader2 } from "lucide-react"
+import { Save, MapPin, Loader2 } from "lucide-react"
+import { useEffect } from "react"
 
-interface NewServiceFormProps {
-  userLocation: { lat: number; lng: number }
+interface Service {
+  id: string
+  name: string
+  categories: string[]
+  description: string
+  latitude: number
+  longitude: number
+  phone: string
+}
+
+interface EditServiceFormProps {
+  service: Service
   selectedServiceLocation: { lat: number; lng: number } | null
   isSelectingLocation: boolean
   onCancelLocationSelection: () => void
-  onServiceCreated: () => void
+  onServiceUpdated: () => void
 }
 
-const NewServiceForm: React.FC<NewServiceFormProps> = ({
-  userLocation,
+const EditServiceForm: React.FC<EditServiceFormProps> = ({
+  service,
   selectedServiceLocation,
   isSelectingLocation,
   onCancelLocationSelection,
-  onServiceCreated,
+  onServiceUpdated,
 }) => {
-  const serviceForm = useNewServiceForm({
+  const serviceForm = useEditServiceForm({
+    service,
     onSuccess: () => {
-      onServiceCreated()
+      onServiceUpdated()
     },
   })
+
+  useEffect(() => {
+    console.log("EditServiceForm - Service recibido:", service)
+    console.log("EditServiceForm - Categorías del servicio:", service.categories)
+    console.log("EditServiceForm - Valores del formulario:", serviceForm.form.state.values)
+  }, [service, serviceForm.form.state.values])
 
   React.useEffect(() => {
     if (selectedServiceLocation) {
@@ -34,44 +52,46 @@ const NewServiceForm: React.FC<NewServiceFormProps> = ({
     }
   }, [selectedServiceLocation, serviceForm.form])
 
-  if (isSelectingLocation || !selectedServiceLocation) {
+  if (isSelectingLocation) {
     return (
       <div className="text-center py-8 space-y-4">
         <div className="flex justify-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-            <MapPin className="w-8 h-8 text-red-500" />
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+            <MapPin className="w-8 h-8 text-blue-500" />
           </div>
         </div>
         <div>
-          <h3 className="text-lg font-medium text-gray-800 mb-2">Selecciona la ubicación</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Haz clic en el mapa principal para marcar donde se encuentra tu servicio
-          </p>
-          {isSelectingLocation && (
-            <div className="flex items-center justify-center space-x-2 text-sm text-blue-600">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Esperando selección en el mapa...</span>
-            </div>
-          )}
+          <h3 className="text-lg font-medium text-gray-800 mb-2">Selecciona nueva ubicación</h3>
+          <p className="text-sm text-gray-600 mb-4">Haz clic en el mapa para cambiar la ubicación de tu servicio</p>
+          <div className="flex items-center justify-center space-x-2 text-sm text-blue-600">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Esperando selección en el mapa...</span>
+          </div>
         </div>
         <p className="text-xs text-gray-500">Puedes minimizar este panel para ver mejor el mapa</p>
       </div>
     )
   }
 
+  const currentLocation = selectedServiceLocation || { lat: service.latitude, lng: service.longitude }
+
   return (
     <div className="space-y-4">
-      {/* Mostrar ubicación seleccionada - estilo minimalista */}
+      {/* Mostrar ubicación - estilo minimalista */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center space-x-2">
-          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
             <MapPin className="w-3 h-3 text-white" />
           </div>
-          <span className="text-sm font-medium text-green-800">Ubicación confirmada</span>
+          <span className="text-sm font-medium text-blue-800">
+            {selectedServiceLocation ? "Nueva ubicación" : "Ubicación actual"}
+          </span>
         </div>
-        <p className="text-xs text-gray-600">Tu servicio se ubicará aquí</p>
+        <p className="text-xs text-gray-600">
+          {selectedServiceLocation ? "Se actualizará la ubicación" : "Ubicación del servicio"}
+        </p>
         <div className="text-xs text-gray-500 font-mono">
-          📍 {selectedServiceLocation.lat.toFixed(6)}, {selectedServiceLocation.lng.toFixed(6)}
+          📍 {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
         </div>
       </div>
 
@@ -137,12 +157,12 @@ const NewServiceForm: React.FC<NewServiceFormProps> = ({
           {serviceForm.isSubmitting ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Creando servicio...
+              Actualizando servicio...
             </>
           ) : (
             <div className="flex items-center">
-              <Check className="w-4 h-4 mr-2" />
-              Crear servicio
+              <Save className="w-4 h-4 mr-2" />
+              Guardar cambios
             </div>
           )}
         </Button>
@@ -151,4 +171,4 @@ const NewServiceForm: React.FC<NewServiceFormProps> = ({
   )
 }
 
-export default NewServiceForm
+export default EditServiceForm

@@ -12,6 +12,7 @@ interface RequestLocationProps {
 const RequestLocation = ({ onLocationReceived }: RequestLocationProps) => {
   const [loading, setLoading] = useState(false)
   const [usingIPLocation, setUsingIPLocation] = useState(false)
+
   const getLocationFromIP = async () => {
     try {
       setUsingIPLocation(true)
@@ -40,6 +41,7 @@ const RequestLocation = ({ onLocationReceived }: RequestLocationProps) => {
       setUsingIPLocation(false)
     }
   }
+
   const requestLocation = async () => {
     setLoading(true)
 
@@ -61,7 +63,6 @@ const RequestLocation = ({ onLocationReceived }: RequestLocationProps) => {
       async (err) => {
         console.error('Error de geolocalización:', err)
 
-
         const ipLocationSuccess = await getLocationFromIP()
         if (!ipLocationSuccess) {
           toast.error("No se pudo obtener tu ubicación", {
@@ -79,10 +80,11 @@ const RequestLocation = ({ onLocationReceived }: RequestLocationProps) => {
     )
   }
 
-  return (    <div className="flex flex-col items-center space-y-4">
+  return (
+    <div className="flex flex-col items-center space-y-4">
       {loading ? (
         <div className="flex flex-col items-center space-y-3">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
           <p className="text-gray-600">
             {usingIPLocation ? "Obteniendo ubicación aproximada..." : "Obteniendo tu ubicación..."}
           </p>

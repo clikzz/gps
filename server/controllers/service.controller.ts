@@ -2,6 +2,34 @@ import { createService, getServices, getServiceById, updateService, deleteServic
 import type { Services as Service } from "@prisma/client"
 import type { ServiceCategory } from "../validations/service.validation"
 
+const serializeBigInt = (obj: any): any => {
+  if (obj === null || obj === undefined) {
+    return obj
+  }
+
+  if (typeof obj === 'bigint') {
+    return obj.toString()
+  }
+
+  if (obj instanceof Date) {
+    return obj.toISOString()
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => serializeBigInt(item))
+  }
+
+  if (typeof obj === 'object' && obj.constructor === Object) {
+    const serialized: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      serialized[key] = serializeBigInt(value)
+    }
+    return serialized
+  }
+
+  return obj
+}
+
 export const fetchServices = async (filters: {
   latitude?: string | null
   longitude?: string | null
@@ -17,12 +45,9 @@ export const fetchServices = async (filters: {
 
   const services = await getServices(parsedFilters)
 
-  const formattedServices = services.map((service: Service) => ({
-    ...service,
-    id: service.id.toString(),
-  }))
+  const serializedServices = serializeBigInt(services)
 
-  return new Response(JSON.stringify(formattedServices), {
+  return new Response(JSON.stringify(serializedServices), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   })
@@ -36,18 +61,15 @@ export const addService = async ({
     latitude: number
     longitude: number
     description: string
-    categories: ServiceCategory[] 
+    categories: ServiceCategory[]
     phone: string
   }
 }) => {
   const newService = await createService(service)
 
-  const formattedService = {
-    ...newService,
-    id: newService.id.toString(),
-  }
+  const serializedService = serializeBigInt(newService)
 
-  return new Response(JSON.stringify(formattedService), {
+  return new Response(JSON.stringify(serializedService), {
     status: 201,
     headers: { "Content-Type": "application/json" },
   })
@@ -63,12 +85,9 @@ export const fetchServiceById = async (serviceId: string) => {
     })
   }
 
-  const serviceFetched = {
-    ...service,
-    id: service.id.toString(),
-  }
+  const serializedService = serializeBigInt(service)
 
-  return new Response(JSON.stringify(serviceFetched), {
+  return new Response(JSON.stringify(serializedService), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   })
@@ -116,13 +135,9 @@ export const updateServiceById = async (
       headers: { "Content-Type": "application/json" },
     })
   }
+  const serializedService = serializeBigInt(updatedService)
 
-  const formattedService = {
-    ...updatedService,
-    id: updatedService.id.toString(),
-  }
-
-  return new Response(JSON.stringify(formattedService), {
+  return new Response(JSON.stringify(serializedService), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   })

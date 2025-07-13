@@ -230,6 +230,7 @@ created_at  DateTime  @default(now())
 subforum_id BigInt
 updated_at  DateTime  @updatedAt
 user_id     String    @db.Uuid
+locked      Boolean   @default(false)
 Posts       Posts[]
 Subforums   Subforums @relation(fields: [subforum_id], references: [id], onDelete: Cascade)
 users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)

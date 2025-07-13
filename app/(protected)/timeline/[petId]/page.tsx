@@ -1,51 +1,168 @@
-"use client";
-
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import TimelineHeader from "@/components/timeline/TimelineHeader";
-import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer";
-import TimelineEntriesList from "@/components/timeline/TimelineEntriesList";
-import { useTimelineData } from "@/hooks/timeline/useTimelineData";
-import { useMilestones } from "@/hooks/timeline/useMilestones";
+"use client"
+import { useState } from "react"
+import { useParams } from "next/navigation"
+import { motion } from "framer-motion"
+import TimelineHeader from "@/components/timeline/TimelineHeader"
+import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer"
+import TimelineEntriesList from "@/components/timeline/TimelineEntriesList"
+import { useTimelineData } from "@/hooks/timeline/useTimelineData"
+import { useMilestones } from "@/hooks/timeline/useMilestones"
+import { PawPrint, Heart } from "lucide-react"
 
 
 export default function PetTimelinePage() {
-  const { petId } = useParams() as { petId: string };
+  const { petId } = useParams() as { petId: string }
+  const { pet, isLoading: isLoadingData, error: dataError } = useTimelineData(petId)
 
-  const {
-    pet,
-    isLoading: isLoadingData,
-    error: dataError,
-  } = useTimelineData(petId);
+  const { milestones, isLoading: isLoadingMilestones, error: milestonesError } = useMilestones()
 
-  const {
-    milestones,
-    isLoading: isLoadingMilestones,
-    error: milestonesError,
-  } = useMilestones();
+  const [startDate, setStartDate] = useState<string>("")
+  const [endDate, setEndDate] = useState<string>("")
+  const [selectedMilestone, setSelectedMilestone] = useState<string>("")
+  const [reloadSignal, setReloadSignal] = useState(0)
 
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
-  const [selectedMilestone, setSelectedMilestone] = useState<string>("");
-
-  const [reloadSignal, setReloadSignal] = useState(0);
-
-  const isLoading = isLoadingData || isLoadingMilestones;
-  const error = dataError || milestonesError;
+  const isLoading = isLoadingData || isLoadingMilestones
+  const error = dataError || milestonesError
 
   if (isLoading) {
-    return <div className="text-center p-8">Cargando timeline...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
+        {/* Contenedor principal con animación de entrada */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          {/* Icono principal animado */}
+          <motion.div
+            className="relative mb-6"
+            animate={{
+              rotate: [0, 10, -10, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            }}
+          >
+            <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+              <PawPrint className="w-8 h-8 text-primary" />
+            </div>
+
+            {/* Corazones flotantes */}
+            <motion.div
+              className="absolute -top-2 -right-2"
+              animate={{
+                y: [-5, -15, -5],
+                opacity: [0.5, 1, 0.5],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+                delay: 0.5,
+              }}
+            >
+              <Heart className="w-4 h-4 text-red-400 fill-current" />
+            </motion.div>
+          </motion.div>
+
+          {/* Texto principal animado */}
+          <motion.h3
+            className="text-xl font-semibold text-foreground mb-2"
+            animate={{ opacity: [0.7, 1, 0.7] }}
+            transition={{
+              duration: 2,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            }}
+          >
+            Cargando timeline
+            <motion.span
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{
+                duration: 1.5,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
+            >
+              ...
+            </motion.span>
+          </motion.h3>
+
+          {/* Texto descriptivo */}
+          <motion.p
+            className="text-muted-foreground text-sm mb-6"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            Preparando los recuerdos de tu mascota
+          </motion.p>
+
+          {/* Barra de progreso animada */}
+          <div className="w-48 h-1 bg-muted rounded-full overflow-hidden mx-auto mb-4">
+            <motion.div
+              className="h-full bg-primary rounded-full"
+              animate={{
+                x: [-200, 200],
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
+              style={{ width: "50%" }}
+            />
+          </div>
+
+          {/* Indicadores de puntos */}
+          <div className="flex justify-center space-x-2">
+            {[1, 2, 3, 4].map((dot) => (
+              <motion.div
+                key={dot}
+                className="w-2 h-2 bg-primary rounded-full"
+                animate={{
+                  scale: [1, 1.5, 1],
+                  opacity: [0.5, 1, 0.5],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
+                  delay: dot * 0.2,
+                }}
+              />
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    )
   }
+
   if (error || !pet) {
     return (
-      <div className="text-center p-8 text-destructive">
+      <motion.div
+        className="text-center p-8 text-destructive"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         Error al cargar el timeline o la mascota no fue encontrada.
-      </div>
-    );
+      </motion.div>
+    )
   }
 
   return (
-    <div className="w-full px-4">
+    <motion.div
+      className="w-full px-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <TimelineHeader
         petData={pet}
         startDate={startDate}
@@ -56,20 +173,15 @@ export default function PetTimelinePage() {
         selectedMilestone={selectedMilestone}
         onMilestoneChange={setSelectedMilestone}
       >
-        <NewTimelineDrawer
-          petId={pet.id.toString()}
-          onSuccess={() => setReloadSignal((n) => n + 1)}
-        />
+        <NewTimelineDrawer petId={pet.id.toString()} onSuccess={() => setReloadSignal((n) => n + 1)} />
       </TimelineHeader>
-
       <hr className="my-6 border-border" />
-
       <TimelineEntriesList
         startDate={startDate}
         endDate={endDate}
         milestoneId={selectedMilestone}
         reloadSignal={reloadSignal}
       />
-    </div>
-  );
+    </motion.div>
+  )
 }

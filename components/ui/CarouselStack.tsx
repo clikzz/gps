@@ -1,138 +1,246 @@
-// components/ui/CarouselStack.tsx
-"use client";
-
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+"use client"
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface CarouselStackProps {
-  images: string[];
+  images: string[]
 }
 
 export default function CarouselStack({ images }: CarouselStackProps) {
-  const [index, setIndex] = useState(0);
-  const total = images.length;
-  if (total === 0) return null;
+  const [index, setIndex] = useState(0)
+  const total = images.length
 
-  const prevImage = () => setIndex((i) => (i - 1 + total) % total);
-  const nextImage = () => setIndex((i) => (i + 1) % total);
+  if (total === 0) return null
+
+  const prevImage = () => setIndex((i) => (i - 1 + total) % total)
+  const nextImage = () => setIndex((i) => (i + 1) % total)
 
   // Distancia modular respecto al índice actual
-  const dist = (i: number) => (i - index + total) % total;
+  const dist = (i: number) => (i - index + total) % total
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <motion.div
+      className="w-full flex flex-col items-center"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       {/* Carrusel full-width para que las flechas queden fuera */}
       <div className="relative w-full mb-4 overflow-visible">
         {/* Wrapper centrado de ancho fijo */}
         <div className="relative w-80 h-60 mx-auto">
-          <AnimatePresence initial={false}>
+          <AnimatePresence initial={false} mode="popLayout">
             {images.map((src, i) => {
-              const d = dist(i);
-
+              const d = dist(i)
               // Solo previa (total-1), activa (0) y siguiente (1)
-              if (d > 1 && d < total - 1) return null;
+              if (d > 1 && d < total - 1) return null
 
               // Valores por defecto (imagen activa)
-              let offsetX = 0;
-              let scale   = 1;
-              let opacity = 1;
-              let zIndex  = 20;
+              let offsetX = 0
+              let scale = 1
+              let opacity = 1
+              let zIndex = 20
+              let rotateY = 0
+              let blur = 0
 
               // Siguiente preview
               if (d === 1) {
-                offsetX = 120;
-                scale   = 0.8;
-                opacity = 0.6;
-                zIndex  = 10;
+                offsetX = 120
+                scale = 0.85
+                opacity = 0.7
+                zIndex = 10
+                rotateY = -15
+                blur = 1
               }
 
               // Preview anterior, SOLO si hay más de una imagen
               if (total > 1 && d === total - 1) {
-                offsetX = -120;
-                scale   = 0.8;
-                opacity = 0.6;
-                zIndex  = 10;
+                offsetX = -120
+                scale = 0.85
+                opacity = 0.7
+                zIndex = 10
+                rotateY = 15
+                blur = 1
               }
-
-              // Transforms: base y centro
-              const baseTransform   = `translateX(calc(-50% + ${offsetX}px)) scale(${scale})`;
-              const centerTransform = `translateX(calc(-50% +   0px   )) scale(${scale})`;
 
               return (
                 <motion.div
                   key={src}
-                  className="absolute top-0 left-1/2 w-full h-full
-                             rounded-xl overflow-hidden border-4 border-card
-                             shadow-2xl cursor-pointer"
-                  style={{ zIndex }}
-                  initial={{ transform: centerTransform, opacity: 0 }}
-                  animate={{ transform: baseTransform, opacity }}
-                  exit   ={{ transform: centerTransform, opacity: 0 }}
-                  transition={{
-                    transform: { duration: 0.3 },
-                    opacity:   { duration: 0.1 }
+                  className="absolute top-0 left-1/2 w-full h-full rounded-xl overflow-hidden border-4 border-card shadow-2xl cursor-pointer"
+                  style={{
+                    zIndex,
+                    perspective: "1000px",
                   }}
+                  initial={{
+                    x: "-50%",
+                    scale: 0.8,
+                    opacity: 0,
+                    rotateY: d === 1 ? 30 : d === total - 1 ? -30 : 0,
+                  }}
+                  animate={{
+                    x: `calc(-50% + ${offsetX}px)`,
+                    scale,
+                    opacity,
+                    rotateY,
+                    filter: `blur(${blur}px)`,
+                  }}
+                  exit={{
+                    x: "-50%",
+                    scale: 0.8,
+                    opacity: 0,
+                    rotateY: offsetX > 0 ? 30 : offsetX < 0 ? -30 : 0,
+                  }}
+                  transition={{
+                    duration: 0.6,
+                    ease: [0.25, 0.46, 0.45, 0.94], // easeOutQuart
+                  }}
+                  whileHover={
+                    d === 0
+                      ? {
+                          scale: 1.02,
+                          y: -5,
+                          transition: { duration: 0.3, ease: "easeOut" },
+                        }
+                      : {
+                          scale: scale * 1.05,
+                          opacity: opacity * 1.2,
+                          filter: `blur(${blur * 0.5}px)`,
+                          transition: { duration: 0.3, ease: "easeOut" },
+                        }
+                  }
                   onClick={() => setIndex(i)}
                 >
-                  <img
+                  <motion.img
                     src={src}
                     alt={`Memory ${i + 1}`}
                     className="w-full h-full object-cover"
+                    initial={{ scale: 1.1 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
                   />
+
+                  {/* Overlay sutil para imágenes no activas */}
+                  {d !== 0 && (
+                    <motion.div
+                      className="absolute inset-0 bg-black/20"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  )}
                 </motion.div>
-              );
+              )
             })}
           </AnimatePresence>
         </div>
 
-        {/* Flechas fuera del w-80, pegadas a los bordes del contenedor full-width */}
+        {/* Flechas mejoradas */}
         {total > 1 && (
           <>
-            <button
+            <motion.button
               onClick={prevImage}
               aria-label="Anterior"
-              className="absolute top-1/2 left-0 -translate-y-1/2
-                         bg-card p-2 rounded-full shadow-lg hover:scale-110
-                         transition z-30"
+              className="absolute top-1/2 left-0 -translate-y-1/2 bg-card/90 backdrop-blur-sm p-3 rounded-full shadow-lg z-30 border border-border/50"
+              whileHover={{
+                scale: 1.1,
+                backgroundColor: "hsl(var(--card))",
+                transition: { duration: 0.2 },
+              }}
+              whileTap={{
+                scale: 0.95,
+                transition: { duration: 0.1 },
+              }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
             >
-              <ChevronLeft size={20} className="text-foreground" />
-            </button>
-            <button
+              <motion.div whileHover={{ x: -2 }} transition={{ duration: 0.2 }}>
+                <ChevronLeft size={20} className="text-foreground" />
+              </motion.div>
+            </motion.button>
+
+            <motion.button
               onClick={nextImage}
               aria-label="Siguiente"
-              className="absolute top-1/2 right-0 -translate-y-1/2
-                         bg-card p-2 rounded-full shadow-lg hover:scale-110
-                         transition z-30"
+              className="absolute top-1/2 right-0 -translate-y-1/2 bg-card/90 backdrop-blur-sm p-3 rounded-full shadow-lg z-30 border border-border/50"
+              whileHover={{
+                scale: 1.1,
+                backgroundColor: "hsl(var(--card))",
+                transition: { duration: 0.2 },
+              }}
+              whileTap={{
+                scale: 0.95,
+                transition: { duration: 0.1 },
+              }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
             >
-              <ChevronRight size={20} className="text-foreground" />
-            </button>
+              <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.2 }}>
+                <ChevronRight size={20} className="text-foreground" />
+              </motion.div>
+            </motion.button>
           </>
         )}
       </div>
 
-      {/* Indicadores: dots arriba, contador debajo */}
+      {/* Indicadores mejorados */}
       {total > 1 && (
-        <div className="flex flex-col items-center">
-          <div className="flex space-x-1">
+        <motion.div
+          className="flex flex-col items-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+        >
+          <div className="flex space-x-2 mb-2">
             {images.map((_, i) => (
-              <button
+              <motion.button
                 key={i}
                 onClick={() => setIndex(i)}
                 aria-label={`Ir a imagen ${i + 1}`}
-                className={`rounded-full transition-opacity duration-300 ${
-                  i === index
-                    ? "w-3 h-3 bg-primary"
-                    : "w-2 h-2 bg-muted-foreground"
-                }`}
-              />
+                className="relative rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.5 + i * 0.05, duration: 0.3 }}
+              >
+                <motion.div
+                  className={`rounded-full ${i === index ? "w-3 h-3 bg-primary" : "w-2 h-2 bg-muted-foreground/60"}`}
+                  animate={{
+                    scale: i === index ? 1 : 0.8,
+                    backgroundColor: i === index ? "hsl(var(--primary))" : "hsl(var(--muted-foreground) / 0.6)",
+                  }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                />
+
+                {/* Efecto de ripple al hacer click */}
+                {i === index && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-2 border-primary/30"
+                    initial={{ scale: 1, opacity: 0.8 }}
+                    animate={{ scale: 2, opacity: 0 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    key={`ripple-${index}`}
+                  />
+                )}
+              </motion.button>
             ))}
           </div>
-          <span className="text-sm text-muted-foreground mt-1">
+
+          <motion.span
+            className="text-sm text-muted-foreground font-medium"
+            key={index} // Re-anima cuando cambia el índice
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             {index + 1} / {total}
-          </span>
-        </div>
+          </motion.span>
+        </motion.div>
       )}
-    </div>
-  );
+    </motion.div>
+  )
 }

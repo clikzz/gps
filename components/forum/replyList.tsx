@@ -41,13 +41,13 @@ export function ReplyList({ replies }: ReplyListProps) {
   const [editContent, setEditContent] = useState("")
   const [replyList, setReplyList] = useState(replies)
 
-  const itemsPerPage = 8
+  const itemsPerPage = 7
   const [currentPage, setCurrentPage] = useState(1)
   const totalPages = Math.ceil(replyList.length / itemsPerPage)
 
   const currentUserId = useUserProfile((state) => state.user?.id)
   const currentUserRole = useUserProfile((state) => state.user?.role)
-  console.log("currentUserRole:", currentUserRole)
+  // const userBadges = (replyList.authorBadges || []).slice(0, 3)
 
   useEffect(() => {
     setReplyList(replies)
@@ -169,6 +169,21 @@ export function ReplyList({ replies }: ReplyListProps) {
                   )}
                 </div>
 
+                {/* 
+                {userBadges.length > 0 && (
+                  <div className="mt-2 text-sm">
+                  <div className="font-semibold mb-1">Insignias:</div>
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {userBadges.map((badge, index) => (
+                    <span key={index} className="text-xl" title={badge.name}>
+                      {badge}
+                    </span>
+                    ))}
+                  </div>
+                  </div>
+                )}
+                */}
+
                 <div className="text-xs">Mensajes: {reply.author.menssageCount.toLocaleString()}</div>
               </div>
 
@@ -230,6 +245,12 @@ export function ReplyList({ replies }: ReplyListProps) {
           <Button size="sm" variant="outline" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
             Siguiente
           </Button>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="text-center text-sm text-muted-foreground">
+          {replyList.length} Respuestas en total
         </div>
       )}
     </div>

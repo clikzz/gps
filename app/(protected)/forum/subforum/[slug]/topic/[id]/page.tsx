@@ -108,7 +108,6 @@ export default async function TopicPage({
           }}
           mainPost={mainPost}
         />}
-        <h2 className="text-2xl font-bold">Respuestas</h2>
         <ReplyList replies={replies} />
 
         <ReplyForm topicId={topicId} />

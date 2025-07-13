@@ -5,6 +5,7 @@ import { ReplyForm } from "@/components/forum/replyForm"
 import { fetcher } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import { ForumNavigation } from "@/components/forum/forumNavigation"
+import { TopicHeader } from "@/components/forum/topicHeader"
 
 export interface Post {
   id: number
@@ -18,6 +19,7 @@ export interface Post {
     tag: number
     menssageCount: number
     avatar_url?: string
+    role: string
   }
 }
 
@@ -32,11 +34,14 @@ interface Topic {
     tag: number
     menssageCount: number
     avatar_url?: string
+    role: string
   }
   Subforums: {
     name: string
     category: string
   }
+  isLocked: boolean
+  isPinned?: boolean
 }
 
 async function getTopic(topicId: number): Promise<Topic | null> {

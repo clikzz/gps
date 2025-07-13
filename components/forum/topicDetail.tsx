@@ -42,8 +42,8 @@ const getUserTitle = (messageCount: number): string => {
   if (messageCount >= 100) return "Veterinario(a)"
   if (messageCount >= 50) return "Maullador(a) Senior"
   if (messageCount >= 25) return "Amante de Mascotas"
-  if (messageCount >= 10) return "Cachorro Activo"
-  if (messageCount >= 5) return "Gatito Curioso"
+  if (messageCount >= 15) return "Cachorro Activo"
+  if (messageCount >= 8) return "Gatito Curioso"
   return "Mascota Nueva"
 }
 
@@ -122,11 +122,10 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
       </div>
 
       <div className="flex">
-        {/* Sidebar del autor */}
         <div className="w-48 border-r p-4 text-center space-y-3">
           <div>
             <Link href={`/forum/user/${topic.author.id}`} className="font-medium hover:underline text-sm">
-              {topic.author.name} #{topic.author.tag}
+              {topic.author.name}#{topic.author.tag}
             </Link>
           </div>
           <div className="text-xs font-medium">{getUserTitle(topic.author.menssageCount)}</div>
@@ -172,7 +171,7 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
                 <div className="absolute bottom-4 right-4 flex gap-2 text-sm">
                   {canEdit && <button onClick={() => setIsEditing(true)}>Editar</button>}
                   {canEdit && canDelete && <span>|</span>}
-                  {canDelete && <button onClick={handleDeleteTopic}>Eliminar tema</button>}
+                  {canDelete && <button onClick={handleDeleteTopic}>Eliminar</button>}
                 </div>
               )}
             </>

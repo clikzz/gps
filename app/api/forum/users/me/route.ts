@@ -8,9 +8,7 @@ export async function GET(req: Request) {
   const u = await prisma.users.findUnique({
     where: { id: auth.id },
     select: {
-      status: true,
-      banReason: true,
-      banExpires: true
+      status: true
     },
   })
 

@@ -19,6 +19,7 @@ import {
   updateUserRole,
   updateUserStatus,
   listUsers, 
+  updateTopicLock,
 } from "../services/forum.service";
 import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema} from "@/server/validations/forum.validation";
 import { authenticateUser, ensureAdmin, ensureModerator } from "@/server/middlewares/auth.middleware";
@@ -478,5 +479,34 @@ export async function changeUserRoleHandler(req: Request) {
         ? "No tienes permisos"
         : "Error interno"
     return NextResponse.json({ error: msg }, { status: 400 })
+  }
+}
+
+//HU2.5
+export async function lockTopicHandler(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+
+  try {
+    ensureModerator(user);
+  } catch {
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
+  }
+
+  const topicId = Number(new URL(req.url).pathname.split("/").pop());
+  if (isNaN(topicId)) {
+    return NextResponse.json({ error: "ID de tema inválido" }, { status: 400 });
+  }
+
+  const { locked } = await req.json() as { locked: boolean };
+
+  try {
+    await updateTopicLock(user.id, topicId, locked);
+    return NextResponse.json({ locked }, { status: 200 });
+  } catch (err: any) {
+    if (err.message === "FORBIDDEN_MODERATOR") {
+      return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
+    }
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

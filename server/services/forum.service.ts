@@ -306,3 +306,15 @@ export async function listUsers(): Promise<
     orderBy: { name: "asc" },
   });
 }
+
+//HU2.5 
+export async function updateTopicLock(
+  currentUserId: string,
+  topicId: number,
+  locked: boolean
+) {
+  const me = await prisma.users.findUnique({ where: { id: currentUserId } });
+  if (!me || (me.role !== "MODERATOR" && me.role !== "ADMIN")) {
+    throw new Error("FORBIDDEN_MODERATOR");
+  }
+}

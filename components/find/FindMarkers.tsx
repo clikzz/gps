@@ -32,13 +32,13 @@ export function Markers<T extends ReportItem>({
         >
           <div className="relative flex items-center justify-center">
             {variant === "found" && (
-              <span className="absolute inline-flex h-16 w-16 rounded-full bg-yellow-600 opacity-70 animate-ping" />
+              <span className="absolute inline-flex h-14 w-14 rounded-full bg-yellow-500 opacity-40 animate-ping" />
             )}
             {r.pet.photo_url ? (
               <img
                 src={r.pet.photo_url}
                 alt={r.pet.name}
-                className={`w-14 h-14 rounded-full border-2 border-white shadow-lg cursor-pointer ${
+                className={`w-12 h-12 rounded-full border-2 border-white shadow-lg cursor-pointer ${
                   variant === "found" ? "relative" : ""
                 }`}
               />

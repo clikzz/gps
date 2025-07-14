@@ -7,7 +7,7 @@ import { Marker } from 'react-map-gl/mapbox';
 import { useUserProfile } from '@/stores/userProfile';
 import { MissingReport, FoundReport } from '@/types/find';
 import { useUserLocation } from '@/hooks/useUserLocation';
-import { MapPinCheck, Plus, Minus, Compass } from 'lucide-react';
+import { MapPin, Plus, Minus, Compass } from 'lucide-react';
 import ActionsMenu from '@/components/find/ActionsMenu';
 import ReportModal, { LatLng } from '@/components/find/ReportModal';
 import MyReports from '@/components/find/MyReports';
@@ -17,6 +17,7 @@ import { Markers } from '@/components/find/FindMarkers';
 import ReportPopup from '@/components/find/ReportPopup';
 import FoundReports from '@/components/find/FoundReports';
 import FoundPopup from '@/components/find/FoundPopup';
+import { toast } from "sonner";
 import { fetcher } from "@/lib/utils";
 
 const Map = dynamic(
@@ -143,14 +144,14 @@ export default function FindMap() {
       refreshReports();
     } catch (e: any) {
       console.error("Error al enviar reporte:", e);
-      alert(`Error al enviar reporte: ${e.message}`);
+      toast.error(`Error al enviar reporte: ${e.message}`);
     }
   }
 
   function handlePickLocation() {
     setIsReportModalOpen(false);
     setPickLocationMode(true);
-    alert("Haz clic en el mapa para seleccionar la ubicación definitiva.");
+    toast.info("Selecciona en el mapa la última ubicación de tu mascota.");
   }
 
   function handleMapClick(evt: any) {
@@ -188,7 +189,7 @@ export default function FindMap() {
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className="w-full h-full relative overflow-hidden">
       {error && (
         <div className="absolute top-2 left-2 bg-red-500 p-2 rounded text-white">
           {error}
@@ -196,7 +197,7 @@ export default function FindMap() {
       )}
 
       {/* Menú de acciones */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-6 right-4 z-20">
         <ActionsMenu
           onReportClick={() => setIsReportModalOpen(true)}
           onMyReportsClick={() => setIsMyReportsModalOpen(true)}
@@ -240,7 +241,7 @@ export default function FindMap() {
           longitude: initial.longitude,
           zoom: initial.zoom,
         }}
-        mapStyle="mapbox://styles/mapbox/outdoors-v12"
+        mapStyle="mapbox://styles/mapbox/streets-v12"
         style={{ width: "100%", height: "100%" }}
         onLoad={(e) => {
           mapRef.current = e.target;
@@ -314,7 +315,7 @@ export default function FindMap() {
           onSubmitted={() => {
             setIsFoundModalOpen(false);
             setFoundLocation(null);
-            alert("¡Aviso de hallazgo enviado!");
+            toast.success("Se ha reportado el hallazgo correctamente.");
             refreshReports();
           }}
         />
@@ -327,12 +328,12 @@ export default function FindMap() {
             longitude={pickedLocation.lng}
             anchor="bottom"
           >
-            <MapPinCheck size={28} className="text-red-500" />
+            <MapPin size={28} className="text-red-400 drop-shadow-lg" fill="currentColor" />
           </Marker>
         )}
       </Map>
 
-        <div className="absolute bottom-4 right-4 flex flex-col space-y-2 z-20">
+        <div className="absolute bottom-6 right-4 flex flex-col space-y-2 z-20">
           <button
             onClick={handleZoomIn}
             className="p-2 bg-white rounded shadow hover:bg-gray-100"

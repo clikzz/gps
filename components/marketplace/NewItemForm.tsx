@@ -10,7 +10,7 @@ import {
 } from "@/components/marketplace/NewItemFormField";
 import { Controller } from "react-hook-form";
 import { ItemCategory, ItemCondition } from "@prisma/client";
-import LocationPicker, { LatLng } from "./LocationPicker";
+import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker";
 
 const CATEGORY_OPTIONS = [
   { label: "Comida", value: ItemCategory.FOOD },

@@ -52,7 +52,7 @@ export default function CategoryFilter({ selected, onChange }: Props) {
   };
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="flex flex-wrap justify-between">
       {categories.map(({ label, value, icon }) => {
         const isSel = selected.includes(value);
         return (

@@ -13,9 +13,8 @@ const SAMPLE_CARDS = Array(9).fill(null).map((_, i) => ({
 export default function MarketplaceGrid() {
   const [items, setItems] = React.useState(SAMPLE_CARDS);
 
-  // en client efect: fetch a /api/marketplace con filtros
   React.useEffect(() => {
-    // fetch(...) → setItems(data)
+    // fetch
   }, []);
 
   return (

@@ -34,7 +34,6 @@ interface TextFieldProps {
   placeholder?: string
   required?: boolean
   error?: string
-  // los props que react-hook-form inyecta vía Controller
   value?: any
   onChange?: (...args: any[]) => void
   onBlur?: () => void

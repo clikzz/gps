@@ -3,7 +3,7 @@
 import React, { useEffect } from "react";
 import { Popup } from "react-map-gl/mapbox";
 import { MissingReport } from "@/types/find";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, MapPin } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -79,7 +79,7 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
           <div className="flex-1">
             <CardTitle className="text-base">{selected.pet.name}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Reportado por: {selected.reporter.name}
+              Dueño: {selected.reporter.name}
             </p>
           </div>
         </CardHeader>
@@ -111,16 +111,21 @@ export default function ReportPopup({ selected, userId, photoIndex, setPhotoInde
             </div>
           )}
 
-          {selected.description ? (
-            <p className="text-sm text-black">{selected.description}</p>
-          ) : (
-            <p className="text-sm italic text-muted-foreground">
-              Sin descripción
+          <div className="mt-4 space-y-2">
+            {selected.description ? (
+              <p className="text-sm text-black">{selected.description}</p>
+            ) : (
+              <p className="text-sm italic text-muted-foreground">
+                Sin descripción
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Última vez visto el {new Date(selected.reported_at).toLocaleDateString()} a las {new Date(selected.reported_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
             </p>
-          )}
-          <p className="text-xs text-muted-foreground text-right">
-            {new Date(selected.reported_at).toLocaleString()}
-          </p>
+            <p className="text-xs text-muted-foreground">
+              {`${selected.address || selected.street}, ${selected.city}` || "Ubicación no registrada"}
+            </p>
+          </div>
 
           {isMyReport ? (
             <Button

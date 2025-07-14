@@ -40,7 +40,6 @@ export default function MarketplaceFilters() {
         <div className="flex gap-4">
           <input type="number" placeholder="Precio min" className="input" />
           <input type="number" placeholder="Precio max" className="input" />
-          {/* Aquí más controles: radio, ubicación, etc. */}
         </div>
       )}
     </div>

@@ -31,11 +31,9 @@ export default function LocationPicker({
   onClose,
   onSelect,
 }: LocationPickerProps) {
-  // Usamos MapRef de react-map-gl, no mapboxgl.Map
   const mapRef = useRef<MapRef | null>(null);
   const [picked, setPicked] = useState<LatLng | null>(null);
 
-  // Cuando abra, centramos en initial
   useEffect(() => {
     if (open && mapRef.current) {
       mapRef.current.flyTo({
@@ -56,7 +54,6 @@ export default function LocationPicker({
       </div>
       <div className="flex-1">
         <Map
-          // Aquí simplemente pasamos la ref de React
           ref={mapRef}
           mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
           initialViewState={{

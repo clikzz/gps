@@ -122,9 +122,12 @@ export default function FoundPopup({
               Sin descripción
             </p>
           )}
-          <p className="text-xs text-muted-foreground text-right">
-            {new Date(selected.reported_at).toLocaleString()}
-          </p>
+            <p className="text-xs text-muted-foreground">
+              Encontrado el {new Date(selected.reported_at).toLocaleDateString()} a las {new Date(selected.reported_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {`${selected.address || selected.street}, ${selected.city}` || "Ubicación no registrada"}
+            </p>
 
           {isOwner ? (
             <Button

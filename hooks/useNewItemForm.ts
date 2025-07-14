@@ -18,7 +18,7 @@ export function useNewItemForm(onSuccess?: () => void) {
       category:    "FOOD",
       condition:   "NEW",
       price:       0,
-      photo_urls:  [],     // Zod te pedirá ≥1, lo añadiremos en el submit
+      photo_urls:  [],
       latitude:    0,
       longitude:   0,
       city:        undefined,
@@ -29,7 +29,6 @@ export function useNewItemForm(onSuccess?: () => void) {
 
   const onSubmit = form.handleSubmit(async (value) => {
     try {
-      // 1) Imagen
       const up = await imageUpload.uploadImage()
       if (up.error) {
         toast.error(up.error)
@@ -37,7 +36,6 @@ export function useNewItemForm(onSuccess?: () => void) {
       }
       value.photo_urls = up.url ? [up.url] : []
 
-      // 2) Reverse geocode
       const { city, region, country } = await reverseGeocode(
         value.latitude,
         value.longitude
@@ -46,7 +44,6 @@ export function useNewItemForm(onSuccess?: () => void) {
       value.region  = region
       value.country = country
 
-      // 3) POST
       const res = await fetch("/api/marketplace", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

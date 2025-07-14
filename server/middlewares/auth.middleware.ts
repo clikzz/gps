@@ -3,7 +3,6 @@ import { createServerClient } from "@supabase/ssr";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import prisma from "@/lib/db";
 
-
 export interface AuthUser extends SupabaseUser {
   role: "USER" | "MODERATOR" | "ADMIN";
 }

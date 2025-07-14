@@ -43,9 +43,9 @@ export default function Home() {
         </div>
       )}
 
-      {!activePet && <PetSelector />}
+      {!activePet && <PetSelector opened={true} />}
 
-      <button onClick={resetActivePet}>Cambiar mascota</button>
+      <PetSelector />
     </div>
   );
 }

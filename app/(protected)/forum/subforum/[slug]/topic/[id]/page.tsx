@@ -4,6 +4,8 @@ import { ReplyList } from "@/components/forum/replyList"
 import { ReplyForm } from "@/components/forum/replyForm"
 import { fetcher } from "@/lib/utils"
 import { notFound } from "next/navigation"
+import { ForumNavigation } from "@/components/forum/forumNavigation"
+import { TopicHeader } from "@/components/forum/topicHeader"
 
 export interface Post {
   id: number
@@ -17,6 +19,7 @@ export interface Post {
     tag: number
     menssageCount: number
     avatar_url?: string
+    role: string
   }
 }
 
@@ -31,11 +34,14 @@ interface Topic {
     tag: number
     menssageCount: number
     avatar_url?: string
+    role: string
   }
   Subforums: {
     name: string
     category: string
   }
+  locked: boolean
+  isPinned?: boolean
 }
 
 async function getTopic(topicId: number): Promise<Topic | null> {
@@ -74,6 +80,7 @@ export default async function TopicPage({
 
   return (
     <div className="h-full w-full">
+      <ForumNavigation />
       <main className="h-full w-full px-4 py-6 space-y-6 max-w-6xl mx-auto">
         <div className="text-sm breadcrumbs">
           <Link href="/forum" className="hover:underline">
@@ -87,11 +94,16 @@ export default async function TopicPage({
           <span className="truncate">{topic.title}</span>
         </div>
 
+        <TopicHeader
+          topic={{ id: topic.id, title: topic.title, isLocked: topic.locked }}
+        />
+
         {mainPost && <TopicDetail
           topic={{
             id: topic.id,
             title: topic.title,
             createdAt: topic.createdAt,
+            locked: topic.locked,
             author: {
               ...topic.author,
               avatar_url: topic.author.avatar_url ?? ""  
@@ -101,10 +113,15 @@ export default async function TopicPage({
           }}
           mainPost={mainPost}
         />}
-        <h2 className="text-2xl font-bold">Respuestas</h2>
         <ReplyList replies={replies} />
 
-        <ReplyForm topicId={topicId} />
+        {topic.locked ? (
+          <div className="p-4 text-center rounded">
+            Este tema está cerrado. No puedes añadir respuestas.
+          </div>
+        ) : (
+          <ReplyForm topicId={topicId} />
+        )}
       </main>
     </div>
   )

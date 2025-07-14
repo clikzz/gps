@@ -1,9 +1,10 @@
-import { editOwnTopic, removeOwnTopic } from "@/server/controllers/forum.controller";
+import { editTopicHandler, deleteTopicHandler } from "@/server/controllers/forum.controller";
 
 export async function PATCH(req: Request) {
-  return await editOwnTopic(req);
+  return await editTopicHandler(req);
 }
 
 export async function DELETE(req: Request) {
-  return await removeOwnTopic(req);
+  return await deleteTopicHandler(req);
 }
+

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import { ForumCategory } from "@/components/forum/forumCategory"
 import { fetcher } from "@/lib/utils"
 import ForumFooter  from "@/components/forum/forumFooter"
+import { ForumNavigation } from "@/components/forum/forumNavigation"
 
 interface Subforum {
   id: number
@@ -162,6 +163,7 @@ export default async function ForumPage() {
 
   return (
     <div className="min-h-screen w-full">
+      <ForumNavigation />
       <main className="w-full max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         {categoriesWithData.map((category) => (
           <ForumCategory key={category.id} category={category} />

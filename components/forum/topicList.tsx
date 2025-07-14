@@ -1,27 +1,15 @@
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
-
-interface Topic {
-  id: number
-  title: string
-  createdAt: string
-  updatedAt: string
-  author: {
-    name: string
-    id: string
-    tag: number
-  }
-  postsCount: number
-}
+import { Lock } from "lucide-react"
+import { ForumTopic } from "@/types/forum"
 
 interface TopicListProps {
-  topics: Topic[]
+  topics: ForumTopic[]
   subforumSlug: string
   subforumId?: number
 }
 
-
-export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) {
+export function TopicList({ topics, subforumSlug }: TopicListProps) {
   if (topics.length === 0) {
     return (
       <div className="border rounded-lg p-8 text-center text-muted-foreground">
@@ -33,42 +21,56 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
 
   return (
     <div className="border rounded-lg overflow-hidden">
-      {topics.map((topic, index) => (
-        <div key={topic.id} className={`${index !== 0 ? "border-t" : ""}`}>
-          <div className="grid grid-cols-1 lg:grid-cols-12 p-4 gap-4 hover:bg-muted/30 transition-colors">
-            <div className="lg:col-span-7 xl:col-span-8">
-              <Link href={`/forum/subforum/${subforumSlug}/topic/${topic.id}`} className="font-medium hover:underline text-base">
-                {topic.title}
-              </Link>
-              <div className="text-sm text-muted-foreground mt-1">
+      {topics.map((topic, idx) => {
+        const pagesCount = Math.ceil(topic.postsCount / 8)
+        return (
+          <div key={topic.id} className={idx !== 0 ? "border-t" : ""}>
+            <div className="grid grid-cols-1 lg:grid-cols-12 p-4 gap-4 hover:bg-muted/30 transition-colors">
+              <div className="lg:col-span-7 xl:col-span-8 space-y-1">
+                <Link
+                  href={`/forum/subforum/${subforumSlug}/topic/${topic.id}`}
+                  className="flex items-center font-medium hover:underline text-base space-x-2"
+                >
+                  {topic.locked && <Lock className="w-5 h-5 text-muted-foreground" />}
+                  <span>{topic.title}</span>
+                </Link>
+                <div className="text-sm text-muted-foreground flex items-center space-x-2">
+                  <span>por {topic.author.name}#{topic.author.tag}</span>
+                  {pagesCount > 1 && (
+                    <div className="flex space-x-1">
+                      {Array.from({ length: pagesCount }, (_, i) => (
+                        <Link
+                          key={i + 1}
+                          href={`/forum/subforum/${subforumSlug}/topic/${topic.id}?page=${i + 1}`}
+                        >
+                          [{i + 1}]
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="flex lg:block lg:col-span-2 xl:col-span-1 gap-4 lg:gap-0">
-              <div className="text-center">
-              </div>
-            </div>
-
-            <div className="flex lg:block lg:col-span-2 xl:col-span-1 gap-4 lg:gap-0">
-              <div className="text-center">
+              <div className="flex lg:block lg:col-span-2 xl:col-span-1 text-center">
                 <div className="text-sm text-muted-foreground">Mensajes</div>
                 <div className="font-medium">{topic.postsCount}</div>
               </div>
-            </div>
 
-            <div className="lg:col-span-1 xl:col-span-2 text-sm lg:text-right">
-              <div className="text-muted-foreground">
-                {formatDateLabel(topic.updatedAt)}
+              <div className="lg:col-span-3 xl:col-span-3 flex flex-col items-end justify-center text-sm">
+                <div className="text-muted-foreground">
+                  {formatDateLabel(topic.updatedAt)}
                 </div>
-              <div>
-                por {topic.author.name} #{topic.author.tag} 
-                <Link href={`/forum/user/${topic.author.id}`} className="hover:underline">
-                </Link>
+                <div>
+                  por{" "}
+                  <Link href={`/forum/user/${topic.author.id}`} className="hover:underline">
+                    {topic.author.name}#{topic.author.tag}
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

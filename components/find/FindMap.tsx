@@ -27,9 +27,11 @@ const Map = dynamic(
 
 export default function FindMap() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const { initial, error, onMapLoad } = useUserLocation();
+  const { initial, onMapLoad } = useUserLocation();
 
   const userId = useUserProfile((state) => state.user?.id || "");
+
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   const [reports, setReports] = useState<MissingReport[]>([]);
   const [selected, setSelected] = useState<MissingReport | null>(null);
@@ -190,12 +192,6 @@ export default function FindMap() {
 
   return (
     <div className="w-full h-full relative overflow-hidden">
-      {error && (
-        <div className="absolute top-2 left-2 bg-red-500 p-2 rounded text-white">
-          {error}
-        </div>
-      )}
-
       {/* Menú de acciones */}
       <div className="absolute top-6 right-4 z-20">
         <ActionsMenu
@@ -236,16 +232,13 @@ export default function FindMap() {
       {/* Mapa */}
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
-        initialViewState={{
-          latitude: initial.latitude,
-          longitude: initial.longitude,
-          zoom: initial.zoom,
-        }}
+        initialViewState={initial}
         mapStyle="mapbox://styles/mapbox/streets-v12"
         style={{ width: "100%", height: "100%" }}
         onLoad={(e) => {
           mapRef.current = e.target;
           onMapLoad(e.target);
+          setMapLoaded(true);
         }}
         onClick={handleMapClick}
       >
@@ -299,27 +292,27 @@ export default function FindMap() {
           />
         )}
 
-      {targetReport && (
-        <FoundReportModal
-          isOpen={isFoundModalOpen}
-          report={targetReport}
-          pickedLocation={foundLocation}
-          onPickLocation={() => {
-            setIsFoundModalOpen(false);
-            setFoundPickMode(true);
-          }}
-          onClose={() => {
-            setIsFoundModalOpen(false);
-            setFoundLocation(null);
-          }}
-          onSubmitted={() => {
-            setIsFoundModalOpen(false);
-            setFoundLocation(null);
-            toast.success("Se ha reportado el hallazgo correctamente.");
-            refreshReports();
-          }}
-        />
-      )}
+        {targetReport && (
+          <FoundReportModal
+            isOpen={isFoundModalOpen}
+            report={targetReport}
+            pickedLocation={foundLocation}
+            onPickLocation={() => {
+              setIsFoundModalOpen(false);
+              setFoundPickMode(true);
+            }}
+            onClose={() => {
+              setIsFoundModalOpen(false);
+              setFoundLocation(null);
+            }}
+            onSubmitted={() => {
+              setIsFoundModalOpen(false);
+              setFoundLocation(null);
+              toast.success("Se ha reportado el hallazgo correctamente.");
+              refreshReports();
+            }}
+          />
+        )}
 
         {/* Marcador de ubicación marcada */}
         {pickedLocation && (
@@ -353,6 +346,15 @@ export default function FindMap() {
             <Compass size={20} />
           </button>
         </div>
+
+      {!mapLoaded && (
+        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando mapa...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -39,7 +39,17 @@ export const modifyUserProfile = async (
     email,
     avatar_url,
   });
-  return new Response(JSON.stringify(updatedProfile), {
+
+  const serializedProfile = {
+    ...updatedProfile,
+    tag: updatedProfile?.tag?.toString(),
+    Pets: updatedProfile?.Pets?.map((pet: Pet) => ({
+      ...pet,
+      id: pet.id.toString(),
+    })),
+  };
+
+  return new Response(JSON.stringify(serializedProfile), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });

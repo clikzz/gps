@@ -1,4 +1,5 @@
 import { z } from "zod/v4"
+
 export const serviceCategories = [
   "veterinaria",
   "peluqueria",
@@ -8,6 +9,7 @@ export const serviceCategories = [
   "adopcion",
   "otro",
 ] as const
+
 export type ServiceCategory = (typeof serviceCategories)[number]
 
 export const serviceSchema = z.object({
@@ -22,9 +24,15 @@ export const serviceSchema = z.object({
     .string()
     .min(5, "La descripción debe tener al menos 5 caracteres")
     .max(500, "La descripción no puede exceder 500 caracteres"),
-  category: z.enum(serviceCategories, {
-    message: "Categoría inválida",
-  }),
+  categories: z
+    .array(z.enum(serviceCategories))
+    .min(1, "Debe seleccionar al menos una categoría")
+    .max(3, "Máximo 3 categorías permitidas"),
+  phone: z
+    .string()
+    .min(8, "El teléfono debe tener al menos 8 dígitos")
+    .max(15, "El teléfono no puede exceder 15 dígitos")
+    .regex(/^[+]?[\d\s\-()]+$/, "Formato de teléfono inválido"),
 })
 
 export const createServiceSchema = serviceSchema.omit({ id: true })

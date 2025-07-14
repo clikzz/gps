@@ -9,102 +9,96 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer"
-import NewServiceForm from "./NewServiceForm"
-import { MapPin, Plus, Edit } from "lucide-react"
+import EditServiceForm from "./EditServiceForm"
+import { MapPin, Trash2 } from "lucide-react"
 
-interface NewServiceDrawerProps {
-  userLocation: { lat: number; lng: number }
+interface Service {
+  id: string
+  name: string
+  categories: string[]
+  description: string
+  latitude: number
+  longitude: number
+  phone: string
+}
+
+interface EditServiceDrawerProps {
+  service: Service | null
   onStartLocationSelection: () => void
   onCancelLocationSelection: () => void
-  onOpenExistingSelection: () => void
   selectedServiceLocation: { lat: number; lng: number } | null
   isSelectingLocation: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
-  onServiceCreated: () => void
+  onServiceUpdated: () => void
+  onServiceDeleted?: () => void
+  showDeleteButton?: boolean
 }
 
-export function NewServiceDrawer({
-  userLocation,
+export function EditServiceDrawer({
+  service,
   onStartLocationSelection,
   onCancelLocationSelection,
-  onOpenExistingSelection,
   selectedServiceLocation,
   isSelectingLocation,
   open,
   onOpenChange,
-  onServiceCreated,
-}: NewServiceDrawerProps) {
-  if (!userLocation || !userLocation.lat || !userLocation.lng) {
-    return (
-      <Button variant="outline" disabled>
-        Obteniendo ubicación...
-      </Button>
+  onServiceUpdated,
+  onServiceDeleted,
+  showDeleteButton = false,
+}: EditServiceDrawerProps) {
+  if (!service) return null
+
+  const handleDeleteService = async () => {
+    if (!onServiceDeleted) return
+
+    const confirmed = window.confirm(
+      "¿Estás seguro de que quieres eliminar este servicio? Esta acción no se puede deshacer.",
     )
-  }
+    if (!confirmed) return
 
-  const handleTriggerClick = () => {
-    if (selectedServiceLocation && !isSelectingLocation) {
-      onOpenExistingSelection()
-    } else {
-      onStartLocationSelection()
-    }
-  }
+    try {
+      const response = await fetch(`/api/services?id=${service.id}`, {
+        method: "DELETE",
+      })
 
-  const getButtonContent = () => {
-    if (selectedServiceLocation && !isSelectingLocation) {
-      return (
-        <>
-          <Edit className="w-4 h-4 mr-2" />
-          Completar servicio
-        </>
-      )
+      if (response.ok) {
+        onServiceDeleted()
+        onOpenChange(false)
+      } else {
+        alert("Error al eliminar el servicio")
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      alert("Error al eliminar el servicio")
     }
-    return (
-      <>
-        Agregar servicio
-      </>
-    )
-  }
-
-  const getButtonVariant = () => {
-    if (selectedServiceLocation && !isSelectingLocation) {
-      return "default"
-    }
-    return "outline"
   }
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerTrigger asChild>
-        <Button variant={getButtonVariant()} onClick={handleTriggerClick}>
-          {getButtonContent()}
-        </Button>
-      </DrawerTrigger>
       <DrawerContent>
         <div className="mx-auto w-full max-w-lg">
           <DrawerHeader className="flex flex-col items-center justify-center">
-            <DrawerTitle className="text-center">Nuevo Servicio</DrawerTitle>
+            <DrawerTitle className="text-center">Editar Servicio</DrawerTitle>
             <DrawerDescription className="text-center">
-              {!selectedServiceLocation
-                ? "Haz clic en el mapa para seleccionar la ubicación de tu servicio"
-                : "Completa los datos de tu servicio"}
+              {isSelectingLocation
+                ? "Haz clic en el mapa para cambiar la ubicación del servicio"
+                : "Modifica los datos de tu servicio"}
             </DrawerDescription>
           </DrawerHeader>
           <div className="overflow-y-auto max-h-[60vh] px-4">
-            <NewServiceForm
-              userLocation={userLocation}
+            <EditServiceForm
+              service={service}
               selectedServiceLocation={selectedServiceLocation}
               isSelectingLocation={isSelectingLocation}
               onCancelLocationSelection={onCancelLocationSelection}
-              onServiceCreated={onServiceCreated}
+              onServiceUpdated={onServiceUpdated}
             />
           </div>
           <DrawerFooter>
             <div className="flex space-x-2">
-              {selectedServiceLocation && !isSelectingLocation && (
+              {!isSelectingLocation && (
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -117,6 +111,14 @@ export function NewServiceDrawer({
                   Cambiar ubicación
                 </Button>
               )}
+
+              {showDeleteButton && onServiceDeleted && (
+                <Button variant="destructive" onClick={handleDeleteService} className="flex-1">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar
+                </Button>
+              )}
+
               <DrawerClose asChild>
                 <Button variant="outline" onClick={onCancelLocationSelection} className="flex-1 bg-transparent">
                   Cancelar

@@ -15,21 +15,18 @@ type Topic = {
 
 interface TopicHeaderProps {
   topic: Topic;
-  subforumSlug: string;
-  onTopicUpdate?: (locked: boolean) => void;
 }
 
-export function TopicHeader({
-  topic,
-  onTopicUpdate,
-}: TopicHeaderProps) {
+export function TopicHeader({ topic }: TopicHeaderProps) {
   const [isLocked, setIsLocked] = useState(topic.isLocked);
+  console.log("Initial locked state:", isLocked);
   const currentUserRole = useUserProfile((s) => s.user?.role)
   const canModerate = currentUserRole === "MODERATOR" || currentUserRole === "ADMIN";
   const router = useRouter();
 
   const toggleLock = async () => {
     try {
+      console.log("Toggling lock for topic:", topic.id, "Current state:", isLocked);
       const res = await fetch(
         `/api/forum/topics/${topic.id}/lock`,
         {
@@ -52,7 +49,6 @@ export function TopicHeader({
             : "Puedes responder de nuevo"
         }
       );
-      onTopicUpdate?.(locked);
       router.refresh();
     } catch (e: any) {
       toast.error(e.message);
@@ -62,7 +58,6 @@ export function TopicHeader({
   return (
     <div className="space-y-4">
       <div className="flex items-center text-sm text-muted-foreground">
-        <ChevronRight className="h-4 w-4 mx-1" />
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -40,7 +40,7 @@ interface Topic {
     name: string
     category: string
   }
-  isLocked: boolean
+  locked: boolean
   isPinned?: boolean
 }
 
@@ -94,11 +94,16 @@ export default async function TopicPage({
           <span className="truncate">{topic.title}</span>
         </div>
 
+        <TopicHeader
+          topic={{ id: topic.id, title: topic.title, isLocked: topic.locked }}
+        />
+
         {mainPost && <TopicDetail
           topic={{
             id: topic.id,
             title: topic.title,
             createdAt: topic.createdAt,
+            locked: topic.locked,
             author: {
               ...topic.author,
               avatar_url: topic.author.avatar_url ?? ""  
@@ -110,7 +115,13 @@ export default async function TopicPage({
         />}
         <ReplyList replies={replies} />
 
-        <ReplyForm topicId={topicId} />
+        {topic.locked ? (
+          <div className="p-4 text-center rounded">
+            Este tema está cerrado. No puedes añadir respuestas.
+          </div>
+        ) : (
+          <ReplyForm topicId={topicId} />
+        )}
       </main>
     </div>
   )

@@ -101,6 +101,17 @@ export const createPost = async (
   dto: { topicId: number; content: string }
 ) => {
   return prisma.$transaction(async tx => {
+    const topic = await tx.topics.findUnique({
+      where: { id: dto.topicId },
+      select: { locked: true }
+    });
+    if (!topic) {
+      throw new Error("TOPIC_NOT_FOUND");
+    }
+    if (topic.locked) {
+      throw new Error("TOPIC_LOCKED");
+    }
+
     const profile = await tx.users.findUnique({ where: { id: userId } });
     if (profile?.lastMessageAt) {
       const secondsSinceLast = (Date.now() - new Date(profile.lastMessageAt).getTime()) / 1000;
@@ -317,4 +328,9 @@ export async function updateTopicLock(
   if (!me || (me.role !== "MODERATOR" && me.role !== "ADMIN")) {
     throw new Error("FORBIDDEN_MODERATOR");
   }
+
+  return prisma.topics.update({
+    where: { id: topicId },
+    data: { locked: locked, updated_at: new Date() },
+  });
 }

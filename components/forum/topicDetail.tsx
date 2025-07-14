@@ -22,6 +22,7 @@ interface TopicDetailProps {
       menssageCount: number
       avatar_url?: string
     }
+    locked: boolean
   }
   mainPost: {
     id: number                
@@ -64,7 +65,6 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
     setDisplayContent(mainPost?.content ?? "")
     setEditContent(mainPost?.content ?? "")
   }, [mainPost])
-
 
   const handleSaveContent = async () => {
     if (!mainPost) return

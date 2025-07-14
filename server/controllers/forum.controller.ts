@@ -95,6 +95,7 @@ export const fetchTopics = async (req: Request) => {
     createdAt: t.created_at.toISOString(),
     updatedAt: t.updated_at.toISOString(),
     postsCount: t.postsCount,
+    locked: t.locked,
     author: {
       id: t.author.id,
       name: t.author.name,
@@ -250,25 +251,31 @@ export const addPost = async (req: Request) => {
       status: 201,
       headers: { "Content-Type": "application/json" },
     })
-  } catch (err) {
-  if (err instanceof ZodError) {
+  } catch (err: any) {
+    if (err.message === "TOPIC_LOCKED") {
+      return NextResponse.json(
+        { error: "Este tema está cerrado y no acepta más respuestas." },
+        { status: 403 }
+      );
+    }
+    if (err instanceof ZodError) {
+      return new Response(
+        JSON.stringify({ errors: err.errors }),
+        { status: 422, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    if (err instanceof Error && err.message.includes("10 segundos")) {
+      return new Response(
+        JSON.stringify({ error: err.message }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    console.error("Error en addPost:", err);
     return new Response(
-      JSON.stringify({ errors: err.errors }),
-      { status: 422, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Error interno" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
-  if (err instanceof Error && err.message.includes("10 segundos")) {
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 429, headers: { "Content-Type": "application/json" } }
-    );
-  }
-  console.error("Error en addPost:", err);
-  return new Response(
-    JSON.stringify({ error: "Error interno" }),
-    { status: 500, headers: { "Content-Type": "application/json" } }
-  );
-}
 }
 
 export async function editPostHandler(req: Request) {
@@ -493,7 +500,9 @@ export async function lockTopicHandler(req: Request) {
     return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
   }
 
-  const topicId = Number(new URL(req.url).pathname.split("/").pop());
+  const segments = new URL(req.url).pathname.split("/").filter(Boolean);
+  const topicId = Number(segments[segments.length - 2]);
+  console.log("Controller:", topicId);
   if (isNaN(topicId)) {
     return NextResponse.json({ error: "ID de tema inválido" }, { status: 400 });
   }

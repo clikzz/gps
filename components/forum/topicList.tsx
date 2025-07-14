@@ -1,4 +1,3 @@
-// components/forum/TopicList.tsx
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
 

@@ -1,8 +1,8 @@
 import { authenticateUser } from "@/server/middlewares/auth.middleware";
 import {
-  getMedicationById,
-  updateMedicationById,
-} from "@/server/services/medication.service";
+  fetchMedications,
+  updateMedication,
+} from "@/server/controllers/medication.controller";
 
 export async function PUT(req: Request) {
   const user = await authenticateUser(req);
@@ -18,7 +18,17 @@ export async function PUT(req: Request) {
     });
   }
 
-  return updateMedicationById(id, medication);
+  const parsedMedication = {
+    ...medication,
+    start_date: medication.start_date
+      ? new Date(medication.start_date)
+      : undefined,
+    next_dose_date: medication.next_dose_date
+      ? new Date(medication.next_dose_date)
+      : undefined,
+  };
+
+  return updateMedication(id, parsedMedication);
 }
 
 export async function GET(req: Request) {
@@ -35,5 +45,5 @@ export async function GET(req: Request) {
     });
   }
 
-  return getMedicationById(id);
+  return fetchMedications(id);
 }

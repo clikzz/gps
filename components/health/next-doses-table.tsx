@@ -26,6 +26,8 @@ import { useState, useMemo } from "react";
 import React from "react";
 import { format, isPast, isWithinInterval, addDays } from "date-fns";
 import { es } from "date-fns/locale";
+import { BellRing } from "lucide-react";
+import ConfirmationButton from "@/components/ConfirmationButton";
 
 export function NextDosesTable() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -34,6 +36,7 @@ export function NextDosesTable() {
   const { medications, vaccinations } = useHealth();
 
   interface Dose {
+    id: number;
     global_id: string;
     entry_type: string;
     name: string;
@@ -69,6 +72,7 @@ export function NextDosesTable() {
             end: addDays(today, 7),
           }),
           details: `Dosis: ${med.dose}`,
+          id: med.id,
         });
       });
 
@@ -92,6 +96,7 @@ export function NextDosesTable() {
             end: addDays(today, 7),
           }),
           details: vac.type ? `Tipo: ${vac.type}` : "",
+          id: vac.id,
         });
       });
 
@@ -143,6 +148,28 @@ export function NextDosesTable() {
     }
   };
 
+  const handleEnableNotifications = async (dose: Dose) => {
+    console.log(`Habilitar notificaciones para la dosis: ${dose.name}`);
+    try {
+      const response = await fetch(`/api/health/alerts/${dose.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ dose: dose }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al habilitar notificaciones");
+      }
+
+      alert(`Notificaciones habilitadas para ${dose.name}`);
+    } catch (error) {
+      console.error("Error al habilitar notificaciones:", error);
+      alert("No se pudo habilitar las notificaciones. Inténtalo más tarde.");
+    }
+  };
+
   return (
     <motion.div
       className="rounded-lg border overflow-hidden"
@@ -158,6 +185,7 @@ export function NextDosesTable() {
               <TableHead>Nombre</TableHead>
               <TableHead>Próxima Dosis</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Avisar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -215,6 +243,24 @@ export function NextDosesTable() {
                         {!dose.isOverdue && !dose.isUpcoming && (
                           <Badge variant="outline">Programado</Badge>
                         )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <ConfirmationButton
+                          onConfirm={() => handleEnableNotifications(dose)}
+                          triggerText={
+                            <span className="flex items-center gap-2">
+                              <BellRing className="h-4 w-4" />
+                              {isMobile ? "" : "Notificar"}
+                            </span>
+                          }
+                          dialogTitle={`Notificar sobre ${dose.name}`}
+                          dialogDescription={`¿Deseas recibir un recordatorio 1 día antes en tu correo para la próxima dosis de ${dose.name}?`}
+                          confirmText="Notificar"
+                          cancelText="Cancelar"
+                          variant="secondary"
+                        />
                       </div>
                     </TableCell>
                   </motion.tr>

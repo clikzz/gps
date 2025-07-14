@@ -8,20 +8,6 @@ url       = env("DATABASE_URL")
 directUrl = env("DIRECT_URL")
 }
 
-model MarketplaceItems {
-id             BigInt   @id @default(autoincrement())
-user_id        String   @db.Uuid
-title          String?
-image_url      String?
-description    String?
-condition      String?
-price          Float?
-contact_method String?
-created_at     DateTime @default(now())
-status         String?  @default("active")
-users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-}
-
 model Medications {
 id             BigInt   @id @default(autoincrement())
 pet_id         BigInt
@@ -124,6 +110,31 @@ MissingPets    MissingPets @relation(fields: [missingPetId], references: [id], o
 users          users       @relation(fields: [helperId], references: [id], onDelete: Cascade)
 }
 
+model MarketplaceItem {
+  id             BigInt        @id @default(autoincrement())
+  user_id        String        @db.Uuid
+  title          String
+  description    String?
+  category       ItemCategory
+  condition      ItemCondition
+  price          Decimal       @db.Decimal(10,2)
+  photo_urls     String[]
+  status         ItemStatus    @default(ACTIVE)
+
+  latitude       Float
+  longitude      Float
+  city           String?
+  region         String?
+  country        String?
+
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  seller         users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([status, category, created_at])
+}
+
 model Pets {
 id               BigInt            @id @default(autoincrement())
 user_id          String            @db.Uuid
@@ -152,7 +163,7 @@ created_at DateTime @default(now())
 topic_id   BigInt
 updated_at DateTime @updatedAt
 moderated_at DateTime?
-moderated_by String? 
+moderated_by String?
 user_id    String   @db.Uuid
 Topics     Topics   @relation(fields: [topic_id], references: [id], onDelete: Cascade)
 users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -170,12 +181,13 @@ users      users    @relation(fields: [user_id], references: [id], onDelete: Cas
 }
 
 model Services {
-id          BigInt    @id @default(autoincrement())
+id          BigInt     @id @default(autoincrement())
 name        String
-category    String
+categories  String[]
 description String
 latitude    Float
 longitude   Float
+phone       String?
 Reviews     Reviews[]
 }
 
@@ -245,7 +257,7 @@ lastMessageAt    DateTime?          @map("lastMessageAt")
 menssageCount    Int                @default(0)
 role             Role               @default(USER)
 status           UserStatus         @default(ACTIVE)
-MarketplaceItems MarketplaceItems[]
+MarketplaceItems MarketplaceItem[]
 MissingPets      MissingPets[]
 FoundReports     FoundReports[]
 Pets             Pets[]
@@ -267,4 +279,25 @@ enum UserStatus {
   INACTIVE
   SUSPENDED
   BANNED
+}
+
+enum ItemCondition {
+  NEW
+  USED
+}
+
+enum ItemStatus {
+  ACTIVE
+  SOLD
+  REMOVED
+}
+
+enum ItemCategory {
+  FOOD
+  TOYS
+  BEDDING
+  WALK_WEAR
+  HEALTH_GROOM
+  TRAVEL
+  OTHER
 }

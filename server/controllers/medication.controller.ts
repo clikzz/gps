@@ -79,7 +79,14 @@ export const updateMedication = async (
       );
     }
     const updatedMedication = await updateMedicationService(id, data);
-    return new Response(JSON.stringify(updatedMedication), {
+
+    const parsedUpdatedMedication = {
+      ...updatedMedication,
+      id: Number(updatedMedication.id),
+      pet_id: Number(updatedMedication.pet_id),
+    };
+
+    return new Response(JSON.stringify(parsedUpdatedMedication), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

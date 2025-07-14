@@ -1,8 +1,9 @@
 import { authenticateUser } from "@/server/middlewares/auth.middleware";
 import {
-  getVaccinationById,
-  updateVaccinationById,
-} from "@/server/services/vaccination.service";
+  getVaccinations,
+  removeVaccination,
+  updateVaccination,
+} from "@/server/controllers/vaccination.controller";
 
 export async function PUT(req: Request) {
   const user = await authenticateUser(req);
@@ -18,23 +19,14 @@ export async function PUT(req: Request) {
     });
   }
 
-  return updateVaccinationById(id, vaccination);
+  return updateVaccination(id, vaccination);
 }
 
 export async function GET(req: Request) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return user;
 
-  const id = parseInt(req.url.split("/").pop() || "");
-
-  if (!id) {
-    return new Response(JSON.stringify({ error: "Invalid vaccination ID" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  return getVaccinationById(id);
+  return getVaccinations(user.id);
 }
 
 export async function DELETE(req: Request) {
@@ -52,7 +44,7 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    await updateVaccinationById(id, { active: false });
+    await removeVaccination(id);
 
     return new Response(null, { status: 204 });
   } catch (error) {

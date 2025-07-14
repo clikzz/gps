@@ -72,7 +72,12 @@ export const updateVaccination = async (
   try {
     const newData = {
       ...data,
-      date: data.application_date ? new Date(data.application_date) : undefined,
+      application_date: data.application_date
+        ? new Date(data.application_date)
+        : undefined,
+      next_dose_date: data.next_dose_date
+        ? new Date(data.next_dose_date)
+        : undefined,
     };
 
     console.log("Updating vaccination with data:", newData);
@@ -89,9 +94,14 @@ export const updateVaccination = async (
     }
 
     const updatedVaccination = await updateVaccinationById(vaccinationId, data);
-    console.log("Vaccination updated:", updatedVaccination);
 
-    return new Response(JSON.stringify(updatedVaccination), {
+    const fixedVaccination = {
+      ...updatedVaccination,
+      id: Number(updatedVaccination.id),
+      pet_id: Number(updatedVaccination.pet_id),
+    };
+
+    return new Response(JSON.stringify(fixedVaccination), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

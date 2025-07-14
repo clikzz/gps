@@ -194,22 +194,6 @@ export function HealthCalendar() {
               ))
             )}
           </div>
-
-          {/* PLACEHOLDER: Email Alert Configuration */}
-          <div className="mt-6 p-4 border-2 border-dashed border-muted-foreground/25 rounded-lg">
-            <h4 className="font-medium text-sm mb-2">
-              🚧 Configuración de Alertas por Email
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Aquí se implementará la configuración para enviar alertas
-              automáticas por correo antes de las próximas dosis programadas.
-            </p>
-            <div className="mt-2 text-xs text-muted-foreground">
-              <p>• Configurar días de anticipación para alertas</p>
-              <p>• Seleccionar tipos de eventos para notificar</p>
-              <p>• Gestionar direcciones de correo</p>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

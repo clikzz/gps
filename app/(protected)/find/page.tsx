@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import FindMap from '@/components/find/FindMap'
 import RequestLocation from '@/components/find/RequestLocation'
 import { useLocationStore } from '@/stores/location'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function FindPage() {
   const { setPosition } = useLocationStore()
@@ -26,10 +27,20 @@ export default function FindPage() {
 
   if (!ready) {
     return (
-      <div className="flex items-center justify-center h-full px-4">
-        <div className="w-full max-w-md">
-          <RequestLocation onLocationReady={handleLocationReady}/>
-        </div>
+      <div className="flex items-center justify-center px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Permitir Ubicación</CardTitle>
+            <CardDescription className="text-center">
+              Encuentra mascotas perdidas cerca de tu ubicación
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center">
+              <RequestLocation onLocationReady={handleLocationReady} />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }

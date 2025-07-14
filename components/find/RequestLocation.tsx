@@ -87,8 +87,8 @@ export default function RequestLocation({ onLocationReady }: RequestLocationProp
 
       <div className="text-xs text-gray-500 text-center max-w-sm">
         <p>
-          Necesitamos tu ubicación para mostrarte mascotas perdidas más cercanas. A veces, 
-          la ubicación puede ser aproximada si no se tiene acceso a la ubicación.
+          Necesitamos tu ubicación para mostrarte mascotas perdidas cercanas. A veces, 
+          esta ubicación puede ser aproximada.
         </p>
       </div>
     </div>

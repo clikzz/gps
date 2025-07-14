@@ -153,7 +153,6 @@ export default function FindMap() {
   function handlePickLocation() {
     setIsReportModalOpen(false);
     setPickLocationMode(true);
-    toast.info("Selecciona en el mapa la última ubicación de tu mascota.");
   }
 
   function handleMapClick(evt: any) {
@@ -228,6 +227,23 @@ export default function FindMap() {
         isOpen={isFoundReportsModalOpen}
         onClose={() => setIsFoundReportsModalOpen(false)}
       />
+
+      {/* Indicador de modo selección */}
+      {(pickLocationMode || foundPickMode) && (
+        <div className="absolute top-4 left-4 z-30 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-yellow-600 rounded-full animate-pulse" />
+            <div>
+              <h3 className="font-semibold text-gray-800">Modo selección activo</h3>
+              <p className="text-sm text-gray-700">
+                {pickLocationMode
+                  ? "Haz clic en el mapa para seleccionar la última ubicación de tu mascota"
+                  : "Haz clic en el mapa para indicar dónde viste la mascota"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mapa */}
       <Map

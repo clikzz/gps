@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { formatDateLabel } from "@/lib/date"
 
 interface Topic {
   id: number
@@ -8,6 +9,7 @@ interface Topic {
   author: {
     name: string
     id: string
+    tag: number
   }
   postsCount: number
 }
@@ -17,6 +19,7 @@ interface TopicListProps {
   subforumSlug: string
   subforumId?: number
 }
+
 
 export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) {
   if (topics.length === 0) {
@@ -34,11 +37,10 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
         <div key={topic.id} className={`${index !== 0 ? "border-t" : ""}`}>
           <div className="grid grid-cols-1 lg:grid-cols-12 p-4 gap-4 hover:bg-muted/30 transition-colors">
             <div className="lg:col-span-7 xl:col-span-8">
-              <Link href={`/forum/topic/${topic.id}`} className="font-medium hover:underline text-base">
+              <Link href={`/forum/subforum/${subforumSlug}/topic/${topic.id}`} className="font-medium hover:underline text-base">
                 {topic.title}
               </Link>
               <div className="text-sm text-muted-foreground mt-1">
-                por {topic.author.name} - {new Date(topic.createdAt).toLocaleDateString()}
               </div>
             </div>
 
@@ -55,23 +57,18 @@ export function TopicList({ topics, subforumSlug, subforumId }: TopicListProps) 
             </div>
 
             <div className="lg:col-span-1 xl:col-span-2 text-sm lg:text-right">
-              <div className="text-muted-foreground">{new Date(topic.updatedAt).toLocaleDateString()}</div>
+              <div className="text-muted-foreground">
+                {formatDateLabel(topic.updatedAt)}
+                </div>
               <div>
-                por{" "}
+                por {topic.author.name} #{topic.author.tag} 
                 <Link href={`/forum/user/${topic.author.id}`} className="hover:underline">
-                  {topic.author.name}
                 </Link>
               </div>
             </div>
           </div>
         </div>
       ))}
-      <Link
-        href={`/forum/subforum/${subforumSlug}/new-topic`}
-        className="border rounded-full py-2 px-4 text-sm hover:bg-accent transition-colors"
-      >
-        Nuevo tema
-      </Link>
     </div>
   )
 }

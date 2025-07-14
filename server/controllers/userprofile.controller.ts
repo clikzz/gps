@@ -32,14 +32,24 @@ export const modifyUserProfile = async (
     name,
     email,
     avatar_url,
-  }: { name: string; email: string; avatar_url: string }
+  }: { name: string; email: string; avatar_url: string | null }
 ) => {
   const updatedProfile = await updateUserProfile(userId, {
     name,
     email,
     avatar_url,
   });
-  return new Response(JSON.stringify(updatedProfile), {
+
+  const serializedProfile = {
+    ...updatedProfile,
+    tag: updatedProfile?.tag?.toString(),
+    Pets: updatedProfile?.Pets?.map((pet: Pet) => ({
+      ...pet,
+      id: pet.id.toString(),
+    })),
+  };
+
+  return new Response(JSON.stringify(serializedProfile), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });

@@ -10,3 +10,10 @@ export const createPostSchema = z.object({
   topicId: z.coerce.number().int().positive(),
   content: z.string().min(1, "El contenido no puede estar vacío"),
 });
+
+export const editTopicSchema = z.object({
+  title: z.string().min(3, "El título debe tener al menos 3 caracteres"),
+});
+export const editPostSchema = z.object({
+  content: z.string().min(1, "El contenido no puede estar vacío"),
+});

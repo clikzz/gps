@@ -14,6 +14,7 @@ interface ProfilePreviewProps {
 export function ProfilePreview({ onClose }: ProfilePreviewProps) {
   const router = useRouter()
   const { user } = useUserProfile()
+  const menssageCount = useUserProfile(state => state.user?.menssageCount ?? 0)
 
   if (!user) {
     return (
@@ -66,14 +67,13 @@ export function ProfilePreview({ onClose }: ProfilePreviewProps) {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="flex gap-6 items-center">
-          <div className="flex-shrink-0">
+        <div className="flex gap-6 items-center">          <div className="flex-shrink-0">
             <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center overflow-hidden bg-muted">
-              {user.avatar_url ? (
-                <img src={user.avatar_url || "/placeholder.svg"} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-6xl text-muted-foreground">👤</div>
-              )}
+              <img
+                src={user.avatar_url || "/placeholder.svg"}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
           <div className="flex-1">
@@ -102,7 +102,7 @@ export function ProfilePreview({ onClose }: ProfilePreviewProps) {
           </div>
           <div className="text-sm">
             <span className="font-medium">Mensajes:</span>
-            <span className="text-muted-foreground ml-2">10.600</span>
+            <span className="text-muted-foreground ml-2">{user.menssageCount.toLocaleString()}</span>
           </div>
         </div>
       </CardContent>

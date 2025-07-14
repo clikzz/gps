@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Pet } from "@/types/pet";
+import { Role } from ".prisma/client/default";
 
 type PhotoLog = { id: string; url: string };
 type Forum = { id: string; title: string };
@@ -24,6 +25,8 @@ type UserProfile = {
   reviews: Review[];
   lostPets: LostPet[];
   marketplaceItems: MarketplaceItem[];
+  role: Role;
+  menssageCount: number;
 };
 
 type UserProfileStore = {

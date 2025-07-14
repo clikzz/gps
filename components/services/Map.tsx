@@ -94,7 +94,6 @@ export default function Map({
         <FullscreenControl position="top-right" />
         <ScaleControl position="bottom-left" />
 
-        {/* Ícono para volver a mi ubicación */}
         <div className="absolute bottom-4 right-4 z-10">
           <div
             onClick={goToUserLocation}
@@ -104,7 +103,6 @@ export default function Map({
           </div>
         </div>
 
-        {/* Marcador de ubicación del usuario */}
         <Marker latitude={userLocation.lat} longitude={userLocation.lng} anchor="bottom" onClick={toggleUserPopup}>
           <div className="cursor-pointer transform hover:scale-110 transition-transform">
             <div className="relative">
@@ -117,7 +115,6 @@ export default function Map({
           </div>
         </Marker>
 
-        {/* Marcador de ubicación seleccionada para nuevo servicio */}
         {selectedServiceLocation && (
           <Marker latitude={selectedServiceLocation.lat} longitude={selectedServiceLocation.lng} anchor="bottom">
             <div className="flex flex-col items-center">

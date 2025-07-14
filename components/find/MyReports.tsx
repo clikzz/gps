@@ -10,16 +10,17 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 interface MyReportsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onGoTo: (report: MissingReport) => void;
 }
 
 export default function MyReportsModal({
   isOpen,
   onClose,
+  onGoTo,
 }: MyReportsModalProps) {
   const [myReports, setMyReports] = useState<MissingReport[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,10 +63,10 @@ export default function MyReportsModal({
                   className="border flex flex-row items-center space-x-3 p-4"
                 >
                   <CardHeader className="flex items-center p-4 space-x-4">
-                    {r.Pets.photo_url ? (
+                    {r.pet.photo_url ? (
                       <img
-                        src={r.Pets.photo_url}
-                        alt={r.Pets.name}
+                        src={r.pet.photo_url}
+                        alt={r.pet.name}
                         className="w-28 h-28 rounded-full object-cover flex-shrink-0"
                       />
                     ) : (
@@ -73,13 +74,19 @@ export default function MyReportsModal({
                     )}
                   </CardHeader>
 
-                  <CardContent className="p-4 pt-0">
+                  <CardContent className="flex-1 p-4 pt-0">
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center justify-between space-x-4">
                         <p className="text-lg font-semibold">
-                          🐾 {r.Pets.name}
+                          🐾 {r.pet.name}
                         </p>
-                        <Badge variant="secondary">Activo</Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onGoTo(r)}
+                        >
+                          Ver en mapa
+                        </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {new Date(r.reported_at).toLocaleString()}
@@ -92,6 +99,9 @@ export default function MyReportsModal({
                         Sin descripción
                       </p>
                     )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      📍 {`${r.address || r.street}, ${r.city}, ${r.region}` || "Ubicación no registrada"}
+                    </p>
                   </CardContent>
                 </Card>
               ))}

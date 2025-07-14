@@ -268,20 +268,29 @@ export async function revokeModerator(userId: string) {
 export async function updateUserStatus(
   currentUserId: string,
   targetUserId: string,
-  status: UserStatus
+  status: UserStatus,
+  suspensionReason?: string,
+  suspensionUntil?: string
 ) {
-  const me = await prisma.users.findUnique({ where: { id: currentUserId } });
+  const me = await prisma.users.findUnique({ where: { id: currentUserId } })
   if (!me || (me.role !== "MODERATOR" && me.role !== "ADMIN")) {
-    throw new Error("FORBIDDEN_MODERATOR");
+    throw new Error("FORBIDDEN_MODERATOR")
   }
-  const target = await prisma.users.findUnique({ where: { id: targetUserId } });
+  const target = await prisma.users.findUnique({ where: { id: targetUserId } })
   if (!target || target.role === "ADMIN") {
-    throw new Error("CANNOT_MODIFY_ADMIN");
+    throw new Error("CANNOT_MODIFY_ADMIN")
   }
+
   return prisma.users.update({
     where: { id: targetUserId },
-    data: { status },
-  });
+    data: {
+      status,
+      suspensionReason: suspensionReason ?? target.suspensionReason,
+      suspensionUntil: suspensionUntil
+        ? new Date(suspensionUntil)
+        : target.suspensionUntil,
+    },
+  })
 }
 
 export async function updateUserRole(

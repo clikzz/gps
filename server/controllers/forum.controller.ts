@@ -436,13 +436,15 @@ export async function changeUserStatusHandler(req: Request) {
     return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
   }
 
-  const { targetUserId, status } = (await req.json()) as {
+  const { targetUserId, status, suspensionReason, suspensionUntil,  } = (await req.json()) as {
     targetUserId: string
-    status: "ACTIVE" | "SUSPENDED" | "BANNED"
+    status: "ACTIVE" | "SUSPENDED" | "BANNED",
+    suspensionReason?: string
+    suspensionUntil?: string 
   }
 
   try {
-    await updateUserStatus(auth.id, targetUserId, status)
+    await updateUserStatus(auth.id, targetUserId, status, suspensionReason, suspensionUntil)
     return NextResponse.json(null, { status: 204 })
   } catch (err: any) {
     let code = 500

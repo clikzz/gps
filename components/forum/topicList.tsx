@@ -1,19 +1,12 @@
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
 import { Lock } from "lucide-react"
-
-interface Topic {
-  id: number
-  title: string
-  postsCount: number
-  updatedAt: string
-  author: { name: string; id: string; tag: number }
-  locked: boolean
-}
+import { ForumTopic } from "@/types/forum"
 
 interface TopicListProps {
-  topics: Topic[]
+  topics: ForumTopic[]
   subforumSlug: string
+  subforumId?: number
 }
 
 export function TopicList({ topics, subforumSlug }: TopicListProps) {

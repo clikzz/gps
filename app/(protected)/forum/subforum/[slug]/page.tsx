@@ -3,19 +3,7 @@ import { TopicList } from "@/components/forum/topicList"
 import { fetcher } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import { ForumNavigation } from "@/components/forum/forumNavigation"
-
-interface Topic {
-  id: number
-  title: string
-  createdAt: string
-  updatedAt: string
-  author: {
-    name: string
-    id: string
-    tag: number
-  }
-  postsCount: number
-}
+import { ForumTopic } from "@/types/forum"
 
 interface Subforum {
   id: number
@@ -42,9 +30,9 @@ async function getSubforums(): Promise<Subforum[]> {
   }
 }
 
-async function getTopics(subforumId: number): Promise<Topic[]> {
+async function getTopics(subforumId: number): Promise<ForumTopic[]> {
   try {
-    return await fetcher<Topic[]>(`/api/forum/topics?subforumId=${subforumId}`)
+    return await fetcher<ForumTopic[]>(`/api/forum/topics?subforumId=${subforumId}`)
   } catch (error) {
     return []
   }

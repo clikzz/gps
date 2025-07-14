@@ -19,6 +19,7 @@ import { MoreHorizontal, Shield, UserX, Clock, Ban } from "lucide-react"
 import { useUserProfile } from "@/stores/userProfile"
 import { Role, UserStatus } from ".prisma/client/default";
 import Link from "next/link"
+import { formatDateLabel } from "@/lib/date"
 
 export interface ForumUser {
   id: string
@@ -56,6 +57,8 @@ export function MembersSearch({ users }: MembersSearchProps) {
   const [selectedUser, setSelectedUser] = useState<ForumUser | null>(null)
   const [banReason, setBanReason] = useState("")
   const [suspendReason, setSuspendReason] = useState("")
+  const [suspendUntilDate, setSuspendUntilDate] = useState("")
+  const [suspendUntilTime, setSuspendUntilTime] = useState("")
 
   const itemsPerPage = 10
   const currentUser = useUserProfile((s) => s.user)
@@ -125,7 +128,8 @@ export function MembersSearch({ users }: MembersSearchProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           targetUserId: selectedUser.id,
-          status: "BANNED"
+          status: "BANNED",
+          suspensionReason: banReason
         }),
       })
       setUserList(u =>
@@ -142,97 +146,107 @@ export function MembersSearch({ users }: MembersSearchProps) {
   }
 
   const handleSuspendUser = async () => {
+    const until = new Date(`${suspendUntilDate}T${suspendUntilTime}`);
     if (!selectedUser || !suspendReason.trim()) {
       toast.error("Debe proporcionar un motivo para la suspensión")
       return
     }
     try {
+      if (!suspendUntilDate || !suspendUntilTime) {
+        toast.error("Debe proporcionar fecha y hora de fin de suspensión");
+        return;
+      }
+
       await fetch("/api/forum/users/status", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           targetUserId: selectedUser.id,
-          status: "SUSPENDED"
+          status: "SUSPENDED",
+          suspensionReason: suspendReason,
+          suspensionUntil: until.toISOString(),
         }),
       })
       setUserList(u =>
         u.map(x => x.id === selectedUser.id ? { ...x, status: UserStatus.SUSPENDED } : x)
       )
-      toast.success(`${selectedUser.name} ha sido suspendido. Motivo: ${suspendReason}`)
+      toast.success(`${selectedUser.name} ha sido suspendido hasta ${formatDateLabel(until.toISOString())}. Motivo: ${suspendReason}`)
       setSuspendDialogOpen(false)
     } catch (err: any) {
       toast.error(err.message || "Error suspensión")
     } finally {
       setSuspendReason("")
       setSelectedUser(null)
+      setSuspendUntilDate("")
+      setSuspendUntilTime("")
     }
   }
 
-const handlePromoteToModerator = async (user: ForumUser) => {
-  if (!isAdmin) {
-    toast.error("Solo los administradores pueden designar moderadores")
-    return
-  }
-
-  try {
-    const res = await fetch("/api/forum/users/role", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        targetUserId: user.id,
-        role: "MODERATOR",
-      }),
-    })
-
-    if (res.status !== 204) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err.error || "Error al promover moderador")
+  const handlePromoteToModerator = async (user: ForumUser) => {
+    if (!isAdmin) {
+      toast.error("Solo los administradores pueden designar moderadores")
+      return
     }
 
-    setUserList((list) =>
-      list.map((u) =>
-        u.id === user.id ? { ...u, role: Role.MODERATOR } : u
+    try {
+      const res = await fetch("/api/forum/users/role", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          targetUserId: user.id,
+          role: "MODERATOR",
+        }),
+      })
+
+      if (res.status !== 204) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Error al promover moderador")
+      }
+
+      setUserList((list) =>
+        list.map((u) =>
+          u.id === user.id ? { ...u, role: Role.MODERATOR } : u
+        )
       )
-    )
-    toast.success(`${user.name} ha sido designado como moderador`)
-  } catch (err: any) {
-    toast.error(err.message)
-  }
-}
-
-const handleRevokeModerator = async (user: ForumUser) => {
-  if (!isAdmin) {
-    toast.error("Solo los administradores pueden revocar moderadores")
-    return
+      toast.success(`${user.name} ha sido designado como moderador`)
+    } catch (err: any) {
+      toast.error(err.message)
+    }
   }
 
-  try {
-    const res = await fetch("/api/forum/users/role", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        targetUserId: user.id,
-        role: "USER",
-      }),
-    })
-
-    if (res.status !== 204) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err.error || "Error al revocar moderador")
+  const handleRevokeModerator = async (user: ForumUser) => {
+    if (!isAdmin) {
+      toast.error("Solo los administradores pueden revocar moderadores")
+      return
     }
 
-    setUserList((list) =>
-      list.map((u) =>
-        u.id === user.id ? { ...u, role: Role.USER } : u
+    try {
+      const res = await fetch("/api/forum/users/role", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          targetUserId: user.id,
+          role: "USER",
+        }),
+      })
+
+      if (res.status !== 204) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Error al revocar moderador")
+      }
+
+      setUserList((list) =>
+        list.map((u) =>
+          u.id === user.id ? { ...u, role: Role.USER } : u
+        )
       )
-    )
-    toast.success(`Se han revocado los privilegios de moderador de ${user.name}`)
-  } catch (err: any) {
-    toast.error(err.message)
+      toast.success(`Se han revocado los privilegios de moderador de ${user.name}`)
+    } catch (err: any) {
+      toast.error(err.message)
+    }
   }
-}
 
   const openBanDialog = (user: ForumUser) => {
     setSelectedUser(user)
@@ -504,7 +518,7 @@ const handleRevokeModerator = async (user: ForumUser) => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="suspend-reason">Motivo de la suspensión *</Label>
+              <Label htmlFor="suspend-reason">Motivo de la suspensión</Label>
               <Textarea
                 id="suspend-reason"
                 placeholder="Explique el motivo de la suspensión..."
@@ -512,6 +526,28 @@ const handleRevokeModerator = async (user: ForumUser) => {
                 onChange={(e) => setSuspendReason(e.target.value)}
                 rows={4}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="suspend-date">Fecha de fin</Label>
+                <input
+                  id="suspend-date"
+                  type="date"
+                  className="w-full p-2 border rounded"
+                  value={suspendUntilDate}
+                  onChange={e => setSuspendUntilDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="suspend-time">Hora de fin</Label>
+                <input
+                  id="suspend-time"
+                  type="time"
+                  className="w-full p-2 border rounded"
+                  value={suspendUntilTime}
+                  onChange={e => setSuspendUntilTime(e.target.value)}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>

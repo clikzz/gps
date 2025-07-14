@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { createClient } from "@/utils/supabase/server"
 import prisma from "@/lib/db"
 import { UserStatus } from ".prisma/client"
+import { formatDateLabel } from "@/lib/date"
 
 export default async function BannedPage() {
   const supa = await createClient()
@@ -42,14 +43,14 @@ export default async function BannedPage() {
     )
   }
 
-  const isBanned    = profile.status === UserStatus.BANNED
+  const isBanned = profile.status === UserStatus.BANNED
   const isSuspended = profile.status === UserStatus.SUSPENDED
-  const reason      = profile.suspensionReason ?? "No especificado"
-  const endDate     = profile.suspensionUntil
+  const reason = profile.suspensionReason ?? "No especificado"
+  const endDate = profile.suspensionUntil
     ? profile.suspensionUntil.toLocaleDateString()
     : ""
-  const endTime     = profile.suspensionUntil
-    ? profile.suspensionUntil.toLocaleTimeString()
+  const endTime = profile.suspensionUntil
+    ? profile.suspensionUntil.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : ""
 
   const getEndDateText = () =>

@@ -125,6 +125,7 @@ export function MembersSearch({ users }: MembersSearchProps) {
     try {
       await fetch("/api/forum/users/status", {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           targetUserId: selectedUser.id,
@@ -159,6 +160,7 @@ export function MembersSearch({ users }: MembersSearchProps) {
 
       await fetch("/api/forum/users/status", {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           targetUserId: selectedUser.id,
@@ -262,6 +264,7 @@ export function MembersSearch({ users }: MembersSearchProps) {
     try {
       await fetch("/api/forum/users/status", {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targetUserId: user.id, status: "ACTIVE" })
       });
@@ -435,13 +438,13 @@ export function MembersSearch({ users }: MembersSearchProps) {
                             {user.status !== UserStatus.ACTIVE && (
                               <DropdownMenuItem
                                 onClick={() => {
+                                  unbanUser(user)
                                   setUserList(userList.map((u) => (u.id === user.id ? { ...u, status: UserStatus.ACTIVE } : u)))
                                   toast.success(`${user.name} ha sido desbaneado`)
                                 }}
                               >
-                                <DropdownMenuItem onClick={() => unbanUser(user)}></DropdownMenuItem>
                                 <UserX className="h-4 w-4 mr-2" />
-                                Desbanear usuario
+                                Desbanear
                               </DropdownMenuItem>
                             )}
 

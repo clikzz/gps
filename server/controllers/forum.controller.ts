@@ -21,7 +21,7 @@ import {
   listUsers, 
   updateTopicLock,
 } from "../services/forum.service";
-import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema} from "@/server/validations/forum.validation";
+import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema, changeUserStatusSchema} from "@/server/validations/forum.validation";
 import { authenticateUser, ensureAdmin, ensureModerator } from "@/server/middlewares/auth.middleware";
 import type { AuthUser } from "@/server/middlewares/auth.middleware";
 import { NextResponse } from "next/server";
@@ -39,6 +39,22 @@ export async function enforceForumAccess(user: AuthUser) {
     );
   }
 
+    if (
+    profile.status === "SUSPENDED" &&
+    profile.suspensionUntil &&
+    profile.suspensionUntil.getTime() <= Date.now()
+  ) {
+    await prisma.users.update({
+      where: { id: user.id },
+      data: {
+        status: "ACTIVE",
+        suspensionUntil: null,
+        suspensionReason: null,
+      },
+    });
+    return null;
+  }
+
   if (profile.status === "BANNED") {
     return NextResponse.json(
       { error: "Estás baneado del foro" },
@@ -49,7 +65,7 @@ export async function enforceForumAccess(user: AuthUser) {
   if (
     profile.status === "SUSPENDED" &&
     profile.suspensionUntil &&
-    profile.suspensionUntil > new Date()
+    profile.suspensionUntil.getTime() > Date.now()
   ) {
     return NextResponse.json(
       { error: "Estás suspendido temporalmente" },
@@ -427,40 +443,48 @@ export async function removeModerator(req: Request) {
 }
 
 export async function changeUserStatusHandler(req: Request) {
-  const auth = await authenticateUser(req)
-  if (auth instanceof Response) return auth
+  console.log("→ [controller] Entrando a changeUserStatusHandler");
+  const auth = await authenticateUser(req);
+  console.log("changeUserStatusHandler auth:", auth);
+  if (auth instanceof Response) return auth;
 
   try {
-    ensureModerator(auth)
+    ensureModerator(auth);
   } catch {
-    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
   }
 
-  const { targetUserId, status, suspensionReason, suspensionUntil,  } = (await req.json()) as {
-    targetUserId: string
-    status: "ACTIVE" | "SUSPENDED" | "BANNED",
-    suspensionReason?: string
-    suspensionUntil?: string 
+  let dto;
+  try {
+    const body = await req.json();
+    console.log("changeUserStatusHandler body:", body);
+    dto = changeUserStatusSchema.parse(body);
+    console.log("changeUserStatusHandler parsed dto:", dto);
+  } catch (zErr: any) {
+    console.error("ZodError en changeUserStatusHandler:", zErr);
+    return NextResponse.json({ errors: zErr.errors }, { status: 422 });
   }
 
   try {
-    await updateUserStatus(auth.id, targetUserId, status, suspensionReason, suspensionUntil)
-    return NextResponse.json(null, { status: 204 })
+    await updateUserStatus(
+      auth.id,
+      dto.targetUserId,
+      dto.status,
+      dto.suspensionReason,
+      dto.suspensionUntil
+    );
+    return new NextResponse(null, { status: 204 });
   } catch (err: any) {
-    let code = 500
-    let msg  = "Error interno"
-
+    let code = 500, msg = "Error interno";
     if (err.message === "CANNOT_MODIFY_ADMIN") {
-      code = 400
-      msg  = "No puedes modificar al administrador"
+      code = 400; msg = "No puedes modificar al administrador";
     } else if (err.message === "FORBIDDEN_MODERATOR") {
-      code = 403
-      msg  = "No tienes permisos"
+      code = 403; msg = "No tienes permisos";
     }
-
-    return NextResponse.json({ error: msg }, { status: code })
+    return NextResponse.json({ error: msg }, { status: code });
   }
 }
+
 
 export async function changeUserRoleHandler(req: Request) {
   const auth = await authenticateUser(req)

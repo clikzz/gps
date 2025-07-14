@@ -285,12 +285,16 @@ export async function updateUserStatus(
     where: { id: targetUserId },
     data: {
       status,
-      suspensionReason: suspensionReason ?? target.suspensionReason,
-      suspensionUntil: suspensionUntil
-        ? new Date(suspensionUntil)
-        : target.suspensionUntil,
+      ...(status === "SUSPENDED" && {
+        suspensionReason,
+        suspensionUntil: new Date(suspensionUntil!),
+      }),
+      ...(status === "ACTIVE" && {
+        suspensionReason: null,
+        suspensionUntil: null,
+      }),
     },
-  })
+  });
 }
 
 export async function updateUserRole(
@@ -314,6 +318,18 @@ export async function listUsers(): Promise<
     "id" | "name" | "tag" | "menssageCount" | "role" | "status"
   >>
 > {
+  await prisma.users.updateMany({
+    where: {
+      status: UserStatus.SUSPENDED,
+      suspensionUntil: { lte: new Date() },
+    },
+    data: {
+      status: UserStatus.ACTIVE,
+      suspensionUntil: null,
+      suspensionReason: null,
+    },
+  })
+
   return prisma.users.findMany({
     select: {
       id: true,

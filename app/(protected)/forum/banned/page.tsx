@@ -23,6 +23,19 @@ export default async function BannedPage() {
     )
   }
 
+  await prisma.users.updateMany({
+    where: {
+      id: session.user.id,
+      status: UserStatus.SUSPENDED,
+      suspensionUntil: { lte: new Date() }
+    },
+    data: {
+      status: UserStatus.ACTIVE,
+      suspensionUntil: null,
+      suspensionReason: null,
+    },
+  })
+
   const profile = await prisma.users.findUnique({
     where: { id: session.user.id },
     select: {

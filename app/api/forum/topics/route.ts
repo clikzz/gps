@@ -1,4 +1,4 @@
-import { fetchTopics, addTopic } from "@/server/controllers/forum.controller";
+import { fetchTopics, addTopic} from "@/server/controllers/forum.controller";
 
 export async function GET(req: Request) {
   return fetchTopics(req);

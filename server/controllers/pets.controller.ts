@@ -75,8 +75,6 @@ export const addPet = async ({
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.log("Errorrrrrrr creating pet:", error);
-
     console.error("Error creating pet:", error);
     return new Response(JSON.stringify({ error: error }), {
       status: 500,

@@ -19,8 +19,9 @@ import { Image as IMG } from "lucide-react";
 import ConfirmationButton from "@/components/ConfirmationButton";
 import {
   handleDeletePhoto,
-  handleSoftDelete,
-  handleDisablePet,
+  handleSoftDelete as handleSoftDeleteHook,
+  handleDisablePet as handleDisablePetHook,
+  handleEnablePet as handleEnablePetHook,
 } from "@/hooks/useEditPet";
 
 export function EditPetDrawer({
@@ -42,7 +43,20 @@ export function EditPetDrawer({
     handleClose();
   };
 
-  console.log("edit", pet);
+  const handleSoftDelete = async (pet: Pet) => {
+    await handleSoftDeleteHook(pet);
+    handleClose();
+  };
+
+  const handleDisablePet = async (pet: Pet) => {
+    await handleDisablePetHook(pet);
+    handleClose();
+  };
+
+  const handleEnablePet = async (pet: Pet) => {
+    await handleEnablePetHook(pet);
+    handleClose();
+  };
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -100,16 +114,29 @@ export function EditPetDrawer({
                   size="sm"
                 />
 
-                <ConfirmationButton
-                  onConfirm={() => handleDisablePet(pet)}
-                  triggerText="Marcar como fallecida"
-                  dialogTitle="Confirmar fallecimiento de mascota"
-                  dialogDescription="¿Estás seguro de que quieres informar como fallecida esta mascota? Esta acción no se puede deshacer."
-                  confirmText="Eliminar"
-                  cancelText="Cancelar"
-                  variant="outline"
-                  size="sm"
-                />
+                {pet.active ? (
+                  <ConfirmationButton
+                    onConfirm={() => handleDisablePet(pet)}
+                    triggerText="Deshabilitar"
+                    dialogTitle="Confirmar deshabilitación de mascota"
+                    dialogDescription="¿Estás seguro de que quieres deshabilitar esta mascota? Podrás habilitarla más tarde."
+                    confirmText="Deshabilitar"
+                    cancelText="Cancelar"
+                    variant="outline"
+                    size="sm"
+                  />
+                ) : (
+                  <ConfirmationButton
+                    onConfirm={() => handleEnablePet(pet)}
+                    triggerText="Habilitar"
+                    dialogTitle="Confirmar habilitación de mascota"
+                    dialogDescription="¿Estás seguro de que quieres habilitar esta mascota?"
+                    confirmText="Habilitar"
+                    cancelText="Cancelar"
+                    variant="outline"
+                    size="sm"
+                  />
+                )}
               </div>
 
               <div className="w-full">

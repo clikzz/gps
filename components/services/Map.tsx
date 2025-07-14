@@ -1,19 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import dynamic from "next/dynamic"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { Marker, Popup, NavigationControl, FullscreenControl, ScaleControl } from "react-map-gl/mapbox"
-import { CircleUserRound } from "lucide-react"
-import PetService from "@/components/services/PetService"
+import { CircleUserRound, MapPin, Navigation } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import PetService, { type PetServiceRef } from "@/components/services/PetService"
 
 const MapGL = dynamic(() => import("react-map-gl/mapbox").then((mod) => mod.default), { ssr: false })
 
 interface MapProps {
   userLocation: { lat: number; lng: number }
+  isSelectingLocation?: boolean
+  selectedServiceLocation?: { lat: number; lng: number } | null
+  onLocationSelect?: (location: { lat: number; lng: number }) => void
+  onEditService?: (service: any) => void
+  refreshTrigger?: number
 }
 
-export default function Map({ userLocation }: MapProps) {
+export default function Map({
+  userLocation,
+  isSelectingLocation = false,
+  selectedServiceLocation = null,
+  onLocationSelect,
+  onEditService,
+  refreshTrigger,
+}: MapProps) {
   const [viewState, setViewState] = useState({
     latitude: userLocation.lat,
     longitude: userLocation.lng,
@@ -22,6 +35,7 @@ export default function Map({ userLocation }: MapProps) {
 
   const [showUserPopup, setShowUserPopup] = useState(false)
   const [mapLoaded, setMapLoaded] = useState(false)
+  const petServiceRef = useRef<PetServiceRef>(null)
 
   const mapToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
 
@@ -29,11 +43,26 @@ export default function Map({ userLocation }: MapProps) {
     setShowUserPopup(!showUserPopup)
   }
 
+  const handleMapClick = (event: any) => {
+    if (isSelectingLocation && onLocationSelect) {
+      const { lng, lat } = event.lngLat
+      onLocationSelect({ lat, lng })
+    }
+  }
+
+  const goToUserLocation = () => {
+    setViewState({
+      latitude: userLocation.lat,
+      longitude: userLocation.lng,
+      zoom: 14,
+    })
+  }
+
   if (!mapToken) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-gray-100">
         <div className="text-center p-8">
-          <h3 className="text-lg font-semibold text-red-600 mb-2">Error de configuración</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Error de configuración</h3>
           <p className="text-gray-600">No se ha configurado el token de Mapbox.</p>
         </div>
       </div>
@@ -51,7 +80,9 @@ export default function Map({ userLocation }: MapProps) {
         onLoad={() => {
           setMapLoaded(true)
         }}
-        doubleClickZoom={true}
+        onClick={handleMapClick}
+        cursor={isSelectingLocation ? "crosshair" : "grab"}
+        doubleClickZoom={!isSelectingLocation}
         scrollZoom={true}
         dragPan={true}
         dragRotate={true}
@@ -62,17 +93,45 @@ export default function Map({ userLocation }: MapProps) {
         <NavigationControl position="top-right" />
         <FullscreenControl position="top-right" />
         <ScaleControl position="bottom-left" />
+
+        {/* Ícono para volver a mi ubicación */}
+        <div className="absolute bottom-4 right-4 z-10">
+          <div
+            onClick={goToUserLocation}
+            className="w-10 h-10 bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-xl"
+          >
+            <Navigation className="w-5 h-5 text-gray-700 hover:text-black transition-colors" />
+          </div>
+        </div>
+
+        {/* Marcador de ubicación del usuario */}
         <Marker latitude={userLocation.lat} longitude={userLocation.lng} anchor="bottom" onClick={toggleUserPopup}>
           <div className="cursor-pointer transform hover:scale-110 transition-transform">
             <div className="relative">
               <CircleUserRound
                 size={32}
-                className="text-purple-600 hover:text-purple-800 transition-colors drop-shadow-lg"
+                className="text-gray-700 hover:text-black transition-colors drop-shadow-lg"
               />
-              <div className="absolute inset-0 rounded-full bg-purple-400 animate-ping opacity-30"></div>
+              <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-30"></div>
             </div>
           </div>
         </Marker>
+
+        {/* Marcador de ubicación seleccionada para nuevo servicio */}
+        {selectedServiceLocation && (
+          <Marker latitude={selectedServiceLocation.lat} longitude={selectedServiceLocation.lng} anchor="bottom">
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                <MapPin className="w-10 h-10 text-gray-700 drop-shadow-lg" fill="currentColor" />
+                <div className="absolute inset-0 rounded-full bg-gray-400 animate-ping opacity-30"></div>
+              </div>
+              <div className="text-xs text-gray-700 font-medium mt-1 bg-white px-2 py-1 rounded shadow">
+                Nuevo servicio
+              </div>
+            </div>
+          </Marker>
+        )}
+
         {showUserPopup && (
           <Popup
             latitude={userLocation.lat}
@@ -83,8 +142,8 @@ export default function Map({ userLocation }: MapProps) {
             anchor="top"
             className="user-popup"
           >
-            <div className="p-3 text-center">
-              <h3 className="font-bold text-purple-700 text-base mb-2">📍 Tu ubicación actual</h3>
+            <div className="p-3 text-center bg-white rounded-lg shadow-lg border">
+              <h3 className="font-bold text-gray-800 text-base mb-2">📍 Tu ubicación actual</h3>
               <div className="text-sm text-gray-600 space-y-2">
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
@@ -105,33 +164,21 @@ export default function Map({ userLocation }: MapProps) {
             </div>
           </Popup>
         )}
-        {mapLoaded && <PetService userLocation={userLocation} />}
+
+        {mapLoaded && !isSelectingLocation && (
+          <PetService
+            ref={petServiceRef}
+            userLocation={userLocation}
+            onEditService={onEditService}
+            refreshTrigger={refreshTrigger}
+          />
+        )}
       </MapGL>
-      <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg text-sm text-gray-700 max-w-xs hidden md:block border border-gray-200">
-        <h4 className="font-semibold mb-2 text-purple-700">🗺️ Controles del mapa</h4>
-        <ul className="space-y-1 text-xs">
-          <li className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-            Arrastra para mover el mapa
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-            Rueda del mouse para zoom
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-            Doble clic para zoom rápido
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-            Clic en marcadores para info
-          </li>
-        </ul>
-      </div>
+
       {!mapLoaded && (
         <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Cargando mapa...</p>
           </div>
         </div>

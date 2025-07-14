@@ -443,9 +443,7 @@ export async function removeModerator(req: Request) {
 }
 
 export async function changeUserStatusHandler(req: Request) {
-  console.log("→ [controller] Entrando a changeUserStatusHandler");
   const auth = await authenticateUser(req);
-  console.log("changeUserStatusHandler auth:", auth);
   if (auth instanceof Response) return auth;
 
   try {
@@ -457,11 +455,8 @@ export async function changeUserStatusHandler(req: Request) {
   let dto;
   try {
     const body = await req.json();
-    console.log("changeUserStatusHandler body:", body);
     dto = changeUserStatusSchema.parse(body);
-    console.log("changeUserStatusHandler parsed dto:", dto);
   } catch (zErr: any) {
-    console.error("ZodError en changeUserStatusHandler:", zErr);
     return NextResponse.json({ errors: zErr.errors }, { status: 422 });
   }
 

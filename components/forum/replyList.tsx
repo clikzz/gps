@@ -30,8 +30,8 @@ const getUserTitle = (messageCount: number): string => {
   if (messageCount >= 100) return "Veterinario(a)"
   if (messageCount >= 50) return "Maullador(a) Senior"
   if (messageCount >= 25) return "Amante de Mascotas"
-  if (messageCount >= 10) return "Cachorro Activo"
-  if (messageCount >= 5) return "Gatito Curioso"
+  if (messageCount >= 15) return "Cachorro Activo"
+  if (messageCount >= 8) return "Gatito Curioso"
   return "Mascota Nueva"
 }
 
@@ -41,13 +41,28 @@ export function ReplyList({ replies }: ReplyListProps) {
   const [editContent, setEditContent] = useState("")
   const [replyList, setReplyList] = useState(replies)
 
+  const itemsPerPage = 7
+  const [currentPage, setCurrentPage] = useState(1)
+  const totalPages = Math.ceil(replyList.length / itemsPerPage)
+
   const currentUserId = useUserProfile((state) => state.user?.id)
-  const userRole = useUserProfile((state) => state.user?.role)
+  const currentUserRole = useUserProfile((state) => state.user?.role)
+  // const userBadges = (replyList.authorBadges || []).slice(0, 3)
 
   useEffect(() => {
     setReplyList(replies)
+    setCurrentPage(1)
   }, [replies])
 
+  const paginatedReplies = replyList.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  const onPageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return
+    setCurrentPage(page)
+  }
 
   const handleEdit = (reply: Reply) => {
     setEditingReply(reply.id)
@@ -108,14 +123,16 @@ export function ReplyList({ replies }: ReplyListProps) {
     )
   }
 
-  console.log("currentUserId:", currentUserId)
-
   return (
     <div className="space-y-4">
-      {replyList.map((reply) => {
+      {paginatedReplies.map((reply) => {
 
         const isAuthor = currentUserId === reply.author.id
         const isEditing = editingReply === reply.id
+        const canEdit = isAuthor || currentUserRole === "MODERATOR" || currentUserRole === "ADMIN"
+        const canDelete = isAuthor || currentUserRole === "ADMIN"
+        console.log("reply id:", reply.id, "isAuthor:", isAuthor, "canEdit:", canEdit, "canDelete:", canDelete)
+
 
         return (
           <div key={reply.id} className="border rounded-lg overflow-hidden">
@@ -130,7 +147,7 @@ export function ReplyList({ replies }: ReplyListProps) {
               <div className="w-48 border-r p-4 text-center space-y-3">
                 <div>
                   <Link href={`/forum/user/${reply.author.id}`} className="font-medium hover:underline text-sm">
-                    {reply.author.name} #{reply.author.tag}
+                    {reply.author.name}#{reply.author.tag}
                   </Link>
                 </div>
 
@@ -151,6 +168,21 @@ export function ReplyList({ replies }: ReplyListProps) {
                     />
                   )}
                 </div>
+
+                {/* 
+                {userBadges.length > 0 && (
+                  <div className="mt-2 text-sm">
+                  <div className="font-semibold mb-1">Insignias:</div>
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {userBadges.map((badge, index) => (
+                    <span key={index} className="text-xl" title={badge.name}>
+                      {badge}
+                    </span>
+                    ))}
+                  </div>
+                  </div>
+                )}
+                */}
 
                 <div className="text-xs">Mensajes: {reply.author.menssageCount.toLocaleString()}</div>
               </div>
@@ -180,11 +212,11 @@ export function ReplyList({ replies }: ReplyListProps) {
                     </div>
 
 
-                    {isAuthor && (
-                      <div className="absolute bottom-4 right-4 flex gap-1 text-sm">
-                        <button onClick={() => handleEdit(reply)} className="hover:underline">Editar</button>
-                        <span> | </span>
-                        <button onClick={() => handleDelete(reply.id)} className="hover:underline">Eliminar</button>
+                    {(isAuthor || canEdit || canDelete) && (
+                      <div className="absolute bottom-4 right-4 flex gap-2 text-sm">
+                        {canEdit && <button onClick={() => handleEdit(reply)}>Editar</button>}
+                        {canEdit && canDelete && <span>|</span>}
+                        {canDelete && <button onClick={() => handleDelete(reply.id)}>Eliminar</button>}
                       </div>
                     )}
                   </>
@@ -194,6 +226,33 @@ export function ReplyList({ replies }: ReplyListProps) {
           </div>
         )
       })}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-4">
+          <Button size="sm" variant="outline" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
+            Anterior
+          </Button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <Button
+              key={p}
+              size="sm"
+              variant={p === currentPage ? "default" : "outline"}
+              onClick={() => onPageChange(p)}
+            >
+              {p}
+            </Button>
+          ))}
+          <Button size="sm" variant="outline" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+            Siguiente
+          </Button>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="text-center text-sm text-muted-foreground">
+          {replyList.length} Respuestas en total
+        </div>
+      )}
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useDeleteTimelineEntry } from "@/hooks/timeline/useDeleteTimeline"
 import { useTimelineData } from "@/hooks/timeline/useTimelineData"
 import TimelineMemoryCard from "@/components/timeline/TimelineMemoryCard"
-import { useActivePet } from "@/stores/activePet"                            // Nicolás pidió usar mascota activa → import useActivePet
+import { useActivePet } from "@/stores/activePet"                           
 import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer" 
 
 
@@ -25,7 +25,7 @@ function parseEventDateLocal(input: string | Date): Date {
   return new Date(input)
 }
 
-// Variantes de animación para el contenedor principal
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -37,7 +37,6 @@ const containerVariants = {
   },
 }
 
-// Variantes para el título
 const titleVariants = {
   hidden: { opacity: 0, y: -20 },
   visible: {
@@ -47,7 +46,6 @@ const titleVariants = {
   },
 }
 
-// Variantes para la grilla de tarjetas
 const gridVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -59,7 +57,6 @@ const gridVariants = {
   },
 }
 
-// Variantes para estados de carga y error
 const stateVariants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: {
@@ -69,7 +66,6 @@ const stateVariants = {
   },
 }
 
-// Variantes para la paginación
 const paginationVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -85,24 +81,22 @@ export default function TimelineEntriesList({
   milestoneId,
   reloadSignal,
 }: TimelineEntriesListProps) {
-  // → Hooks en orden fijo
-  const activePet = useActivePet((state) => state.activePet)                // Nicolás pidió obtener mascota activa → useActivePet
-  const petId = activePet?.id ?? ""                                         // Nicolás pidió ID garantizado → petId desde activePet
-  if (!petId) {                                                             // Nicolás pidió no renderizar sin petId → guard
+  const activePet = useActivePet((state) => state.activePet)              
+  const petId = activePet?.id ?? ""                                       
+  if (!petId) {                              
     return null
   }
 
-  const [page, setPage] = useState(0)                                        // Nicolás pidió paginación
+  const [page, setPage] = useState(0)                           
   const skip = page * TAKE
 
   const { entries, total, isLoading, error, mutateEntries } = useTimelineData(
     petId,
     { startDate, endDate, milestoneId, skip, take: TAKE }
   )
-  const { isDeleting, deleteEntry } = useDeleteTimelineEntry(petId)        // Nicolás pidió delete con petId activo → deleteEntry
+  const { isDeleting, deleteEntry } = useDeleteTimelineEntry(petId)      
 
-  // Nicolás pidió función para eliminar entradas → definimos handleDelete
-  const handleDelete = async (entryId: string) => {                       // Nicolás pidió handleDelete → función para borrar y refrescar
+  const handleDelete = async (entryId: string) => {                    
     await deleteEntry(entryId)
     mutateEntries()
   }
@@ -125,7 +119,7 @@ export default function TimelineEntriesList({
         </motion.h3>
         <NewTimelineDrawer
           petId={petId}
-          onSuccess={() => mutateEntries()}            // Refresca al añadir un recuerdo
+          onSuccess={() => mutateEntries()}           
         />
       </div>
 

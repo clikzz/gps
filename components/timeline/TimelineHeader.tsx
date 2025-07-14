@@ -17,7 +17,7 @@ interface PetTimelineHeaderProps {
   onMilestoneChange: (id: string) => void
 }
 
-// Variantes para el contenedor principal
+
 const containerVariants = {
   hidden: { opacity: 0, y: -20 },
   visible: {
@@ -30,7 +30,7 @@ const containerVariants = {
   },
 }
 
-// Variantes para elementos individuales
+
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -40,7 +40,7 @@ const itemVariants = {
   },
 }
 
-// Variantes para la imagen/avatar
+
 const avatarVariants = {
   hidden: { opacity: 0, scale: 0.8 },
   visible: {
@@ -50,7 +50,7 @@ const avatarVariants = {
   },
 }
 
-// Variantes para los filtros
+
 const filtersVariants = {
   hidden: { opacity: 0, y: 10 },
   visible: {

@@ -21,7 +21,7 @@ export interface TimelineMemoryCardProps {
   index?: number
 }
 
-// Variantes para la tarjeta principal
+
 const cardVariants = {
   hidden: {
     opacity: 0,
@@ -46,7 +46,7 @@ const cardVariants = {
   },
 }
 
-// Variantes para elementos internos
+
 const contentVariants = {
   hidden: { opacity: 0, y: 10 },
   visible: {
@@ -68,7 +68,7 @@ const itemVariants = {
   },
 }
 
-// Variantes para los badges
+
 const badgeVariants = {
   hidden: { opacity: 0, scale: 0.8 },
   visible: {
@@ -99,7 +99,7 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
       }}
     >
       <Card className="bg-card rounded-xl shadow-lg overflow-hidden mb-6 border-0 shadow-md hover:shadow-xl transition-shadow duration-300">
-        {/* Cabecera */}
+
         <motion.div className="p-6 border-b" variants={contentVariants} initial="hidden" animate="visible">
           <div className="flex items-start justify-between gap-x-4">
             <motion.div variants={itemVariants}>
@@ -119,7 +119,7 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
               </motion.div>
             </motion.div>
 
-            {/* Grid de badges */}
+
             <motion.div dir="rtl" className="grid grid-cols-2 gap-2 justify-items-start" variants={contentVariants}>
               {entry.Milestones?.map((tag, tagIndex) => (
                 <motion.span
@@ -141,7 +141,7 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
           </div>
         </motion.div>
 
-        {/* Contenido: descripción + carrusel */}
+
         <CardContent className="p-6">
           <motion.div variants={contentVariants} initial="hidden" animate="visible">
             {entry.description && (
@@ -155,7 +155,7 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
           </motion.div>
         </CardContent>
 
-        {/* Footer: botón eliminar */}
+
         <CardFooter className="justify-end">
           <motion.div
             initial={{ opacity: 0, y: 10 }}

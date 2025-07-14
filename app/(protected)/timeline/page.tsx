@@ -1,4 +1,3 @@
-// app/(protected)/timeline/page.tsx
 "use client"
 import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
@@ -9,7 +8,7 @@ import { useTimelineData } from "@/hooks/timeline/useTimelineData"
 import { useMilestones } from "@/hooks/timeline/useMilestones"
 import { PawPrint, Heart } from "lucide-react"
 import { useActivePet } from "@/stores/activePet"
-import { Button } from "@/components/ui/button"                                  // Nicolás pidió usar componente Button → import Button
+import { Button } from "@/components/ui/button"                                
 
 const PetSelector = dynamic(() => import("@/components/PetSelector"), { ssr: false })
 
@@ -34,14 +33,13 @@ export default function PetTimelinePage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
-        {/* Contenedor principal con animación de entrada */}
+
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
           className="text-center"
         >
-          {/* Icono principal animado */}
           <motion.div
             className="relative mb-6"
             animate={{
@@ -58,7 +56,6 @@ export default function PetTimelinePage() {
               <PawPrint className="w-8 h-8 text-primary" />
             </div>
 
-            {/* Corazones flotantes */}
             <motion.div
               className="absolute -top-2 -right-2"
               animate={{
@@ -76,7 +73,6 @@ export default function PetTimelinePage() {
             </motion.div>
           </motion.div>
 
-          {/* Texto principal animado */}
           <motion.h3
             className="text-xl font-semibold text-foreground mb-2"
             animate={{ opacity: [0.7, 1, 0.7] }}
@@ -99,7 +95,6 @@ export default function PetTimelinePage() {
             </motion.span>
           </motion.h3>
 
-          {/* Texto descriptivo */}
           <motion.p
             className="text-muted-foreground text-sm mb-6"
             initial={{ opacity: 0, y: 10 }}
@@ -109,7 +104,6 @@ export default function PetTimelinePage() {
             Preparando los recuerdos de tu mascota
           </motion.p>
 
-          {/* Barra de progreso animada */}
           <div className="w-48 h-1 bg-muted rounded-full overflow-hidden mx-auto mb-4">
             <motion.div
               className="h-full bg-primary rounded-full"
@@ -126,7 +120,6 @@ export default function PetTimelinePage() {
             />
           </div>
 
-          {/* Indicadores de puntos */}
           <div className="flex justify-center space-x-2">
             {[1, 2, 3, 4].map((dot) => (
               <motion.div

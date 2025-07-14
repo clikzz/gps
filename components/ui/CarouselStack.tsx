@@ -16,7 +16,7 @@ export default function CarouselStack({ images }: CarouselStackProps) {
   const prevImage = () => setIndex((i) => (i - 1 + total) % total)
   const nextImage = () => setIndex((i) => (i + 1) % total)
 
-  // Distancia modular respecto al índice actual
+
   const dist = (i: number) => (i - index + total) % total
 
   return (
@@ -26,17 +26,17 @@ export default function CarouselStack({ images }: CarouselStackProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      {/* Carrusel full-width para que las flechas queden fuera */}
+
       <div className="relative w-full mb-4 overflow-visible">
-        {/* Wrapper centrado de ancho fijo */}
+
         <div className="relative w-80 h-60 mx-auto">
           <AnimatePresence initial={false} mode="popLayout">
             {images.map((src, i) => {
               const d = dist(i)
-              // Solo previa (total-1), activa (0) y siguiente (1)
+
               if (d > 1 && d < total - 1) return null
 
-              // Valores por defecto (imagen activa)
+
               let offsetX = 0
               let scale = 1
               let opacity = 1
@@ -44,7 +44,7 @@ export default function CarouselStack({ images }: CarouselStackProps) {
               let rotateY = 0
               let blur = 0
 
-              // Siguiente preview
+
               if (d === 1) {
                 offsetX = 120
                 scale = 0.85
@@ -54,7 +54,7 @@ export default function CarouselStack({ images }: CarouselStackProps) {
                 blur = 1
               }
 
-              // Preview anterior, SOLO si hay más de una imagen
+
               if (total > 1 && d === total - 1) {
                 offsetX = -120
                 scale = 0.85
@@ -93,7 +93,7 @@ export default function CarouselStack({ images }: CarouselStackProps) {
                   }}
                   transition={{
                     duration: 0.6,
-                    ease: [0.25, 0.46, 0.45, 0.94], // easeOutQuart
+                    ease: [0.25, 0.46, 0.45, 0.94], 
                   }}
                   whileHover={
                     d === 0
@@ -120,7 +120,7 @@ export default function CarouselStack({ images }: CarouselStackProps) {
                     transition={{ duration: 0.6, ease: "easeOut" }}
                   />
 
-                  {/* Overlay sutil para imágenes no activas */}
+
                   {d !== 0 && (
                     <motion.div
                       className="absolute inset-0 bg-black/20"
@@ -136,7 +136,7 @@ export default function CarouselStack({ images }: CarouselStackProps) {
           </AnimatePresence>
         </div>
 
-        {/* Flechas mejoradas */}
+
         {total > 1 && (
           <>
             <motion.button
@@ -186,7 +186,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
         )}
       </div>
 
-      {/* Indicadores mejorados */}
       {total > 1 && (
         <motion.div
           className="flex flex-col items-center"
@@ -216,7 +215,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
                   transition={{ duration: 0.3, ease: "easeOut" }}
                 />
 
-                {/* Efecto de ripple al hacer click */}
                 {i === index && (
                   <motion.div
                     className="absolute inset-0 rounded-full border-2 border-primary/30"
@@ -232,7 +230,7 @@ export default function CarouselStack({ images }: CarouselStackProps) {
 
           <motion.span
             className="text-sm text-muted-foreground font-medium"
-            key={index} // Re-anima cuando cambia el índice
+            key={index} 
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}

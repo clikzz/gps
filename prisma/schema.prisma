@@ -22,7 +22,6 @@ created_at     DateTime  @default(now())
 updated_at     DateTime  @updatedAt
 Pets           Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 HealthAlerts   HealthAlerts[]
-HealthAlerts   HealthAlerts[]
 }
 
 model Vaccinations {
@@ -38,7 +37,6 @@ created_at       DateTime  @default(now())
 updated_at       DateTime  @updatedAt
 Pets             Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 HealthAlerts     HealthAlerts[]
-HealthAlerts     HealthAlerts[]
 }
 
 model HealthAlerts {
@@ -48,8 +46,6 @@ pet_id       BigInt
 alert_type   String
 medication_id BigInt?
 vaccination_id BigInt?
-medication_id BigInt?
-vaccination_id BigInt?
 title        String
 message      String
 alert_date   DateTime
@@ -57,8 +53,6 @@ sent         Boolean     @default(false)
 created_at   DateTime    @default(now())
 users        users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
-Medications  Medications? @relation(fields: [medication_id], references: [id], onDelete: Cascade)
-Vaccinations Vaccinations? @relation(fields: [vaccination_id], references: [id], onDelete: Cascade)
 Medications  Medications? @relation(fields: [medication_id], references: [id], onDelete: Cascade)
 Vaccinations Vaccinations? @relation(fields: [vaccination_id], references: [id], onDelete: Cascade)
 

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
+import { Lock } from "lucide-react"
 
 interface Topic {
   id: number
@@ -7,6 +8,7 @@ interface Topic {
   postsCount: number
   updatedAt: string
   author: { name: string; id: string; tag: number }
+  locked: boolean
 }
 
 interface TopicListProps {
@@ -31,18 +33,16 @@ export function TopicList({ topics, subforumSlug }: TopicListProps) {
         return (
           <div key={topic.id} className={idx !== 0 ? "border-t" : ""}>
             <div className="grid grid-cols-1 lg:grid-cols-12 p-4 gap-4 hover:bg-muted/30 transition-colors">
-
               <div className="lg:col-span-7 xl:col-span-8 space-y-1">
                 <Link
                   href={`/forum/subforum/${subforumSlug}/topic/${topic.id}`}
-                  className="font-medium hover:underline text-base"
+                  className="flex items-center font-medium hover:underline text-base space-x-2"
                 >
-                  {topic.title}
+                  {topic.locked && <Lock className="w-5 h-5 text-muted-foreground" />}
+                  <span>{topic.title}</span>
                 </Link>
                 <div className="text-sm text-muted-foreground flex items-center space-x-2">
-                  <span>
-                    por {topic.author.name}#{topic.author.tag}
-                  </span>
+                  <span>por {topic.author.name}#{topic.author.tag}</span>
                   {pagesCount > 1 && (
                     <div className="flex space-x-1">
                       {Array.from({ length: pagesCount }, (_, i) => (

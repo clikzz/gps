@@ -1,7 +1,14 @@
 import { createClient } from "@/utils/supabase/server";
 import { createServerClient } from "@supabase/ssr";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+import prisma from "@/lib/db";
 
-export const authenticateUser = async (req: Request) => {
+
+export interface AuthUser extends SupabaseUser {
+  role: "USER" | "MODERATOR" | "ADMIN";
+}
+
+export const authenticateUser = async (req: Request): Promise<AuthUser | Response> => {
   const authHeader = req.headers.get("authorization");
   const bearerToken = authHeader?.startsWith("Bearer ")
     ? authHeader.substring(7)
@@ -44,5 +51,32 @@ export const authenticateUser = async (req: Request) => {
     });
   }
 
-  return user;
+  const profile = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { role: true },
+  });
+
+  if (!profile) {
+    return new Response(
+      JSON.stringify({ error: "Usuario no registrado en el foro" }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  return {
+    ...user,
+    role: profile.role,
+  };
 };
+
+export function ensureModerator(user: AuthUser) {
+  if (user.role !== "MODERATOR" && user.role !== "ADMIN") {
+    throw new Error("FORBIDDEN_MODERATOR");
+  }
+}
+
+export function ensureAdmin(user: AuthUser) {
+  if (user.role !== "ADMIN") {
+    throw new Error("FORBIDDEN_ADMIN");
+  }
+}

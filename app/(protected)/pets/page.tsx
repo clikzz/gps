@@ -16,12 +16,11 @@ function Pets() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [selectedPet] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
-  console.log(pets);
+  const [isNewPetDrawerOpen, setIsNewPetDrawerOpen] = useState(false);
 
   return (
     <motion.div
-      className="p-4 md:p-6 max-w-7xl mx-auto"
+      className="max-w-7xl mx-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -34,16 +33,19 @@ function Pets() {
       >
         <div className="flex items-center gap-2">
           <PawPrint className="h-6 w-6 text-primary" />
-          <h2 className="font-bold text-2xl md:text-3xl">Mis mascotas</h2>
+          <h1 className="font-bold text-2xl md:text-3xl">Mis mascotas</h1>
         </div>
-        <NewPetDrawer />
+        <NewPetDrawer
+          open={isNewPetDrawerOpen}
+          onOpenChange={setIsNewPetDrawerOpen}
+        />
       </motion.div>
 
       {pets && pets.length > 0 ? (
         <div
           className={`grid gap-6 ${isDesktop ? "grid-cols-4" : "grid-cols-1"}`}
         >
-          <PetsStats />
+          {isDesktop && <PetsStats />}
           <PetsTable />
         </div>
       ) : (
@@ -60,7 +62,6 @@ function Pets() {
         </motion.div>
       )}
 
-      {/* Hidden EditPetDrawer that gets triggered programmatically */}
       {selectedPet && (
         <EditPetDrawer
           pet={selectedPet}

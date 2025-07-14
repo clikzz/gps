@@ -8,20 +8,6 @@ url       = env("DATABASE_URL")
 directUrl = env("DIRECT_URL")
 }
 
-model MarketplaceItems {
-id             BigInt   @id @default(autoincrement())
-user_id        String   @db.Uuid
-title          String?
-image_url      String?
-description    String?
-condition      String?
-price          Float?
-contact_method String?
-created_at     DateTime @default(now())
-status         String?  @default("active")
-users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-}
-
 model Medications {
 id             BigInt   @id @default(autoincrement())
 pet_id         BigInt
@@ -35,6 +21,7 @@ active         Boolean   @default(true)
 created_at     DateTime  @default(now())
 updated_at     DateTime  @updatedAt
 Pets           Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+HealthAlerts   HealthAlerts[]
 }
 
 model Vaccinations {
@@ -49,6 +36,7 @@ active           Boolean   @default(true)
 created_at       DateTime  @default(now())
 updated_at       DateTime  @updatedAt
 Pets             Pets      @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+HealthAlerts     HealthAlerts[]
 }
 
 model HealthAlerts {
@@ -56,7 +44,8 @@ id           BigInt      @id @default(autoincrement())
 user_id      String      @db.Uuid
 pet_id       BigInt
 alert_type   String
-reference_id BigInt
+medication_id BigInt?
+vaccination_id BigInt?
 title        String
 message      String
 alert_date   DateTime
@@ -64,6 +53,8 @@ sent         Boolean     @default(false)
 created_at   DateTime    @default(now())
 users        users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)
+Medications  Medications? @relation(fields: [medication_id], references: [id], onDelete: Cascade)
+Vaccinations Vaccinations? @relation(fields: [vaccination_id], references: [id], onDelete: Cascade)
 
 @@index([alert_date, sent])
 }
@@ -76,15 +67,22 @@ TimelineEntries TimelineEntries[] @relation("MilestoneToTimelineEntry")
 }
 
 model MissingPets {
-id          BigInt   @id @default(autoincrement())
-pet_id      BigInt
-reporter_id String   @db.Uuid
-latitude    Float
-longitude   Float
-description String?
-reported_at DateTime @default(now())
-photo_urls  String[]
-resolved    Boolean? @default(false)
+id           BigInt   @id @default(autoincrement())
+pet_id       BigInt
+reporter_id  String   @db.Uuid
+latitude     Float
+longitude    Float
+full_address String?
+address      String?
+street       String?
+city         String?
+region       String?
+postcode     String?
+country      String?
+description  String?
+reported_at  DateTime @default(now())
+photo_urls   String[]
+resolved     Boolean? @default(false)
 FoundReports FoundReports[]
 
 Pets        Pets     @relation(fields: [pet_id], references: [id], onDelete: Cascade)
@@ -99,10 +97,42 @@ photo_urls     String[]
 description    String?
 latitude       Float
 longitude      Float
+full_address   String?
+address        String?
+street         String?
+city           String?
+region         String?
+postcode       String?
+country        String?
 created_at     DateTime    @default(now())
 
 MissingPets    MissingPets @relation(fields: [missingPetId], references: [id], onDelete: Cascade)
 users          users       @relation(fields: [helperId], references: [id], onDelete: Cascade)
+}
+
+model MarketplaceItem {
+  id             BigInt        @id @default(autoincrement())
+  user_id        String        @db.Uuid
+  title          String
+  description    String?
+  category       ItemCategory
+  condition      ItemCondition
+  price          Decimal       @db.Decimal(10,2)
+  photo_urls     String[]
+  status         ItemStatus    @default(ACTIVE)
+
+  latitude       Float
+  longitude      Float
+  city           String?
+  region         String?
+  country        String?
+
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  seller         users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([status, category, created_at])
 }
 
 model Pets {
@@ -132,6 +162,8 @@ content    String
 created_at DateTime @default(now())
 topic_id   BigInt
 updated_at DateTime @updatedAt
+moderated_at DateTime?
+moderated_by String?
 user_id    String   @db.Uuid
 Topics     Topics   @relation(fields: [topic_id], references: [id], onDelete: Cascade)
 users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -149,12 +181,13 @@ users      users    @relation(fields: [user_id], references: [id], onDelete: Cas
 }
 
 model Services {
-id          BigInt    @id @default(autoincrement())
+id          BigInt     @id @default(autoincrement())
 name        String
-category    String
+categories  String[]
 description String
 latitude    Float
 longitude   Float
+phone       String?
 Reviews     Reviews[]
 }
 
@@ -174,7 +207,7 @@ title               String?
 description         String?
 event_date          DateTime
 created_at          DateTime              @default(now())
-updated_at          DateTime              @default(now()) @updatedAt
+updated_at          DateTime              @default(now()) @updatedAt
 Pets                Pets                  @relation(fields: [pet_id], references: [id], onDelete: Cascade)
 users               users                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
 TimelineEntryPhotos TimelineEntryPhotos[]
@@ -197,6 +230,7 @@ created_at  DateTime  @default(now())
 subforum_id BigInt
 updated_at  DateTime  @updatedAt
 user_id     String    @db.Uuid
+locked      Boolean   @default(false)
 Posts       Posts[]
 Subforums   Subforums @relation(fields: [subforum_id], references: [id], onDelete: Cascade)
 users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -217,13 +251,16 @@ model users {
 id               String             @id @db.Uuid
 email            String?
 name             String?
-avatar_url       String?
+avatar_url       String?            @default("https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/images/profile/defaultpfp.png")
 created_at       DateTime           @default(now())
 tag              Int                @unique @default(autoincrement())
 lastMessageAt    DateTime?          @map("lastMessageAt")
 menssageCount    Int                @default(0)
 role             Role               @default(USER)
-MarketplaceItems MarketplaceItems[]
+status           UserStatus         @default(ACTIVE)
+suspensionUntil  DateTime?
+suspensionReason String?
+MarketplaceItems MarketplaceItem[]
 MissingPets      MissingPets[]
 FoundReports     FoundReports[]
 Pets             Pets[]
@@ -238,4 +275,32 @@ enum Role {
   USER
   MODERATOR
   ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum ItemCondition {
+  NEW
+  USED
+}
+
+enum ItemStatus {
+  ACTIVE
+  SOLD
+  REMOVED
+}
+
+enum ItemCategory {
+  FOOD
+  TOYS
+  BEDDING
+  WALK_WEAR
+  HEALTH_GROOM
+  TRAVEL
+  OTHER
 }

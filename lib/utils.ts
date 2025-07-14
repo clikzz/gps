@@ -27,5 +27,3 @@ export async function fetcher<T>(path: string): Promise<T> {
 }
 
 
-
-

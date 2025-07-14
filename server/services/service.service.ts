@@ -20,7 +20,8 @@ export const createService = async (data: CreateServiceInput) => {
       latitude: data.latitude,
       longitude: data.longitude,
       description: data.description,
-      category: data.category,
+      phone: data.phone,
+      categories: data.categories,
     },
     include: {
       Reviews: true,
@@ -36,14 +37,18 @@ export const getServices = async (filters: GetServicesInput) => {
   })
 
   let filteredServices = services
+
   if (filters.latitude && filters.longitude && filters.radius) {
     filteredServices = services.filter((service: Services) => {
       const distance = calculateDistance(filters.latitude!, filters.longitude!, service.latitude, service.longitude)
       return distance <= filters.radius!
     })
   }
+
   if (filters.category) {
-    filteredServices = filteredServices.filter((service: Services) => service.category === filters.category)
+    filteredServices = filteredServices.filter((service: Services) =>
+      service.categories.includes(filters.category!)
+    )
   }
 
   return filteredServices
@@ -66,7 +71,8 @@ export const updateService = async (serviceId: string, data: Partial<CreateServi
       ...(data.latitude && { latitude: data.latitude }),
       ...(data.longitude && { longitude: data.longitude }),
       ...(data.description && { description: data.description }),
-      ...(data.category && { category: data.category }),
+      ...(data.categories && { categories: data.categories }),
+      ...(data.phone && { phone: data.phone }),
     },
     include: {
       Reviews: true,

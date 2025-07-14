@@ -1,10 +1,12 @@
 "use client"
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useDeleteTimelineEntry } from "@/hooks/timeline/useDeleteTimeline"
 import { useTimelineData } from "@/hooks/timeline/useTimelineData"
 import TimelineMemoryCard from "@/components/timeline/TimelineMemoryCard"
+import { useActivePet } from "@/stores/activePet"                            // Nicolás pidió usar mascota activa → import useActivePet
+import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer" 
+
 
 interface TimelineEntriesListProps {
   startDate?: string
@@ -83,28 +85,31 @@ export default function TimelineEntriesList({
   milestoneId,
   reloadSignal,
 }: TimelineEntriesListProps) {
-  const { petId } = useParams() as { petId: string }
-  const [page, setPage] = useState(0)
+  // → Hooks en orden fijo
+  const activePet = useActivePet((state) => state.activePet)                // Nicolás pidió obtener mascota activa → useActivePet
+  const petId = activePet?.id ?? ""                                         // Nicolás pidió ID garantizado → petId desde activePet
+  if (!petId) {                                                             // Nicolás pidió no renderizar sin petId → guard
+    return null
+  }
+
+  const [page, setPage] = useState(0)                                        // Nicolás pidió paginación
   const skip = page * TAKE
 
-  const { entries, total, isLoading, error, mutateEntries } = useTimelineData(petId, {
-    startDate,
-    endDate,
-    milestoneId,
-    skip,
-    take: TAKE,
-  })
+  const { entries, total, isLoading, error, mutateEntries } = useTimelineData(
+    petId,
+    { startDate, endDate, milestoneId, skip, take: TAKE }
+  )
+  const { isDeleting, deleteEntry } = useDeleteTimelineEntry(petId)        // Nicolás pidió delete con petId activo → deleteEntry
 
-  const { isDeleting, deleteEntry } = useDeleteTimelineEntry(petId)
+  // Nicolás pidió función para eliminar entradas → definimos handleDelete
+  const handleDelete = async (entryId: string) => {                       // Nicolás pidió handleDelete → función para borrar y refrescar
+    await deleteEntry(entryId)
+    mutateEntries()
+  }
 
   useEffect(() => {
     if (reloadSignal !== undefined) mutateEntries()
   }, [reloadSignal, mutateEntries])
-
-  const handleDelete = async (entryId: string) => {
-    await deleteEntry(entryId)
-    mutateEntries()
-  }
 
   useEffect(() => {
     setPage(0)
@@ -114,9 +119,15 @@ export default function TimelineEntriesList({
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible">
-      <motion.h3 className="text-xl font-semibold mt-6 mb-4" variants={titleVariants}>
-        Recuerdos
-      </motion.h3>
+      <div className="flex items-center justify-between mt-6 mb-4">
+        <motion.h3 className="text-xl font-semibold" variants={titleVariants}>
+          Recuerdos
+        </motion.h3>
+        <NewTimelineDrawer
+          petId={petId}
+          onSuccess={() => mutateEntries()}            // Refresca al añadir un recuerdo
+        />
+      </div>
 
       <AnimatePresence mode="wait">
         {isLoading ? (
@@ -175,7 +186,7 @@ export default function TimelineEntriesList({
         ) : (
           <motion.div key="content">
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-1 gap-6"
+              className="grid grid-cols-1 gap-6"
               variants={gridVariants}
               initial="hidden"
               animate="visible"

@@ -1,25 +1,32 @@
+// app/(protected)/timeline/page.tsx
 "use client"
-import { useState } from "react"
-import { useParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { motion } from "framer-motion"
 import TimelineHeader from "@/components/timeline/TimelineHeader"
-import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer"
 import TimelineEntriesList from "@/components/timeline/TimelineEntriesList"
 import { useTimelineData } from "@/hooks/timeline/useTimelineData"
 import { useMilestones } from "@/hooks/timeline/useMilestones"
 import { PawPrint, Heart } from "lucide-react"
+import { useActivePet } from "@/stores/activePet"
+import { Button } from "@/components/ui/button"                                  // Nicolás pidió usar componente Button → import Button
 
+const PetSelector = dynamic(() => import("@/components/PetSelector"), { ssr: false })
 
 export default function PetTimelinePage() {
-  const { petId } = useParams() as { petId: string }
+  const activePet = useActivePet((state) => state.activePet)
+  const resetActivePet = useActivePet((state) => state.resetActivePet)
+  const petId = activePet?.id ?? ""
   const { pet, isLoading: isLoadingData, error: dataError } = useTimelineData(petId)
-
   const { milestones, isLoading: isLoadingMilestones, error: milestonesError } = useMilestones()
-
   const [startDate, setStartDate] = useState<string>("")
   const [endDate, setEndDate] = useState<string>("")
   const [selectedMilestone, setSelectedMilestone] = useState<string>("")
   const [reloadSignal, setReloadSignal] = useState(0)
+
+  if (!activePet?.id) {
+    return <PetSelector />
+  }
 
   const isLoading = isLoadingData || isLoadingMilestones
   const error = dataError || milestonesError
@@ -173,9 +180,14 @@ export default function PetTimelinePage() {
         selectedMilestone={selectedMilestone}
         onMilestoneChange={setSelectedMilestone}
       >
-        <NewTimelineDrawer petId={pet.id.toString()} onSuccess={() => setReloadSignal((n) => n + 1)} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={resetActivePet}
+        >
+          Cambiar mascota
+        </Button>                                              
       </TimelineHeader>
-      <hr className="my-6 border-border" />
       <TimelineEntriesList
         startDate={startDate}
         endDate={endDate}

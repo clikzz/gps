@@ -63,7 +63,7 @@ const stateVariants = {
     opacity: 1,
     scale: 1,
     transition: { duration: 0.3, ease: "easeOut" },
-  },
+      },
 }
 
 const paginationVariants = {
@@ -96,8 +96,12 @@ export default function TimelineEntriesList({
   )
   const { isDeleting, deleteEntry } = useDeleteTimelineEntry(petId)      
 
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null)
+
   const handleDelete = async (entryId: string) => {                    
-    await deleteEntry(entryId)
+    setDeletingEntryId(entryId)
+    await deleteEntry(entryId)  
+    setDeletingEntryId(null)  
     mutateEntries()
   }
 
@@ -191,7 +195,7 @@ export default function TimelineEntriesList({
                     key={entry.id}
                     entry={entry}
                     onDelete={() => handleDelete(entry.id)}
-                    isDeleting={isDeleting}
+                    isDeleting={isDeleting && deletingEntryId === entry.id} 
                     index={index}
                   />
                 ))}

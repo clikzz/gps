@@ -60,7 +60,7 @@ export function ForumCategory({ category }: ForumCategoryProps) {
                         {formatDateLabel(subforum.lastPost.date)}
                         </div>
                       <div>
-                        por {subforum.lastPost.author.name} #{subforum.lastPost.author.tag}
+                        por {subforum.lastPost.author.name}#{subforum.lastPost.author.tag}
                         <Link href={`/forum/user/${subforum.lastPost.author.id}`} className="hover:underline">
                         </Link>
                       </div>

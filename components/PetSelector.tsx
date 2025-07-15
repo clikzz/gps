@@ -3,18 +3,48 @@
 import { useUserProfile } from "@/stores/userProfile";
 import { useActivePet } from "@/stores/activePet";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { motion } from "framer-motion";
-import { PawPrint, Plus, Heart } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { PawPrint, Plus, Heart, X } from "lucide-react";
 import { translateSpecies } from "@/utils/translateSpecies";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
-function PetSelector() {
+interface PetSelectorProps {
+  opened?: boolean;
+  onClose?: () => void;
+  triggerButtonText?: string;
+  triggerButtonVariant?: "default" | "outline" | "ghost" | "secondary";
+}
+
+function PetSelector({
+  opened = false,
+  onClose,
+  triggerButtonText = "Cambiar Mascota",
+  triggerButtonVariant = "default",
+}: PetSelectorProps) {
+  const [isOpen, setIsOpen] = useState(opened);
   const pets = useUserProfile((state) => state.user?.Pets);
   const setActivePet = useActivePet((state) => state.setActivePet);
   const isMobile = useMediaQuery("(max-width: 640px)");
   const isTablet = useMediaQuery("(min-width: 641px) and (max-width: 1024px)");
+
+  const handleOpen = () => {
+    setIsOpen(true);
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    onClose?.();
+  };
+
+  const handlePetSelect = (pet: any) => {
+    setActivePet(pet);
+    if (!opened) {
+      handleClose();
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -63,6 +93,33 @@ function PetSelector() {
         type: "spring",
         stiffness: 300,
         damping: 20,
+      },
+    },
+  };
+
+  const modalVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.95,
+      y: 20,
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 25,
+        duration: 0.4,
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.95,
+      y: 20,
+      transition: {
+        duration: 0.3,
       },
     },
   };
@@ -120,7 +177,7 @@ function PetSelector() {
     }
   };
 
-  return (
+  const SelectorContent = () => (
     <motion.div
       className="fixed inset-0 z-50 bg-gradient-to-br from-background via-muted to-background flex flex-col overflow-hidden"
       initial={{ opacity: 0 }}
@@ -132,6 +189,21 @@ function PetSelector() {
 
       {/* Gradiente overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/40" />
+
+      {/* Botón de cerrar para modo modal */}
+      {!opened && (
+        <motion.button
+          onClick={handleClose}
+          className="absolute top-4 right-4 z-50 p-2 bg-background/80 backdrop-blur-sm rounded-full border border-border hover:bg-background/90 transition-colors"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <X className="h-5 w-5" />
+        </motion.button>
+      )}
 
       {pets && pets.length > 0 ? (
         <div className="relative flex flex-col h-full">
@@ -177,7 +249,7 @@ function PetSelector() {
                   <motion.button
                     key={pet.id}
                     className="group relative w-full focus:outline-none focus:ring-2 focus:ring-ring/30 rounded-2xl overflow-hidden"
-                    onClick={() => setActivePet(pet)}
+                    onClick={() => handlePetSelect(pet)}
                     variants={itemVariants}
                     whileHover="hover"
                     whileTap="tap"
@@ -356,6 +428,52 @@ function PetSelector() {
         </motion.div>
       )}
     </motion.div>
+  );
+
+  if (opened) {
+    return <SelectorContent />;
+  }
+
+  return (
+    <>
+      {/* Botón trigger */}
+      <Button
+        onClick={handleOpen}
+        variant={triggerButtonVariant}
+        className="inline-flex items-center gap-2"
+      >
+        <PawPrint className="h-4 w-4" />
+        {triggerButtonText}
+      </Button>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleClose}
+          >
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+
+            {/* Modal content */}
+            <motion.div
+              className="relative w-full h-full max-w-7xl max-h-[90vh] mx-4"
+              variants={modalVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SelectorContent />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 

@@ -83,6 +83,14 @@ export const updateSession = async (request: NextRequest) => {
       return NextResponse.redirect(new URL("/sign-in", request.url));
     }
 
+    if (request.nextUrl.pathname.startsWith("/find") && user.error) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+
+    if (request.nextUrl.pathname.startsWith("/marketplace") && user.error) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+
     // Public routes
     if (request.nextUrl.pathname === "/" && !user.error) {
       return NextResponse.redirect(new URL("/home", request.url));

@@ -14,12 +14,14 @@ interface FindActionsMenuProps {
   onReportClick: () => void;
   onMyReportsClick: () => void;
   onOthersReportsClick: () => void;
+  onFoundReportsClick: () => void;
 }
 
 export default function FindActionsMenu({
   onReportClick,
   onMyReportsClick,
   onOthersReportsClick,
+  onFoundReportsClick,
 }: FindActionsMenuProps) {
   return (
     <DropdownMenu>
@@ -42,6 +44,9 @@ export default function FindActionsMenu({
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onOthersReportsClick}>
           Otros Reportes
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={onFoundReportsClick}>
+          Reportes Encontrados
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

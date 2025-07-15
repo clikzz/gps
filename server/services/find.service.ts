@@ -1,4 +1,5 @@
 import prisma from "@/lib/db";
+import { reverseGeocode } from "@/utils/geocode";
 
 export interface MissingPetInput {
   pet_id: number;
@@ -6,7 +7,7 @@ export interface MissingPetInput {
   longitude: number;
   photo_urls?: string[];
   description?: string;
-}
+};
 
 /**
  * Crea un reporte de mascota desaparecida.
@@ -15,15 +16,71 @@ export const createMissingPet = async (
   reporterId: string,
   data: MissingPetInput
 ) => {
-  return prisma.missingPets.create({
-    data: {
-      reporter_id: reporterId,
-      pet_id: data.pet_id,
-      latitude: data.latitude,
-      longitude: data.longitude,
-      photo_urls: data.photo_urls ?? [],
-      description: data.description,
-    },
+  return prisma.$transaction(async (tx) => {
+    const exists = await tx.missingPets.findFirst({
+      where: {
+        pet_id: data.pet_id,
+        reporter_id: reporterId,
+        resolved: false,
+      }
+    });
+    if (exists) {
+      throw new Error("Ya tienes un reporte activo para esta mascota.");
+    }
+
+    const addr = await reverseGeocode(data.latitude, data.longitude);
+
+    const missing = await tx.missingPets.create({
+      data: {
+        reporter_id: reporterId,
+        pet_id: data.pet_id,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        photo_urls: data.photo_urls ?? [],
+        description: data.description,
+        full_address: addr.full_address,
+        address: addr.address,
+        street: addr.street,
+        city: addr.city,
+        region: addr.region,
+        postcode: addr.postcode,
+        country: addr.country,
+      },
+    });
+
+    await tx.pets.update({
+      where: { id: data.pet_id },
+      data: { is_lost: true },
+    });
+
+    return missing;
+  });
+};
+
+/**
+ * Marca una mascota como encontrada y resuelve su reporte activos. Solo el usuario que reportó la desaparición puede marcarla como encontrada.
+ */
+export const markPetAsFound = async (petId: number, userId: string) => {
+  return prisma.$transaction(async (tx) => {
+    const updatePet = await tx.pets.updateMany({
+      where: { id: petId, user_id: userId },
+      data: { is_lost: false },
+    });
+
+    if (updatePet.count === 0) {
+      throw new Error("No tienes permiso para marcar esta mascota como encontrada.");
+    }
+
+    await tx.missingPets.updateMany({
+      where: {
+        pet_id: petId,
+        reporter_id: userId,
+        resolved: false,
+      },
+      data: { resolved: true },
+    });
+
+    return true;
   });
 };
 
@@ -32,9 +89,35 @@ export const createMissingPet = async (
  */
 export const listAllMissingPets = async () => {
   return prisma.missingPets.findMany({
+    where: {
+      resolved: false,
+      Pets: { is_lost: true },
+    },
     include: {
       Pets: {
         select: { id: true, name: true, photo_url: true },
+      },
+      users: {
+        select: { id: true, name: true },
+      },
+    },
+    orderBy: { reported_at: "desc" },
+  });
+};
+
+/**
+ * Listar los reportes de mascotas desaparecidas de otros usuarios.
+ */
+export const listOtherMissingPets = async (userId: string) => {
+  return prisma.missingPets.findMany({
+    where: {
+      reporter_id: { not: userId },
+      resolved: false,
+      Pets: { is_lost: true },
+    },
+    include: {
+      Pets: {
+        select: { id: true, name: true, photo_url: true, is_lost: true },
       },
       users: {
         select: { id: true, name: true },
@@ -54,6 +137,8 @@ export const listRecentMissingPets = async () => {
   return prisma.missingPets.findMany({
     where: {
       reported_at: { gte: oneMonthAgo },
+      resolved: false,
+      Pets: { is_lost: true },
     },
     include: {
       Pets: {
@@ -72,7 +157,11 @@ export const listRecentMissingPets = async () => {
  */
 export const listMyMissingPets = async (userId: string) => {
   return prisma.missingPets.findMany({
-    where: { reporter_id: userId },
+    where: {
+      reporter_id: userId,
+      resolved: false,
+      Pets: { is_lost: true },
+    },
     include: {
       Pets: { select: { id: true, name: true, photo_url: true } },
       users: { select: { id: true, name: true } },
@@ -86,7 +175,85 @@ export const listMyMissingPets = async (userId: string) => {
  */
 export const findPetsByUser = async (userId: string) => {
   return prisma.pets.findMany({
-    where: { user_id: userId },
+    where: {
+      user_id: userId,
+      is_lost: false,
+    },
     orderBy: { name: "asc" },
+  });
+};
+
+/**
+ * Reportar a otro usuario que su mascota posiblemente fué encontrada.
+ */
+export const createFoundReport = async (
+  helperId: string,
+  missingPetId: number,
+  data: {
+    photo_urls?: string[];
+    description?: string;
+    latitude: number;
+    longitude: number; 
+  }
+) => {
+  const addr = await reverseGeocode(data.latitude, data.longitude);
+
+  return prisma.foundReports.create({
+    data: {
+      helperId,
+      missingPetId,
+      photo_urls: data.photo_urls ?? [],
+      description: data.description,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      full_address: addr.full_address,
+      address: addr.address,
+      street: addr.street,
+      city: addr.city,
+      region: addr.region,
+      postcode: addr.postcode,
+      country: addr.country,
+    },
+  });
+};
+
+/**
+ * Listar reportes de hallazgo a la mascota desaparecida.
+ */
+export const listFoundReportsForUser = async (userId: string) => {
+  return prisma.foundReports.findMany({
+    where: {
+      MissingPets: {
+        reporter_id: userId,
+        resolved: false,
+      },
+    },
+    include: {
+      MissingPets: {
+        select: {
+          id: true,
+          pet_id: true,
+          reporter_id: true,
+          latitude: true,
+          longitude: true,
+          reported_at: true,
+          Pets: {
+            select: {
+              name: true,
+              photo_url: true,
+            },
+          },
+        },
+      },
+      users: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      created_at: "desc",
+    },
   });
 };

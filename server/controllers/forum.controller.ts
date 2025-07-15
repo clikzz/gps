@@ -1,10 +1,80 @@
 import prisma from "@/lib/db"; 
 import { ZodError } from "zod";
-import { listSubforums, listTopics, listPosts, createTopic, createPost, deleteOwnPost, deleteOwnTopic, updateOwnPost, updateOwnTopic } from "../services/forum.service";
-import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema} from "../validations/forum.validation";
-import { authenticateUser } from "../middlewares/auth.middleware";
+import { 
+  listSubforums, 
+  listTopics, 
+  listPosts, 
+  createTopic, 
+  createPost, 
+  deleteOwnPost, 
+  deleteOwnTopic, 
+  updateOwnPost,
+  updateAnyPost,
+  updateOwnTopic, 
+  updateAnyTopic,
+  assignModerator, 
+  revokeModerator,
+  deleteAnyPost,
+  deleteAnyTopic,
+  updateUserRole,
+  updateUserStatus,
+  listUsers, 
+  updateTopicLock,
+} from "../services/forum.service";
+import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema, changeUserStatusSchema} from "@/server/validations/forum.validation";
+import { authenticateUser, ensureAdmin, ensureModerator } from "@/server/middlewares/auth.middleware";
+import type { AuthUser } from "@/server/middlewares/auth.middleware";
 import { NextResponse } from "next/server";
 
+export async function enforceForumAccess(user: AuthUser) {
+  const profile = await prisma.users.findUnique({
+    where: { id: user.id },
+    select: { status: true, suspensionUntil: true },
+  });
+
+  if (!profile) {
+    return NextResponse.json(
+      { error: "Usuario no encontrado" },
+      { status: 404 }
+    );
+  }
+
+    if (
+    profile.status === "SUSPENDED" &&
+    profile.suspensionUntil &&
+    profile.suspensionUntil.getTime() <= Date.now()
+  ) {
+    await prisma.users.update({
+      where: { id: user.id },
+      data: {
+        status: "ACTIVE",
+        suspensionUntil: null,
+        suspensionReason: null,
+      },
+    });
+    return null;
+  }
+
+  if (profile.status === "BANNED") {
+    return NextResponse.json(
+      { error: "Estás baneado del foro" },
+      { status: 403 }
+    );
+  }
+
+  if (
+    profile.status === "SUSPENDED" &&
+    profile.suspensionUntil &&
+    profile.suspensionUntil.getTime() > Date.now()
+  ) {
+    return NextResponse.json(
+      { error: "Estás suspendido temporalmente" },
+      { status: 403 }
+    );
+  }
+
+  return null;
+}
 
 export const fetchSubforums = async () => {
   const subs = await listSubforums();
@@ -19,6 +89,13 @@ export const fetchSubforums = async () => {
   })
 };
 
+export const fetchUsers = async () => {
+  const all = await listUsers();
+  return new Response(JSON.stringify(all), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+};
 
 export const fetchTopics = async (req: Request) => {
   const { searchParams } = new URL(req.url);
@@ -34,6 +111,7 @@ export const fetchTopics = async (req: Request) => {
     createdAt: t.created_at.toISOString(),
     updatedAt: t.updated_at.toISOString(),
     postsCount: t.postsCount,
+    locked: t.locked,
     author: {
       id: t.author.id,
       name: t.author.name,
@@ -151,7 +229,6 @@ export const addTopic = async (req: Request) => {
 }
 }
 
-
 export const addPost = async (req: Request) => {
   const authUser = await authenticateUser(req);
   if (authUser instanceof Response) return authUser;
@@ -190,127 +267,276 @@ export const addPost = async (req: Request) => {
       status: 201,
       headers: { "Content-Type": "application/json" },
     })
-  } catch (err) {
-  if (err instanceof ZodError) {
+  } catch (err: any) {
+    if (err.message === "TOPIC_LOCKED") {
+      return NextResponse.json(
+        { error: "Este tema está cerrado y no acepta más respuestas." },
+        { status: 403 }
+      );
+    }
+    if (err instanceof ZodError) {
+      return new Response(
+        JSON.stringify({ errors: err.errors }),
+        { status: 422, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    if (err instanceof Error && err.message.includes("10 segundos")) {
+      return new Response(
+        JSON.stringify({ error: err.message }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    console.error("Error en addPost:", err);
     return new Response(
-      JSON.stringify({ errors: err.errors }),
-      { status: 422, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Error interno" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
-  if (err instanceof Error && err.message.includes("10 segundos")) {
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 429, headers: { "Content-Type": "application/json" } }
-    );
-  }
-  console.error("Error en addPost:", err);
-  return new Response(
-    JSON.stringify({ error: "Error interno" }),
-    { status: 500, headers: { "Content-Type": "application/json" } }
-  );
-}
 }
 
-export async function editOwnPost(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+export async function editPostHandler(req: Request) {
+  const user = await authenticateUser(req)
+  if (user instanceof Response) return user
 
-  const postId = Number(new URL(req.url).pathname.split("/").pop());
+  const postId = Number(new URL(req.url).pathname.split("/").pop())
   if (isNaN(postId)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 })
   }
 
   try {
-    const { content } = editPostSchema.parse(await req.json());
-    const result = await updateOwnPost(user.id, postId, content);
+    const { content } = editPostSchema.parse(await req.json())
+
+    if (user.role === "MODERATOR" || user.role === "ADMIN") {
+      await updateAnyPost(user.id, postId, content)
+      return new NextResponse(null, { status: 204 })
+    }
+
+    const result = await updateOwnPost(user.id, postId, content)
     if (result.count === 0) {
       return NextResponse.json(
         { error: "No tienes permiso o mensaje no existe" },
         { status: 403 }
-      );
+      )
     }
-    return new NextResponse(null, { status: 204 });
-  } catch (err) {
+    return new NextResponse(null, { status: 204 })
+
+  } catch (err: unknown) {
     if (err instanceof ZodError) {
-      return NextResponse.json(
-        { errors: err.errors },
-        { status: 422 }
-      );
+      return NextResponse.json({ errors: err.errors }, { status: 422 })
     }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Error interno" },
       { status: 500 }
-    );
+    )
   }
 }
 
-export async function removeOwnPost(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+export async function deletePostHandler(req: Request) {
+  const user = await authenticateUser(req)
+  if (user instanceof Response) return user
 
-  const postId = Number(new URL(req.url).pathname.split("/").pop());
+  const postId = Number(new URL(req.url).pathname.split("/").pop())
   if (isNaN(postId)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 })
   }
 
-  const result = await deleteOwnPost(user.id, postId);
+  if (user.role === "ADMIN") {
+    await deleteAnyPost(postId)
+    return new NextResponse(null, { status: 204 })
+  }
+
+  const result = await deleteOwnPost(user.id, postId)
   if (result.count === 0) {
     return NextResponse.json(
       { error: "No tienes permiso o mensaje no existe" },
       { status: 403 }
-    );
+    )
   }
-  return new NextResponse(null, { status: 204 });
+  return new NextResponse(null, { status: 204 })
 }
 
-export async function editOwnTopic(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+export async function editTopicHandler(req: Request) {
+  const user = await authenticateUser(req)
+  if (user instanceof Response) return user
 
-  const topicId = Number(new URL(req.url).pathname.split("/").pop());
+  const topicId = Number(new URL(req.url).pathname.split("/").pop())
   if (isNaN(topicId)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 })
   }
 
   try {
-    const { title } = editTopicSchema.parse(await req.json());
-    const result = await updateOwnTopic(user.id, topicId, title);
+    const { title } = editTopicSchema.parse(await req.json())
+
+    if (user.role === "MODERATOR" || user.role === "ADMIN") {
+      await updateAnyTopic(user.id, topicId, title)
+      return new NextResponse(null, { status: 204 })
+    }
+
+    const result = await updateOwnTopic(user.id, topicId, title)
     if (result.count === 0) {
       return NextResponse.json(
         { error: "No tienes permiso o tema no existe" },
         { status: 403 }
-      );
+      )
     }
-    return new NextResponse(null, { status: 204 });
-  } catch (err) {
+    return new NextResponse(null, { status: 204 })
+
+  } catch (err: unknown) {
     if (err instanceof ZodError) {
-      return NextResponse.json(
-        { errors: err.errors },
-        { status: 422 }
-      );
+      return NextResponse.json({ errors: err.errors }, { status: 422 })
     }
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Error interno" },
       { status: 500 }
-    );
+    )
   }
 }
 
-export async function removeOwnTopic(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
+export async function deleteTopicHandler(req: Request) {
+  const user = await authenticateUser(req)
+  if (user instanceof Response) return user
 
-  const topicId = Number(new URL(req.url).pathname.split("/").pop());
+  const topicId = Number(new URL(req.url).pathname.split("/").pop())
   if (isNaN(topicId)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 })
   }
 
-  const result = await deleteOwnTopic(user.id, topicId);
+  if (user.role === "ADMIN") {
+    await deleteAnyTopic(topicId)
+    return new NextResponse(null, { status: 204 })
+  }
+
+  const result = await deleteOwnTopic(user.id, topicId)
   if (result.count === 0) {
     return NextResponse.json(
       { error: "No tienes permiso o tema no existe" },
       { status: 403 }
-    );
+    )
   }
-  return new NextResponse(null, { status: 204 });
+  return new NextResponse(null, { status: 204 })
+}
+
+export async function addModerator(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+  try {
+    ensureAdmin(user);
+    const { userId } = await req.json();
+    await assignModerator(userId);
+    return new Response(null, { status: 204 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 403 });
+  }
+}
+
+export async function removeModerator(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+  try {
+    ensureAdmin(user);
+    const { userId } = await req.json();
+    await revokeModerator(userId);
+    return new Response(null, { status: 204 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 403 });
+  }
+}
+
+export async function changeUserStatusHandler(req: Request) {
+  const auth = await authenticateUser(req);
+  if (auth instanceof Response) return auth;
+
+  try {
+    ensureModerator(auth);
+  } catch {
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
+  }
+
+  let dto;
+  try {
+    const body = await req.json();
+    dto = changeUserStatusSchema.parse(body);
+  } catch (zErr: any) {
+    return NextResponse.json({ errors: zErr.errors }, { status: 422 });
+  }
+
+  try {
+    await updateUserStatus(
+      auth.id,
+      dto.targetUserId,
+      dto.status,
+      dto.suspensionReason,
+      dto.suspensionUntil
+    );
+    return new NextResponse(null, { status: 204 });
+  } catch (err: any) {
+    let code = 500, msg = "Error interno";
+    if (err.message === "CANNOT_MODIFY_ADMIN") {
+      code = 400; msg = "No puedes modificar al administrador";
+    } else if (err.message === "FORBIDDEN_MODERATOR") {
+      code = 403; msg = "No tienes permisos";
+    }
+    return NextResponse.json({ error: msg }, { status: code });
+  }
+}
+
+
+export async function changeUserRoleHandler(req: Request) {
+  const auth = await authenticateUser(req)
+  if (auth instanceof Response) return auth
+
+  try {
+    ensureAdmin(auth)
+  } catch {
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 })
+  }
+
+  const { targetUserId, role } = (await req.json()) as {
+    targetUserId: string
+    role: "MODERATOR" | "USER"
+  }
+
+  try {
+    await updateUserRole(auth.id, targetUserId, role)
+    return new NextResponse(null, { status: 204 })
+  } catch (err: any) {
+    const msg =
+      err.message === "CANNOT_MODIFY_ADMIN"
+        ? "No puedes modificar al administrador"
+        : err.message === "FORBIDDEN_ADMIN"
+        ? "No tienes permisos"
+        : "Error interno"
+    return NextResponse.json({ error: msg }, { status: 400 })
+  }
+}
+
+//HU2.5
+export async function lockTopicHandler(req: Request) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+
+  try {
+    ensureModerator(user);
+  } catch {
+    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
+  }
+
+  const segments = new URL(req.url).pathname.split("/").filter(Boolean);
+  const topicId = Number(segments[segments.length - 2]);
+  console.log("Controller:", topicId);
+  if (isNaN(topicId)) {
+    return NextResponse.json({ error: "ID de tema inválido" }, { status: 400 });
+  }
+
+  const { locked } = await req.json() as { locked: boolean };
+
+  try {
+    await updateTopicLock(user.id, topicId, locked);
+    return NextResponse.json({ locked }, { status: 200 });
+  } catch (err: any) {
+    if (err.message === "FORBIDDEN_MODERATOR") {
+      return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
+    }
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
 }

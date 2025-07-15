@@ -22,6 +22,7 @@ interface TopicDetailProps {
       menssageCount: number
       avatar_url?: string
     }
+    locked: boolean
   }
   mainPost: {
     id: number                
@@ -42,24 +43,28 @@ const getUserTitle = (messageCount: number): string => {
   if (messageCount >= 100) return "Veterinario(a)"
   if (messageCount >= 50) return "Maullador(a) Senior"
   if (messageCount >= 25) return "Amante de Mascotas"
-  if (messageCount >= 10) return "Cachorro Activo"
-  if (messageCount >= 5) return "Gatito Curioso"
+  if (messageCount >= 15) return "Cachorro Activo"
+  if (messageCount >= 8) return "Gatito Curioso"
   return "Mascota Nueva"
 }
 
 export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
   const currentUserId = useUserProfile((s) => s.user?.id)
+  const currentUserRole = useUserProfile((s) => s.user?.role)
+
   const isAuthor = currentUserId === topic.author.id
-  const [displayContent, setDisplayContent] = useState(mainPost?.content ?? "")
+  const canEdit  = isAuthor || currentUserRole === "MODERATOR" || currentUserRole === "ADMIN"
+  const canDelete= isAuthor || currentUserRole === "ADMIN"
+
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(mainPost?.content ?? "")
+  const [displayContent, setDisplayContent] = useState(mainPost?.content ?? "")
   const router = useRouter()
 
   useEffect(() => {
     setDisplayContent(mainPost?.content ?? "")
     setEditContent(mainPost?.content ?? "")
   }, [mainPost])
-
 
   const handleSaveContent = async () => {
     if (!mainPost) return
@@ -117,11 +122,10 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
       </div>
 
       <div className="flex">
-        {/* Sidebar del autor */}
         <div className="w-48 border-r p-4 text-center space-y-3">
           <div>
             <Link href={`/forum/user/${topic.author.id}`} className="font-medium hover:underline text-sm">
-              {topic.author.name} #{topic.author.tag}
+              {topic.author.name}#{topic.author.tag}
             </Link>
           </div>
           <div className="text-xs font-medium">{getUserTitle(topic.author.menssageCount)}</div>
@@ -153,29 +157,21 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
                 className="w-full min-h-[100px] p-3 border rounded-lg resize-none"
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveContent}>
-                  Guardar
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
-                  Cancelar
-                </Button>
+                <Button size="sm" onClick={handleSaveContent}>Guardar</Button>
+                <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
               </div>
             </div>
           ) : (
             <>
               <div className="prose max-w-none mb-8">
-                <p className="whitespace-pre-wrap">{mainPost.content}</p>
+                <p className="whitespace-pre-wrap">{displayContent}</p>
               </div>
 
-              {isAuthor && (
+              {(canEdit || canDelete) && (
                 <div className="absolute bottom-4 right-4 flex gap-2 text-sm">
-                  <button onClick={() => setIsEditing(true)} className="hover:underline">
-                    Editar
-                  </button>
-                  <span>|</span>
-                  <button onClick={handleDeleteTopic} className="hover:underline">
-                    Eliminar
-                  </button>
+                  {canEdit && <button onClick={() => setIsEditing(true)}>Editar</button>}
+                  {canEdit && canDelete && <span>|</span>}
+                  {canDelete && <button onClick={handleDeleteTopic}>Eliminar</button>}
                 </div>
               )}
             </>

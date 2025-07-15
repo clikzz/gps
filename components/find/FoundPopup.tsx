@@ -2,28 +2,55 @@
 
 import React, { useEffect } from "react";
 import { Popup } from "react-map-gl/mapbox";
-import { MissingReport } from "@/types/find";
+import { FoundReport } from "@/types/find";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { fetcher } from "@/lib/utils";
 
-interface ReportPopupProps {
-  selected: MissingReport | null;
+interface FoundPopupProps {
+  selected: FoundReport | null;
+  userId: string;
   photoIndex: number;
   setPhotoIndex: (i: number) => void;
   onClose: () => void;
+  onMarkResolved: (missingPetId: string) => void;
 }
 
-export default function ReportPopup({
+export default function FoundPopup({
   selected,
+  userId,
   photoIndex,
   setPhotoIndex,
   onClose,
-}: ReportPopupProps) {
+  onMarkResolved,
+}: FoundPopupProps) {
+  const [loading, setLoading] = React.useState(false);
+
   useEffect(() => {
     setPhotoIndex(0);
   }, [selected]);
 
   if (!selected) return null;
+
+  const isOwner = selected.ownerId === userId;
+
+  const handleMarkFound = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/find?mode=resolved&pet=${selected.pet.id}`,
+        { method: "PUT" }
+      );
+      if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+      onMarkResolved(selected.pet.id);
+      onClose();
+    } catch (err: any) {
+      alert("Error marcando encontrada: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Popup
@@ -35,7 +62,7 @@ export default function ReportPopup({
       closeButton={false}
       maxWidth="none"
     >
-      <Card className="w-60 mx-auto overflow-hidden">
+      <Card className="w-72 mx-auto overflow-hidden">
         <button
           onClick={onClose}
           className="absolute top-2 right-2 z-10 text-gray-600 hover:text-gray-800"
@@ -44,19 +71,19 @@ export default function ReportPopup({
         </button>
 
         <CardHeader className="flex flex-row items-center space-x-3 p-4">
-          {selected.Pets.photo_url ? (
+          {selected.pet.photo_url ? (
             <img
-              src={selected.Pets.photo_url}
-              alt={selected.Pets.name}
+              src={selected.pet.photo_url}
+              alt={selected.pet.name}
               className="w-14 h-14 object-cover rounded-full flex-shrink-0"
             />
           ) : (
             <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0" />
           )}
           <div className="flex-1">
-            <CardTitle className="text-base">{selected.Pets.name}</CardTitle>
+            <CardTitle className="text-base">{selected.pet.name}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Reportado por: {selected.reporter.name}
+              Aviso por: {selected.helper.name}
             </p>
           </div>
         </CardHeader>
@@ -66,8 +93,8 @@ export default function ReportPopup({
             <div className="relative">
               <img
                 src={selected.photo_urls[photoIndex]}
-                alt={`respaldo ${photoIndex + 1}`}
-                className="w-full h-32 object-cover rounded"
+                alt={`Evidencia ${photoIndex + 1}`}
+                className="w-full h-52 object-cover rounded"
               />
               {photoIndex > 0 && (
                 <button
@@ -95,9 +122,28 @@ export default function ReportPopup({
               Sin descripción
             </p>
           )}
-          <p className="text-xs text-muted-foreground text-right">
-            {new Date(selected.reported_at).toLocaleString()}
-          </p>
+            <p className="text-xs text-muted-foreground">
+              Encontrado el {new Date(selected.reported_at).toLocaleDateString()} a las {new Date(selected.reported_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {`${selected.address || selected.street}, ${selected.city}` || "Ubicación no registrada"}
+            </p>
+
+          {isOwner ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleMarkFound}
+              disabled={loading}
+              className="w-full mt-2"
+            >
+              {loading ? "Marcando..." : "Marcar encontrada"}
+            </Button>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground mt-2">
+              No puedes marcar este aviso.
+            </p>
+          )}
         </CardContent>
       </Card>
     </Popup>

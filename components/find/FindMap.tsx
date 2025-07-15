@@ -1,18 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import dynamic from "next/dynamic";
-import "mapbox-gl/dist/mapbox-gl.css";
-import { Marker } from "react-map-gl/mapbox";
-import { MissingReport } from "@/types/find";
-import { useUserLocation } from "@/hooks/useUserLocation";
-import { Circle, MapPinCheck } from "lucide-react";
-import ActionsMenu from "@/components/find/ActionsMenu";
-import ReportModal, { LatLng } from "@/components/find/ReportModal";
-import MyReports from "@/components/find/MyReports";
-import OthersReports from "@/components/find/OthersReports";
-import MapMarkers from "@/components/find/MapMarkers";
-import ReportPopup from "@/components/find/MapPopups";
+import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { Marker } from 'react-map-gl/mapbox';
+import { useUserProfile } from '@/stores/userProfile';
+import { MissingReport, FoundReport } from '@/types/find';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { MapPin, Plus, Minus, Compass } from 'lucide-react';
+import ActionsMenu from '@/components/find/ActionsMenu';
+import ReportModal, { LatLng } from '@/components/find/ReportModal';
+import MyReports from '@/components/find/MyReports';
+import OthersReports from '@/components/find/OthersReports';
+import FoundReportModal from '@/components/find/FoundReportModal';
+import { Markers } from '@/components/find/FindMarkers';
+import ReportPopup from '@/components/find/ReportPopup';
+import FoundReports from '@/components/find/FoundReports';
+import FoundPopup from '@/components/find/FoundPopup';
+import { toast } from "sonner";
+import { fetcher } from "@/lib/utils";
 
 const Map = dynamic(
   () => import("react-map-gl/mapbox").then((mod) => mod.default),
@@ -21,7 +27,11 @@ const Map = dynamic(
 
 export default function FindMap() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const { initial, error, onMapLoad } = useUserLocation();
+  const { initial, onMapLoad } = useUserLocation();
+
+  const userId = useUserProfile((state) => state.user?.id || "");
+
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   const [reports, setReports] = useState<MissingReport[]>([]);
   const [selected, setSelected] = useState<MissingReport | null>(null);
@@ -29,11 +39,39 @@ export default function FindMap() {
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isMyReportsModalOpen, setIsMyReportsModalOpen] = useState(false);
-  const [isOthersReportsModalOpen, setIsOthersReportsModalOpen] =
-    useState(false);
+  const [isOthersReportsModalOpen, setIsOthersReportsModalOpen] = useState(false);
+  const [isFoundReportsModalOpen, setIsFoundReportsModalOpen] = useState(false);
 
   const [pickLocationMode, setPickLocationMode] = useState(false);
   const [pickedLocation, setPickedLocation] = useState<LatLng | null>(null);
+
+  const [isFoundModalOpen, setIsFoundModalOpen] = useState(false);
+  const [targetReport, setTargetReport] = useState<MissingReport | null>(null);
+
+  const [foundPickMode, setFoundPickMode] = useState(false);
+  const [foundLocation, setFoundLocation] = useState<LatLng | null>(null);
+
+  const [foundReportsOnMap, setFoundReportsOnMap] = useState<FoundReport[]>([]);
+  const [foundSelected, setFoundSelected] = useState<FoundReport | null>(null);
+  const [foundPhotoIndex, setFoundPhotoIndex] = useState(0);
+
+  async function refreshReports() {
+    try {
+      const data = await fetcher<MissingReport[]>("/api/find?mode=recent");
+      setReports(data);
+    } catch (err: any) {
+      console.error("Error fetching recent reports:", err);
+    }
+  }
+
+  async function refreshFoundReports() {
+    try {
+      const data = await fetcher<FoundReport[]>("/api/find?mode=found");
+      setFoundReportsOnMap(data);
+    } catch (err: any) {
+      console.error("Error fetching found reports:", err);
+    }
+  }
 
   useEffect(() => {
     setPhotoIndex(0);
@@ -41,16 +79,29 @@ export default function FindMap() {
 
   useEffect(() => {
     refreshReports();
+    refreshFoundReports();
   }, []);
 
-  function refreshReports() {
-    fetch("/api/find?mode=recent")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data: MissingReport[]) => setReports(data))
-      .catch(console.error);
+  const flyToReport = (report: MissingReport) => {
+    if (!mapRef.current) return;
+    mapRef.current.flyTo({
+      center: [report.longitude, report.latitude],
+      zoom: 16,
+      essential: true,
+      speed: 1.2,
+    });
+  };
+
+  const handleGoTo = (report: MissingReport) => {
+    setIsOthersReportsModalOpen(false);
+    setIsMyReportsModalOpen(false);
+    flyToReport(report);
+  };
+
+  function openFoundModal(report: MissingReport) {
+    setTargetReport(report);
+    setIsFoundModalOpen(true);
+    setFoundLocation(null);
   }
 
   async function handleSubmitReport(data: {
@@ -95,38 +146,58 @@ export default function FindMap() {
       refreshReports();
     } catch (e: any) {
       console.error("Error al enviar reporte:", e);
-      alert(`Error al enviar reporte: ${e.message}`);
+      toast.error(`Error al enviar reporte: ${e.message}`);
     }
   }
 
   function handlePickLocation() {
     setIsReportModalOpen(false);
     setPickLocationMode(true);
-    alert("Haz clic en el mapa para seleccionar la ubicación definitiva.");
   }
 
   function handleMapClick(evt: any) {
-    if (!pickLocationMode) return;
     const [lng, lat] = evt.lngLat.toArray();
-    setPickedLocation({ lat, lng });
-    setPickLocationMode(false);
-    setIsReportModalOpen(true);
+    if (pickLocationMode) {
+      setPickedLocation({ lat, lng });
+      setPickLocationMode(false);
+      setIsReportModalOpen(true);
+    }
+    if (foundPickMode) {
+      setFoundLocation({ lat, lng });
+      setFoundPickMode(false);
+      setIsFoundModalOpen(true);
+    }
   }
 
-  return (
-    <div className="relative w-full h-full">
-      {error && (
-        <div className="absolute top-2 left-2 bg-red-500 p-2 rounded text-white">
-          {error}
-        </div>
-      )}
+  const handleZoomIn = () => {
+    if (!mapRef.current) return;
+    mapRef.current.zoomIn({ duration: 300 });
+  };
 
+  const handleZoomOut = () => {
+    if (!mapRef.current) return;
+    mapRef.current.zoomOut({ offset: [80, 60], duration: 300 });
+  };
+
+  const handleCenter = () => {
+    if (!mapRef.current) return;
+    mapRef.current.flyTo({
+      center: [initial.longitude, initial.latitude],
+      zoom: initial.zoom,
+      essential: true,
+      speed: 1.2,
+    });
+  };
+
+  return (
+    <div className="w-full h-full relative overflow-hidden">
       {/* Menú de acciones */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-6 right-4 z-20">
         <ActionsMenu
           onReportClick={() => setIsReportModalOpen(true)}
           onMyReportsClick={() => setIsMyReportsModalOpen(true)}
           onOthersReportsClick={() => setIsOthersReportsModalOpen(true)}
+          onFoundReportsClick={() => setIsFoundReportsModalOpen(true)}
         />
       </div>
 
@@ -145,49 +216,119 @@ export default function FindMap() {
       <MyReports
         isOpen={isMyReportsModalOpen}
         onClose={() => setIsMyReportsModalOpen(false)}
+        onGoTo={handleGoTo}
       />
       <OthersReports
         isOpen={isOthersReportsModalOpen}
         onClose={() => setIsOthersReportsModalOpen(false)}
+        onGoTo={handleGoTo}
       />
+      <FoundReports
+        isOpen={isFoundReportsModalOpen}
+        onClose={() => setIsFoundReportsModalOpen(false)}
+      />
+
+      {/* Indicador de modo selección */}
+      {(pickLocationMode || foundPickMode) && (
+        <div className="absolute top-4 left-4 z-30 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-yellow-600 rounded-full animate-pulse" />
+            <div>
+              <h3 className="font-semibold text-gray-800">Modo selección activo</h3>
+              <p className="text-sm text-gray-700">
+                {pickLocationMode
+                  ? "Haz clic en el mapa para seleccionar la última ubicación de tu mascota"
+                  : "Haz clic en el mapa para indicar dónde viste la mascota"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mapa */}
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
-        initialViewState={{
-          latitude: initial.latitude,
-          longitude: initial.longitude,
-          zoom: initial.zoom,
-        }}
-        mapStyle="mapbox://styles/mapbox/outdoors-v11"
+        initialViewState={initial}
+        mapStyle="mapbox://styles/mapbox/streets-v12"
         style={{ width: "100%", height: "100%" }}
         onLoad={(e) => {
           mapRef.current = e.target;
           onMapLoad(e.target);
+          setMapLoaded(true);
         }}
         onClick={handleMapClick}
       >
-        <Marker
-          latitude={initial.latitude}
-          longitude={initial.longitude}
-          anchor="bottom"
-        >
-          <Circle size={22} className="text-blue-600" />
-        </Marker>
 
-        {/* Marcadores */}
-        <MapMarkers
+        {/* Marcadores de desapariciones */}
+        <Markers
           reports={reports}
-          onSelect={(report) => setSelected(report)}
+          onSelect={(r) => {
+            setSelected(r);
+            setFoundSelected(null);
+          }}
+        />
+
+        {/* Marcadores de hallazgos */}
+        <Markers
+          key="found-markers"
+          reports={foundReportsOnMap}
+          variant="found"
+          onSelect={(r) => {
+            setFoundPhotoIndex(0);
+            setFoundSelected(r);
+            setSelected(null);
+          }}
         />
 
         {/* Popup */}
         <ReportPopup
           selected={selected}
+          userId={userId}
           photoIndex={photoIndex}
           setPhotoIndex={setPhotoIndex}
           onClose={() => setSelected(null)}
+          onFound={() => {
+            setSelected(null);
+            refreshReports();
+          }}
+          onOpenFoundModal={openFoundModal}
         />
+
+        {foundSelected && (
+          <FoundPopup
+            selected={foundSelected}
+            userId={userId}
+            photoIndex={foundPhotoIndex}
+            setPhotoIndex={setFoundPhotoIndex}
+            onClose={() => setFoundSelected(null)}
+            onMarkResolved={(petId) => {
+              refreshReports();
+              refreshFoundReports();
+            }}
+          />
+        )}
+
+        {targetReport && (
+          <FoundReportModal
+            isOpen={isFoundModalOpen}
+            report={targetReport}
+            pickedLocation={foundLocation}
+            onPickLocation={() => {
+              setIsFoundModalOpen(false);
+              setFoundPickMode(true);
+            }}
+            onClose={() => {
+              setIsFoundModalOpen(false);
+              setFoundLocation(null);
+            }}
+            onSubmitted={() => {
+              setIsFoundModalOpen(false);
+              setFoundLocation(null);
+              toast.success("Se ha reportado el hallazgo correctamente.");
+              refreshReports();
+            }}
+          />
+        )}
 
         {/* Marcador de ubicación marcada */}
         {pickedLocation && (
@@ -196,10 +337,40 @@ export default function FindMap() {
             longitude={pickedLocation.lng}
             anchor="bottom"
           >
-            <MapPinCheck size={28} className="text-red-500" />
+            <MapPin size={28} className="text-red-400 drop-shadow-lg" fill="currentColor" />
           </Marker>
         )}
       </Map>
+
+        <div className="absolute bottom-6 right-4 flex flex-col space-y-2 z-20">
+          <button
+            onClick={handleZoomIn}
+            className="p-2 bg-white rounded shadow hover:bg-gray-100"
+          >
+            <Plus size={20} />
+          </button>
+          <button
+            onClick={handleZoomOut}
+            className="p-2 bg-white rounded shadow hover:bg-gray-100"
+          >
+            <Minus size={20} />
+          </button>
+          <button
+            onClick={handleCenter}
+            className="p-2 bg-white rounded shadow hover:bg-gray-100"
+          >
+            <Compass size={20} />
+          </button>
+        </div>
+
+      {!mapLoaded && (
+        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando mapa...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

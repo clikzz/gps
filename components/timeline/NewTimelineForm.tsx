@@ -176,7 +176,7 @@ export default function NewTimelineForm({
     return;
   }
 
-  // Convertir eventDate local ("YYYY-MM-DD") a UTC "YYYY-MM-DDT00:00:00.000Z"
+
   const localDate = new Date(eventDate + "T00:00:00");
   const utcDateString = new Date(
     Date.UTC(localDate.getFullYear(), localDate.getMonth(), localDate.getDate())

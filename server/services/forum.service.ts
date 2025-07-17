@@ -1,5 +1,6 @@
 import prisma from "@/lib/db";
 import { Topics, Posts, users, Subforums, Role, UserStatus } from "@prisma/client";
+import { assignBadge } from "./badge.service";
 
 export const listSubforums = async (): Promise<Subforums[]> => {
   return prisma.subforums.findMany({
@@ -84,13 +85,17 @@ export const createTopic = async (
     await tx.posts.create({
       data: { topic_id: topic.id, user_id: userId, content: dto.content },
     });
-    await tx.users.update({
+    const updatedUser = await tx.users.update({
       where: { id: userId },
       data: {
         menssageCount: { increment: 1 },
         lastMessageAt: new Date(),
       },
     });
+
+    if (updatedUser.menssageCount === 10) {
+      await assignBadge(userId, "MSG_10");
+    }
 
     return topic;
   });
@@ -129,6 +134,11 @@ export const createPost = async (
         lastMessageAt: new Date(),
       },
     });
+
+    if (profile?.menssageCount === 10) {
+      await assignBadge(userId, "MSG_10");
+    }
+    
     return post;
   });
 };

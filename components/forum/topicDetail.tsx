@@ -128,7 +128,7 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
               {topic.author.name}#{topic.author.tag}
             </Link>
           </div>
-          <div className="text-xs font-medium">{getUserTitle(topic.author.menssageCount)}</div>
+          <div className="text-xs font-semibold text-accent">{getUserTitle(topic.author.menssageCount)}</div>
           <div className="flex justify-center">
             {topic.author.avatar_url ? (
               <img

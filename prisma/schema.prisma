@@ -292,8 +292,6 @@ Reviews          Reviews[]
 TimelineEntries  TimelineEntries[]
 Topics           Topics[]
 HealthAlerts     HealthAlerts[]
-userBadges       UserBadge[]
-selectedBadgeIds String[]
 }
 
 enum Role {

@@ -36,6 +36,12 @@ const UPLOAD_CONFIGS = {
     quality: 80,
     maxSize: 5 * 1024 * 1024, // 5MB
   },
+  marketplace: {
+    folder: "marketplace",
+    maxWidth: 1024,
+    quality: 80,
+    maxSize: 5 * 1024 * 1024, // 5MB
+  },
 } as const;
 
 type UploadType = keyof typeof UPLOAD_CONFIGS;

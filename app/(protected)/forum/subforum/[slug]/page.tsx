@@ -2,19 +2,8 @@ import Link from "next/link"
 import { TopicList } from "@/components/forum/topicList"
 import { fetcher } from "@/lib/utils"
 import { notFound } from "next/navigation"
-
-interface Topic {
-  id: number
-  title: string
-  createdAt: string
-  updatedAt: string
-  author: {
-    name: string
-    id: string
-    tag: number
-  }
-  postsCount: number
-}
+import { ForumNavigation } from "@/components/forum/forumNavigation"
+import { ForumTopic } from "@/types/forum"
 
 interface Subforum {
   id: number
@@ -41,9 +30,9 @@ async function getSubforums(): Promise<Subforum[]> {
   }
 }
 
-async function getTopics(subforumId: number): Promise<Topic[]> {
+async function getTopics(subforumId: number): Promise<ForumTopic[]> {
   try {
-    return await fetcher<Topic[]>(`/api/forum/topics?subforumId=${subforumId}`)
+    return await fetcher<ForumTopic[]>(`/api/forum/topics?subforumId=${subforumId}`)
   } catch (error) {
     return []
   }
@@ -68,6 +57,7 @@ export default async function SubforumPage({
 
   return (
     <div className="min-h-screen w-full">
+      <ForumNavigation />
       <main className="w-full max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="text-sm breadcrumbs">
           <Link href="/forum" className="hover:underline">

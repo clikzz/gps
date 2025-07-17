@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 interface Pet {
   id: string;
@@ -52,7 +53,7 @@ export default function ReportModal({
       })
       .then((data: Pet[]) => setPets(data))
       .catch((err) => {
-        console.error('Error al traer pets:', err);
+        toast.error('Error al traer mascotas:', err);
         setPets([]);
       })
       .finally(() => setLoadingPets(false));
@@ -77,7 +78,7 @@ export default function ReportModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPetId) {
-      alert('Debes seleccionar una mascota.');
+      toast.info('Debes seleccionar una mascota.');
       return;
     }
 
@@ -87,7 +88,7 @@ export default function ReportModal({
         photo_urls = await uploadAll();
       } catch (err) {
         console.error(err);
-        alert("Error subiendo fotos de referencia");
+        toast.error("Error subiendo fotos de referencia");
         return;
       }
     }
@@ -177,7 +178,7 @@ export default function ReportModal({
             <p className="text-sm text-muted-foreground">
               {pickedLocation
                 ? 'Si estás satisfecho con la ubicación marcada, continúa con el envío.'
-                : 'Si no marcas ubicación, se tomará el centro actual del mapa al enviar.'}
+                : 'Debes marcar la última ubicación donde viste a tu mascota.'}
             </p>
           </CardContent>
 

@@ -246,6 +246,29 @@ details       Json?
 created_at    DateTime? @default(now()) @db.Timestamptz(6)
 }
 
+model Badge {
+  id          Int          @id @default(autoincrement())
+  key         String       @unique
+  name        String
+  description String?
+  icon_url    String?
+  created_at  DateTime     @default(now())
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        Int    @id @default(autoincrement())
+  userId    String @db.Uuid
+  badgeId   Int
+  awardedAt DateTime @default(now())
+
+  user      users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge   @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model users {
 id               String             @id @db.Uuid
@@ -269,6 +292,8 @@ Reviews          Reviews[]
 TimelineEntries  TimelineEntries[]
 Topics           Topics[]
 HealthAlerts     HealthAlerts[]
+userBadges       UserBadge[]
+selectedBadgeIds String[]
 }
 
 enum Role {

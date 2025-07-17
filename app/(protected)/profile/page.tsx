@@ -14,12 +14,13 @@ import { useUserProfile } from "@/stores/userProfile"
 
 export default function ProfileConfigPage() {
   const router = useRouter()
-  const { user, setUser } = useUserProfile()
+  const { user, setUser, setSelectedBadges } = useUserProfile()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [selectedBadgeIds, setSelectedBadgeIds] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -38,6 +39,7 @@ export default function ProfileConfigPage() {
   useEffect(() => {
     if (user) {
       setName(user.name || "")
+      setSelectedBadgeIds(user.selectedBadgeIds || [])
       if (!selectedFile) {
         setImagePreview(null)
       }
@@ -69,6 +71,7 @@ export default function ProfileConfigPage() {
         name: updatedData?.name !== undefined ? updatedData?.name : user?.name,
         email: user?.email || "",
         avatar_url: updatedData?.avatar_url !== undefined ? updatedData?.avatar_url : user?.avatar_url,
+        selectedBadgeIds: updatedData?.selectedBadgeIds !== undefined ? updatedData?.selectedBadgeIds : user?.selectedBadgeIds,
       }
 
       const response = await fetch("/api/profile", {
@@ -117,6 +120,35 @@ export default function ProfileConfigPage() {
     }
   }
 
+  const handleBadgeToggle = async (badgeId: string) => {
+    const newSelectedBadgeIds = selectedBadgeIds.includes(badgeId)
+      ? selectedBadgeIds.filter(id => id !== badgeId)
+      : selectedBadgeIds.length < 3
+        ? [...selectedBadgeIds, badgeId]
+        : (() => {
+            toast.warning("Solo puedes seleccionar máximo 3 insignias")
+            return selectedBadgeIds
+          })()
+
+    if (newSelectedBadgeIds !== selectedBadgeIds) {
+      setSelectedBadgeIds(newSelectedBadgeIds)
+      
+      try {
+        const success = await updateProfile({
+          selectedBadgeIds: newSelectedBadgeIds,
+        })
+        
+        if (success) {
+          setSelectedBadges(newSelectedBadgeIds)
+          toast.success("Insignias actualizadas")
+        }
+      } catch (error) {
+        setSelectedBadgeIds(selectedBadgeIds)
+        toast.error("Error al actualizar insignias")
+      }
+    }
+  }
+
   const handleSave = async () => {
     if (!user) return
 
@@ -149,9 +181,11 @@ export default function ProfileConfigPage() {
       const success = await updateProfile({
         name: name.trim() || undefined,
         avatar_url: avatarUrl,
+        selectedBadgeIds: selectedBadgeIds,
       })
 
       if (success) {
+        setSelectedBadges(selectedBadgeIds)
         toast.success("Perfil actualizado correctamente")
         resetImage()
         fetchProfile()
@@ -308,24 +342,75 @@ export default function ProfileConfigPage() {
                 </TabsContent>
 
                 <TabsContent value="badges" className="space-y-4">
-                  {user.badges.length === 0
-                    ? <p>No tienes insignias aún.</p>
-                    : (
-                      <div className="flex flex-wrap gap-4">
-                        {user.badges.map(b => (
-                          <div key={b.id} className="text-center">
-                            <img
-                              src={b.icon}
-                              alt={b.label}
-                              title={b.label}
-                              className="w-12 h-12 mx-auto"
-                            />
-                            <div className="text-sm mt-1">{b.label}</div>
-                          </div>
-                        ))}
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Selecciona tus insignias</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Puedes seleccionar hasta 3 insignias que se mostrarán en tu perfil público.
+                        Seleccionadas: {selectedBadgeIds.length}/3
+                      </p>
+                      {user.badges.length === 0 ? (
+                        <p>No tienes insignias disponibles aún.</p>
+                      ) : (
+                        <div className="grid grid-cols-3 gap-4">
+                          {user.badges.map((badge) => {
+                            const isSelected = selectedBadgeIds.includes(badge.id)
+                            return (
+                              <div
+                                key={badge.id}
+                                className={`
+                                  relative cursor-pointer transition-all duration-200
+                                  ${isSelected ? "scale-105" : "hover:scale-105"}
+                                `}
+                                onClick={() => handleBadgeToggle(badge.id)}
+                              >
+                                <div className="text-center">
+                                  <img
+                                    src={badge.icon}
+                                    alt={badge.label}
+                                    title={badge.label}
+                                    className="w-12 h-12 mx-auto"
+                                  />
+                                  <div className="text-sm mt-1">{badge.label}</div>
+                                </div>
+                                {isSelected && (
+                                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                    <span className="text-white text-xs font-bold">✓</span>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedBadgeIds.length > 0 && (
+                      <div>
+                        <h4 className="text-md font-semibold mb-3">Vista previa de insignias seleccionadas</h4>
+                        <div className="flex gap-3 p-4 bg-muted rounded-lg">
+                          {selectedBadgeIds.map((badgeId) => {
+                            const badge = user.badges.find(b => b.id === badgeId)
+                            if (!badge) return null
+                            return (
+                              <div key={badge.id} className="text-center">
+                                <img
+                                  src={badge.icon}
+                                  alt={badge.label}
+                                  title={badge.label}
+                                  className="w-8 h-8 mx-auto"
+                                />
+                                <div className="text-xs mt-1">{badge.label}</div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Así se verán en tu perfil público
+                        </p>
                       </div>
-                    )
-                  }
+                    )}
+                  </div>
                 </TabsContent>
 
               </div>

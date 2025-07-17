@@ -256,7 +256,7 @@ const PetService = forwardRef<PetServiceRef, PetServiceProps>(
           >
             <div className="cursor-pointer transform hover:scale-110 transition-transform">
               <div className="relative">
-                <div className="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold bg-pink-300">
+                <div className="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold bg-secondary">
                   🐾
                 </div>
                 {selectedService && selectedService.id === service.id && (

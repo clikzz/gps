@@ -104,3 +104,13 @@ export const useUserProfile = create<UserProfileStore>()(
     }
   )
 );
+
+export const useSelectedBadges = () => {
+  const user = useUserProfile(state => state.user);
+  if (!user) return [];
+  
+  return (user.selectedBadgeIds || [])
+    .map(id => user.badges.find(badge => badge.id === id))
+    .filter((badge): badge is NonNullable<typeof badge> => badge !== undefined)
+    .slice(0, 3);
+};

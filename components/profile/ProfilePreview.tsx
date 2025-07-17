@@ -3,9 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Settings, User, X } from "lucide-react"
-import { Badge } from "./Badge"
 import { useRouter } from "next/navigation"
-import { useUserProfile } from "@/stores/userProfile"
+import { useUserProfile, useSelectedBadges } from "@/stores/userProfile"
 
 interface ProfilePreviewProps {
   onClose: () => void
@@ -14,7 +13,7 @@ interface ProfilePreviewProps {
 export function ProfilePreview({ onClose }: ProfilePreviewProps) {
   const router = useRouter()
   const { user } = useUserProfile()
-  const menssageCount = useUserProfile(state => state.user?.menssageCount ?? 0)
+  const selectedBadges = useSelectedBadges()
 
   if (!user) {
     return (
@@ -31,16 +30,6 @@ export function ProfilePreview({ onClose }: ProfilePreviewProps) {
 
   const displayName = user.name || (user.email ? user.email.split("@")[0] : "Usuario")
   const tag = user.tag ? `#${user.tag}` : ""
-
-  // insignias de ejemplo
-  const exampleBadges = [
-    { id: "1", name: "Trofeo", icon: "🏆", description: "Usuario destacado" },
-    { id: "2", name: "Vip", icon: "⭐", description: "Miembro VIP" },
-    { id: "3", name: "Objetivo", icon: "🎯", description: "Buen participante" },
-    { id: "4", name: "Pet", icon: "🐕", description: "Pet Lover" },
-    { id: "5", name: "Vaquero", icon: "🤠", description: "yolorejiju" },
-    { id: "6", name: "Angry", icon: "🤬", description: "Professional Hater" },
-  ]
 
   const handleSettings = () => {
     onClose()
@@ -78,12 +67,30 @@ export function ProfilePreview({ onClose }: ProfilePreviewProps) {
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Insignias</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {exampleBadges.map((badge) => (
-                <Badge key={badge.id} name={badge.name} icon={badge.icon} description={badge.description} />
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">Insignias de ejemplo</p>
+            {selectedBadges.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {selectedBadges.map((badge) => (
+                  <div key={badge.id} className="text-center">
+                    <img
+                      src={badge.icon}
+                      alt={badge.label}
+                      title={badge.label}
+                      className="w-12 h-12 mx-auto"
+                    />
+                    <div className="text-sm mt-1">{badge.label}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3 opacity-50">
+                <div className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-400 text-xs">Sin insignias</span>
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">
+                {selectedBadges.length === 0 && "Ve a configuración para seleccionar insignias"}
+            </p>
           </div>
         </div>
 

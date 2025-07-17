@@ -39,17 +39,25 @@ export const modifyUserProfile = async (
     name,
     email,
     avatar_url,
-  }: { name: string; email: string; avatar_url: string | null }
+    selectedBadgeIds,
+  }: { 
+    name: string; 
+    email: string; 
+    avatar_url: string | null;
+    selectedBadgeIds?: string[];
+  }
 ) => {
   const updatedProfile = await updateUserProfile(userId, {
     name,
     email,
     avatar_url,
+    selectedBadgeIds,
   });
 
   const serializedProfile = {
     ...updatedProfile,
     tag: updatedProfile?.tag?.toString(),
+    selectedBadgeIds: updatedProfile?.selectedBadgeIds || [],
     Pets: updatedProfile?.Pets?.map((pet: Pet) => ({
       ...pet,
       id: pet.id.toString(),

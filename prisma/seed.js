@@ -40,15 +40,41 @@ async function main() {
     },
   ];
 
-  for (const sf of defaults) {
-    await prisma.subforums.upsert({
-      where: { name: sf.name },
+const badges = [
+    {
+      key: "WELCOME",
+      name: "Bienvenida",
+      description: "Por registrarte en la aplicación",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//welcome.png",
+    },
+    {
+      key: "FIRST_PHOTO",
+      name: "Primera foto",
+      description: "Por subir la primera foto en el Timeline",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//first_photo.png",
+    },
+    {
+      key: "PET_LOVER",
+      name: "Pet Lover",
+      description: "Por registrar más de un tipo de mascota",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//pet_lover.png",
+    },
+    {
+      key: "MSG_10",
+      name: "10 Mensajes",
+      description: "Por publicar 10 mensajes en el foro",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//msg_10.png",
+    },
+  ];
+
+  for (const b of badges) {
+    await prisma.badge.upsert({
+      where: { key: b.key },
       update: {},
-      create: sf,
+      create: b,
     });
   }
-
-  console.log("✅ Subforums seed completed");
+  console.log("seed completed");
 }
 
 main()

@@ -139,7 +139,7 @@ export default function ProfileConfigPage() {
                   url: user.avatar_url,
                 }),
               })
-            } catch {}
+            } catch { }
           }
         } else {
           throw new Error(uploadResult.error || "Error al subir la imagen")
@@ -307,23 +307,27 @@ export default function ProfileConfigPage() {
                   </Button>
                 </TabsContent>
 
-                <TabsContent value="badges" className="space-y-4 m-0 h-full flex flex-col">
-                  <div>
-                    <Label className="text-base font-semibold">Insignias</Label>
-                    <p className="text-sm text-muted-foreground mt-1">Las insignias estarán disponibles próximamente</p>
-                  </div>
-
-                  <div className="flex-1 flex items-center justify-center">
-                    <Card className="p-8 text-center max-w-md">
-                      <div className="text-4xl mb-4">🏆</div>
-                      <h3 className="text-lg font-semibold mb-3">Insignias en Desarrollo</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        El sistema de insignias estará disponible próximamente. Aquí podrás seleccionar hasta 6
-                        insignias para mostrar en tu perfil.
-                      </p>
-                    </Card>
-                  </div>
+                <TabsContent value="badges" className="space-y-4">
+                  {user.badges.length === 0
+                    ? <p>No tienes insignias aún.</p>
+                    : (
+                      <div className="flex flex-wrap gap-4">
+                        {user.badges.map(b => (
+                          <div key={b.id} className="text-center">
+                            <img
+                              src={b.icon}
+                              alt={b.label}
+                              title={b.label}
+                              className="w-12 h-12 mx-auto"
+                            />
+                            <div className="text-sm mt-1">{b.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  }
                 </TabsContent>
+
               </div>
             </Tabs>
           </Card>

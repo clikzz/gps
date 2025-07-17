@@ -6,12 +6,12 @@ import { UserStatus } from ".prisma/client/default";
 
 type PhotoLog = { id: string; url: string };
 type Forum = { id: string; title: string };
-type Badge = { id: string; label: string };
+export type Badge = { id: string; label: string; icon: string; description: string };
 type Review = { id: string; content: string };
 type LostPet = { id: string; name: string };
 type MarketplaceItem = { id: string; title: string };
 
-type UserProfile = {
+export type UserProfile = {
   id: string;
   email: string;
   created_at: string;
@@ -29,6 +29,7 @@ type UserProfile = {
   role: Role;
   status: UserStatus;
   menssageCount: number;
+  selectedBadgeIds: string[];
 };
 
 type UserProfileStore = {
@@ -39,6 +40,8 @@ type UserProfileStore = {
     value: UserProfile[K]
   ) => void;
   resetUser: () => void;
+
+  setSelectedBadges: (ids: string[]) => void;
 };
 
 export const useUserProfile = create<UserProfileStore>()(
@@ -54,6 +57,7 @@ export const useUserProfile = create<UserProfileStore>()(
 
       return {
         user: null,
+
         setUser: (user) => {
           const sortedUser = user.Pets
             ? { ...user, Pets: sortPets(user.Pets) }
@@ -61,6 +65,7 @@ export const useUserProfile = create<UserProfileStore>()(
 
           set({ user: sortedUser });
         },
+
         updateUserField: (key, value) =>
           set((state) => {
             if (!state.user) return {};
@@ -78,7 +83,19 @@ export const useUserProfile = create<UserProfileStore>()(
               },
             };
           }),
+
         resetUser: () => set({ user: null }),
+
+        setSelectedBadges: (ids: string[]) =>
+          set((state) => {
+            if (!state.user) return {};
+            return {
+              user: {
+                ...state.user,
+                selectedBadgeIds: ids,
+              },
+            };
+          }),
       };
     },
     {

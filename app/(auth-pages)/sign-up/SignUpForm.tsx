@@ -75,19 +75,22 @@ export default function SignUpForm() {
             </motion.p>
           </div>
           <form action={signUpAction} className="flex flex-col gap-4">
+            {/* 
+            para mas adelante solicitar el nombre al registrarse 
             <motion.div initial="hidden" animate="visible" variants={formItemVariants} transition={{ delay: 0.2 }}>
               <Label htmlFor="name" className="sr-only">
-                Nombre
+              Nombre
               </Label>
               <Input
-                id="name"
-                name="name"
-                placeholder="Nombre"
-                maxLength={50}
-                required
-                aria-required="true"
+              id="name"
+              name="name"
+              placeholder="Nombre"
+              maxLength={50}
+              required
+              aria-required="true"
               />
             </motion.div>
+            */} 
             <motion.div initial="hidden" animate="visible" variants={formItemVariants} transition={{ delay: 0.3 }}>
               <Label htmlFor="email" className="sr-only">
                 Correo

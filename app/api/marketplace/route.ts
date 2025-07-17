@@ -14,18 +14,24 @@ export async function GET(req: NextRequest) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return new NextResponse(await user.text(), { status: user.status, headers: user.headers });
 
-  const mode = new URL(req.url).searchParams.get("mode") || "public";
+  const url = new URL(req.url);
+  const mode = url.searchParams.get("mode") || "public";
+
+  const filters = {
+    category: url.searchParams.get("category") || undefined,
+    minPrice: url.searchParams.has("minPrice") ? Number(url.searchParams.get("minPrice")) : undefined,
+    maxPrice: url.searchParams.has("maxPrice") ? Number(url.searchParams.get("maxPrice")) : undefined,
+  }
 
   switch (mode) {
     case "public":
-      const raw = await req.json().catch(() => ({}));
-      return fetchPublicMarketplaceItems(raw);
+      return fetchPublicMarketplaceItems(filters);
     case "user":
       return fetchUserMarketplaceItems(user.id);
     case "sold":
       return fetchUserSoldMarketplaceItems(user.id);
     default:
-      return fetchPublicMarketplaceItems(await req.json().catch(() => ({})));
+      return fetchPublicMarketplaceItems(filters);
   }
 }
 

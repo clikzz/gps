@@ -4,12 +4,12 @@ import MarketplaceGrid from "@/components/marketplace/MarketplaceGrid";
 import { NewItemDrawer } from "@/components/marketplace/NewItemDrawer";
 import { Store } from "lucide-react";
 
-export default async function MarketplacePage() {
-  const stats = {
-    total: 0,
-    active: 0,
-    sold: 0,
-  };
+export default async function MarketPage() {
+  // const stats = {
+  //   total: 0,
+  //   active: 0,
+  //   sold: 0,
+  // };
 
   return (
     <main className="space-y-8">
@@ -17,7 +17,7 @@ export default async function MarketplacePage() {
         <Store className="inline-block h-8 w-8" />
         Marketplace
       </h1>
-      <MarketplaceStats stats={stats} />
+      {/* <MarketStats stats={stats} /> */}
       <MarketplaceFilters />
       <div className="flex items-center justify-start">
         <NewItemDrawer />

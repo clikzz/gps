@@ -80,20 +80,20 @@ export const fetchPublicMarketplaceItems = async (
 
   const filters = parseResult.data as ListFilters;
   const list = await listItemsService(filters);
-  const output = list.map((item: MarketplaceItem) => ({
+  const output = list.map(item => ({
     id: item.id.toString(),
     user_id: item.user_id,
     title: item.title,
-    description: item.description,
+    description: item.description ?? undefined,
     category: item.category,
     condition: item.condition,
     price: item.price.toString(),
     photo_urls: item.photo_urls,
     latitude: item.latitude,
     longitude: item.longitude,
-    city: item.city,
-    region: item.region,
-    country: item.country,
+    city: item.city ?? undefined,
+    region: item.region ?? undefined,
+    country: item.country ?? undefined,
     status: item.status,
     created_at: item.created_at.toISOString(),
     updated_at: item.updated_at.toISOString(),

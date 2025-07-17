@@ -19,6 +19,16 @@ export interface MarketplaceItem {
   updated_at: Date;
 }
 
+export type Item = Omit<
+  MarketplaceItem,
+  "id" | "price" | "created_at" | "updated_at"
+> & {
+  id: string;
+  price: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export interface MarketplaceItemInput {
   title: string;
   description?: string;

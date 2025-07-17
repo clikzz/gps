@@ -16,6 +16,12 @@ export const getUserProfile = async (userId: string) => {
   });
 };
 
+export const getAllBadges = async () => {
+  return await prisma.badge.findMany({
+    orderBy: { name: 'asc' }
+  });
+};
+
 export const updateUserProfile = async (
   userId: string,
   {

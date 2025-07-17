@@ -6,7 +6,7 @@ import { UserStatus } from ".prisma/client/default";
 
 type PhotoLog = { id: string; url: string };
 type Forum = { id: string; title: string };
-export type Badge = { id: string; label: string; icon: string; description: string };
+export type Badge = { id: string; label: string; icon: string; description: string; key?: string };
 type Review = { id: string; content: string };
 type LostPet = { id: string; name: string };
 type MarketplaceItem = { id: string; title: string };
@@ -23,6 +23,8 @@ export type UserProfile = {
   photoLogs: PhotoLog[];
   forums: Forum[];
   badges: Badge[];
+  unlockedBadges?: Badge[];
+  lockedBadges?: Badge[];
   reviews: Review[];
   lostPets: LostPet[];
   marketplaceItems: MarketplaceItem[];
@@ -109,8 +111,10 @@ export const useSelectedBadges = () => {
   const user = useUserProfile(state => state.user);
   if (!user) return [];
   
+  const badgesToSearch = user.unlockedBadges || user.badges || [];
+  
   return (user.selectedBadgeIds || [])
-    .map(id => user.badges.find(badge => badge.id === id))
+    .map(id => badgesToSearch.find(badge => badge.id === id))
     .filter((badge): badge is NonNullable<typeof badge> => badge !== undefined)
     .slice(0, 3);
 };

@@ -132,12 +132,12 @@ export default function ProfileConfigPage() {
 
     if (newSelectedBadgeIds !== selectedBadgeIds) {
       setSelectedBadgeIds(newSelectedBadgeIds)
-      
+
       try {
         const success = await updateProfile({
           selectedBadgeIds: newSelectedBadgeIds,
         })
-        
+
         if (success) {
           setSelectedBadges(newSelectedBadgeIds)
           toast.success("Insignias actualizadas")
@@ -349,40 +349,83 @@ export default function ProfileConfigPage() {
                         Puedes seleccionar hasta 3 insignias que se mostrarán en tu perfil público.
                         Seleccionadas: {selectedBadgeIds.length}/3
                       </p>
-                      {user.badges.length === 0 ? (
-                        <p>No tienes insignias disponibles aún.</p>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-4">
-                          {user.badges.map((badge) => {
-                            const isSelected = selectedBadgeIds.includes(badge.id)
-                            return (
+
+                      {/* Insignias desbloqueadas */}
+                      <div className="mb-8">
+                        <h4 className="text-md font-semibold mb-3 text-secondary">🏆 Insignias Desbloqueadas</h4>
+                        {user.unlockedBadges?.length === 0 || !user.unlockedBadges ? (
+                          <p className="text-muted-foreground">No tienes insignias desbloqueadas aún.</p>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-4">
+                            {user.unlockedBadges.map((badge) => {
+                              const isSelected = selectedBadgeIds.includes(badge.id)
+                              return (
+                                <div
+                                  key={badge.id}
+                                  className={`
+                                    relative cursor-pointer transition-all duration-200
+                                    ${isSelected ? "scale-105" : "hover:scale-105"}
+                                  `}
+                                  onClick={() => handleBadgeToggle(badge.id)}
+                                >
+                                  <div className="text-center p-3 border rounded-lg bg-transparent hover:bg-green-50/20">
+                                    <img
+                                      src={badge.icon}
+                                      alt={badge.label}
+                                      title={badge.description || badge.label}
+                                      className="w-12 h-12 mx-auto"
+                                    />
+                                    <div className="text-sm mt-1 font-medium">{badge.label}</div>
+                                    {badge.description && (
+                                      <div className="text-xs text-muted-foreground mt-1">{badge.description}</div>
+                                    )}
+                                  </div>
+                                  {isSelected && (
+                                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                      <span className="text-white text-xs font-bold">✓</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Insignias por desbloquear */}
+                      <div>
+                        <h4 className="text-md font-semibold mb-3 text-muted-foreground">🔒 Insignias por Desbloquear</h4>
+                        {user.lockedBadges?.length === 0 || !user.lockedBadges ? (
+                          <p className="text-muted-foreground">¡Felicidades! Has desbloqueado todas las insignias disponibles.</p>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-4">
+                            {user.lockedBadges.map((badge) => (
                               <div
                                 key={badge.id}
-                                className={`
-                                  relative cursor-pointer transition-all duration-200
-                                  ${isSelected ? "scale-105" : "hover:scale-105"}
-                                `}
-                                onClick={() => handleBadgeToggle(badge.id)}
+                                className="text-center p-3 border rounded-lg bg-gray-50 opacity-75"
                               >
-                                <div className="text-center">
+                                <div className="relative">
                                   <img
                                     src={badge.icon}
                                     alt={badge.label}
-                                    title={badge.label}
-                                    className="w-12 h-12 mx-auto"
+                                    title={badge.description || badge.label}
+                                    className="w-12 h-12 mx-auto grayscale"
                                   />
-                                  <div className="text-sm mt-1">{badge.label}</div>
-                                </div>
-                                {isSelected && (
-                                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                                    <span className="text-white text-xs font-bold">✓</span>
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
+                                      <span className="text-white text-xs">🔒</span>
+                                    </div>
                                   </div>
+                                </div>
+                                <div className="text-sm mt-1 text-gray-500">{badge.label}</div>
+                                {badge.description && (
+                                  <div className="text-xs text-muted-foreground mt-1">{badge.description}</div>
                                 )}
                               </div>
-                            )
-                          })}
-                        </div>
-                      )}
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {selectedBadgeIds.length > 0 && (
@@ -390,7 +433,7 @@ export default function ProfileConfigPage() {
                         <h4 className="text-md font-semibold mb-3">Vista previa de insignias seleccionadas</h4>
                         <div className="flex gap-3 p-4 bg-muted rounded-lg">
                           {selectedBadgeIds.map((badgeId) => {
-                            const badge = user.badges.find(b => b.id === badgeId)
+                            const badge = user.unlockedBadges?.find(b => b.id === badgeId)
                             if (!badge) return null
                             return (
                               <div key={badge.id} className="text-center">

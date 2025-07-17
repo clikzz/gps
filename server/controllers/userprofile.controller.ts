@@ -1,17 +1,47 @@
 import {
   getUserProfile,
   updateUserProfile,
+  getAllBadges,
 } from "@/server/services/userprofile.service";
 import { Pets as Pet } from "@prisma/client";
 
 export const fetchUserProfile = async (userId: string) => {
-  const profile = await getUserProfile(userId);
+  const [profile, allBadges] = await Promise.all([
+    getUserProfile(userId),
+    getAllBadges()
+  ]);
+  
   if (!profile) {
     return new Response(JSON.stringify({ error: "Profile not found" }), {
       status: 404,
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  // Get user's unlocked badge IDs
+  const userBadgeIds = profile.userBadges.map(ub => ub.badge.id);
+  
+  // Separate badges into unlocked and locked
+  const unlockedBadges = allBadges
+    .filter(badge => userBadgeIds.includes(badge.id))
+    .map(badge => ({
+      id: badge.id.toString(),
+      label: badge.name,
+      icon: badge.icon_url!,
+      description: badge.description || "",
+      key: badge.key
+    }));
+
+  const lockedBadges = allBadges
+    .filter(badge => !userBadgeIds.includes(badge.id))
+    .map(badge => ({
+      id: badge.id.toString(),
+      label: badge.name,
+      icon: badge.icon_url!,
+      description: badge.description || "",
+      key: badge.key
+    }));
+  
   const userProfile = {
     ...profile,
     tag: profile.tag.toString(),
@@ -19,13 +49,11 @@ export const fetchUserProfile = async (userId: string) => {
       ...pet,
       id: pet.id.toString(),
     })),
-    badges: profile.userBadges.map(ub => ({
-      id: ub.badge.id.toString(),
-      label: ub.badge.name,
-      icon: ub.badge.icon_url!,
-      description: ub.badge.description || ""
-    })),
+    badges: unlockedBadges, // Keep for backward compatibility
+    unlockedBadges,
+    lockedBadges,
   };
+  
   return new Response(JSON.stringify(userProfile), {
     status: 200,
     headers: { "Content-Type": "application/json" },
@@ -47,12 +75,39 @@ export const modifyUserProfile = async (
     selectedBadgeIds?: string[];
   }
 ) => {
-  const updatedProfile = await updateUserProfile(userId, {
-    name,
-    email,
-    avatar_url,
-    selectedBadgeIds,
-  });
+  const [updatedProfile, allBadges] = await Promise.all([
+    updateUserProfile(userId, {
+      name,
+      email,
+      avatar_url,
+      selectedBadgeIds,
+    }),
+    getAllBadges()
+  ]);
+
+  // Get user's unlocked badge IDs
+  const userBadgeIds = (updatedProfile as any).userBadges?.map((ub: any) => ub.badge.id) || [];
+  
+  // Separate badges into unlocked and locked
+  const unlockedBadges = allBadges
+    .filter(badge => userBadgeIds.includes(badge.id))
+    .map(badge => ({
+      id: badge.id.toString(),
+      label: badge.name,
+      icon: badge.icon_url!,
+      description: badge.description || "",
+      key: badge.key
+    }));
+
+  const lockedBadges = allBadges
+    .filter(badge => !userBadgeIds.includes(badge.id))
+    .map(badge => ({
+      id: badge.id.toString(),
+      label: badge.name,
+      icon: badge.icon_url!,
+      description: badge.description || "",
+      key: badge.key
+    }));
 
   const serializedProfile = {
     ...updatedProfile,
@@ -62,12 +117,9 @@ export const modifyUserProfile = async (
       ...pet,
       id: pet.id.toString(),
     })),
-    badges: (updatedProfile as any).userBadges?.map((ub: any) => ({
-      id: ub.badge.id.toString(),
-      label: ub.badge.name,
-      icon: ub.badge.icon_url!,
-      description: ub.badge.description || ""
-    })) || [],
+    badges: unlockedBadges, // Keep for backward compatibility
+    unlockedBadges,
+    lockedBadges,
   };
 
   return new Response(JSON.stringify(serializedProfile), {

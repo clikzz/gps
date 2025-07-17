@@ -113,7 +113,7 @@ const features = [
 
 export default function HomePage() {
   return (
-    <div className="-mt-16 min-h-screen bg-gray-100 overflow-x-visible">
+    <div className="-mt-24 min-h-screen bg-gray-100 overflow-x-visible">
       <div className="relative w-screen left-1/2 -translate-x-1/2 bg-background rounded-lg shadow-xl overflow-hidden">
 
         {/* Header */}

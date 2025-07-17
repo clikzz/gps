@@ -147,10 +147,10 @@ export default function HomePage() {
               className="relative w-full max-w-md aspect-[4/3] md:order-2"
             >
               <Image
-                src="/images/pet-hero.jpg"
-                alt="Mascota jugando"
-                width={400}
-                height={400}
+                src="/images/pethug.gif"
+                alt="Mascotas abrazándose"
+                width={700}
+                height={700}
                 className="rounded-lg object-contain w-full h-full"
               />
               <div className="absolute inset-0 bg-card/30 rounded-full blur-3xl opacity-50 z-0" />

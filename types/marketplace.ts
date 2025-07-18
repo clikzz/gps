@@ -57,6 +57,26 @@ export interface ListFilters {
   pageSize?: number;        // default 20
 }
 
+export interface MarketplaceProduct {
+  id: number;
+  title: string;
+  price: number;
+  location: string;
+  petCategory: string;
+  articleCategory: string;
+  images: string[];
+  seller: string;
+  sellerAvatar: string;
+  sellerRating: number;
+  sellerReviews: number;
+  rating: number;
+  isFavorite: boolean;
+  description: string;
+  specifications: Record<string,string>;
+  publishedDate: string;
+  views: number;
+}
+
 export interface SelectOption {
   value: string;
   label: string;
@@ -86,3 +106,13 @@ export const CONDITION_OPTIONS: SelectOption[] = [
   { label: "Nuevo", value: ItemCondition.NEW },
   { label: "Usado", value: ItemCondition.USED },
 ];
+
+export interface ImageUploadResult {
+  urls: string[];
+  error?: string;
+}
+
+export const FILE_CONSTRAINTS = {
+  MAX_SIZE: 5 * 1024 * 1024, // 5MB
+  ACCEPTED_TYPES: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+} as const;

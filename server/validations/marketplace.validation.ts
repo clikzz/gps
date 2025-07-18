@@ -20,8 +20,7 @@ export const createItemSchema = z.object({
     .number()
     .min(0, { message: "El precio no puede ser negativo." }),
   photo_urls: z
-    .array(z.string().url({ message: "Cada URL de imagen debe ser válida." }))
-    .min(1, { message: "Debes subir al menos una imagen." }),
+    .array(z.string().url({ message: "Cada URL de imagen debe ser válida." })),
   latitude: z
     .number()
     .min(-90, { message: "Latitud inválida." })

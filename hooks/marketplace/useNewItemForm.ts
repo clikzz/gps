@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { reverseGeocode } from "@/utils/geocode"
 import { createItemSchema, type CreateItemInput } from "@/server/validations/marketplace.validation"
-import { useImageUpload } from "@/hooks/usePetImageUpload"
+import { useImageUpload } from "@/hooks/marketplace/useItemImageUpload"
 
 export function useNewItemForm(onSuccess?: () => void) {
   const imageUpload = useImageUpload()
@@ -13,28 +13,29 @@ export function useNewItemForm(onSuccess?: () => void) {
   const form = useForm<CreateItemInput>({
     resolver: zodResolver(createItemSchema),
     defaultValues: {
-      title:       "",
+      title: "",
       description: "",
-      category:    "FOOD",
-      condition:   "NEW",
-      price:       0,
-      photo_urls:  [],
-      latitude:    0,
-      longitude:   0,
-      city:        undefined,
-      region:      undefined,
-      country:     undefined,
+      category: "FOOD",
+      condition: "NEW",
+      price: 0,
+      photo_urls: [],
+      latitude: 0,
+      longitude: 0,
+      city: undefined,
+      region: undefined,
+      country: undefined,
     },
   })
 
   const onSubmit = form.handleSubmit(async (value) => {
+    console.log("Submitting new item:", value)
     try {
-      const up = await imageUpload.uploadImage()
+      const up = await imageUpload.uploadImages()
       if (up.error) {
         toast.error(up.error)
         return
       }
-      value.photo_urls = up.url ? [up.url] : []
+      value.photo_urls = up.urls.length > 0 ? up.urls : []
 
       const { city, region, country } = await reverseGeocode(
         value.latitude,

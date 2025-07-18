@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,9 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
 
   const [loc, setLoc] = useState<LatLng | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (loc) {
@@ -57,6 +60,23 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
 
   const condition = watch("condition");
   const category = watch("category");
+
+  const handleFiles = (files: FileList) => {
+    imageUpload.handleFileChange({ target: { files } } as any);
+    const urls = Array.from(files).map((f) => URL.createObjectURL(f));
+    setPreviewUrls(urls);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -100,7 +120,7 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
             )}
           </div>
 
-          {/* Condición & Categoría */}
+          {/* Condición y Categoría */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Condición *</Label>
@@ -170,7 +190,7 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
           </div>
 
           {/* Ubicación */}
-          <div className="space-y-1">
+          <div className="space-y-1 flex flex-col">
             <Label>Ubicación *</Label>
             <Button
               variant="outline"
@@ -195,7 +215,12 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
           {/* Imágenes */}
           <div className="space-y-1">
             <Label>Fotos *</Label>
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+            <div 
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
               <Plus className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-muted-foreground mb-2">
                 Arrastra tus fotos aquí o haz clic para seleccionar
@@ -206,18 +231,29 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
               >
                 Seleccionar fotos
               </Button>
-              {imageUpload.imagePreview && (
-                <img
-                  src={imageUpload.imagePreview}
-                  className="mt-4 h-32 mx-auto object-cover rounded"
-                />
-              )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {previewUrls.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    className="h-24 w-24 object-cover rounded"
+                  />
+                ))}
+              </div>
             </div>
             {errors.photo_urls && (
               <p className="text-sm text-destructive">
                 {errors.photo_urls.message as string}
               </p>
             )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => e.target.files && handleFiles(e.target.files)}
+            />
           </div>
         </CardContent>
 

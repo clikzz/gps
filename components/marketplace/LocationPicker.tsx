@@ -7,6 +7,12 @@ import type { MapRef } from "react-map-gl/mapbox";
 import { Marker } from "react-map-gl/mapbox";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export interface LatLng {
   lat: number;
@@ -44,46 +50,47 @@ export default function LocationPicker({
     }
   }, [open, initial]);
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      <div className="px-4 py-2 flex justify-between items-center border-b">
-        <h2 className="text-lg font-semibold">Elige ubicación</h2>
-        <Button variant="ghost" onClick={onClose}>Cerrar</Button>
-      </div>
-      <div className="flex-1">
-        <Map
-          ref={mapRef}
-          mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-          initialViewState={{
-            latitude:  initial.lat,
-            longitude: initial.lng,
-            zoom:      12,
-          }}
-          mapStyle="mapbox://styles/mapbox/streets-v12"
-          style={{ width: "100%", height: "100%" }}
-          onClick={(e) => {
-            const [lng, lat] = e.lngLat.toArray();
-            setPicked({ lat, lng });
-          }}
-        >
-          {picked && (
-            <Marker longitude={picked.lng} latitude={picked.lat} anchor="bottom">
-              <MapPin className="text-red-600" size={28} />
-            </Marker>
-          )}
-        </Map>
-      </div>
-      <div className="p-4 border-t flex justify-end gap-2">
-        <Button variant="outline" onClick={onClose}>Cancelar</Button>
-        <Button
-          onClick={() => picked && onSelect(picked)}
-          disabled={!picked}
-        >
-          Confirmar
-        </Button>
-      </div>
-    </div>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="fixed flex items-center justify-center p-4 z-50 lg:max-w-7xl">
+        <div className="w-full flex flex-col overflow-hidden h-[80vh]">
+          <DialogHeader className="border-b px-4 py-2">
+            <DialogTitle>Elige ubicación</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1">
+            <Map
+              ref={mapRef}
+              mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+              initialViewState={{
+                latitude: initial.lat,
+                longitude: initial.lng,
+                zoom: 12,
+              }}
+              mapStyle="mapbox://styles/mapbox/streets-v12"
+              onClick={(e) => {
+                const [lng, lat] = e.lngLat.toArray();
+                setPicked({ lat, lng });
+              }}
+            >
+              {picked && (
+                <Marker longitude={picked.lng} latitude={picked.lat} anchor="bottom">
+                  <MapPin className="text-red-600" size={28} />
+                </Marker>
+              )}
+            </Map>
+          </div>
+
+          <div className="border-t p-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button onClick={() => picked && onSelect(picked)} disabled={!picked}>
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

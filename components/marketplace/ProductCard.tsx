@@ -10,9 +10,10 @@ import type { Item } from "@/types/marketplace";
 interface Props {
   item: Item;
   onToggleFav: (id: string) => void;
+  onViewDetails: () => void;
 }
 
-export function ProductCard({ item, onToggleFav }: Props) {
+export function ProductCard({ item, onToggleFav, onViewDetails }: Props) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
@@ -51,7 +52,9 @@ export function ProductCard({ item, onToggleFav }: Props) {
       </CardContent>
 
       <CardFooter>
-        <Button className="w-full">Ver detalles</Button>
+        <Button className="w-full" onClick={onViewDetails}>
+          Ver detalles
+        </Button>
       </CardFooter>
     </Card>
   );

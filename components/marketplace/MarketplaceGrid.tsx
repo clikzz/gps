@@ -1,7 +1,8 @@
-"use client";
-
-import { ProductCard } from "@/components/marketplace/ProductCard";
-import type { Item } from "@/types/marketplace";
+"use client"
+import { ProductCard } from "@/components/marketplace/ProductCard"
+import { ProductDetailsDialog } from "@/components/marketplace/ProductDetails"
+import type { Item } from "@/types/marketplace"
+import { useState } from "react"
 
 interface Props {
   items: Item[];
@@ -9,11 +10,28 @@ interface Props {
 }
 
 export function MarketplaceGrid({ items, onToggleFav }: Props) {
+  const [selected, setSelected] = useState<Item | null>(null);
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {items.map((it) => (
-        <ProductCard key={it.id} item={it} onToggleFav={onToggleFav}/>
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.map((it) => (
+          <ProductCard
+            key={it.id}
+            item={it}
+            onToggleFav={onToggleFav}
+            onViewDetails={() => setSelected(it)}
+          />
+        ))}
+      </div>
+      {selected && (
+        <ProductDetailsDialog
+          item={selected}
+          open={!!selected}
+          onClose={() => setSelected(null)}
+          onToggleFav={onToggleFav}
+        />
+      )}
+    </>
   );
 }

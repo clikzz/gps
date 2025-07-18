@@ -56,6 +56,8 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DIRECT_URL: ${{ secrets.DIRECT_URL }}
       NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
       - name: Instalar dependencias (OpenVPN, SSH y sshpass)
         run: |
@@ -96,6 +98,8 @@ jobs:
           echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env
           echo "DIRECT_URL=${{ env.DIRECT_URL }}" >> .env
           echo "NEXT_PUBLIC_MAPBOX_TOKEN=${{ env.NEXT_PUBLIC_MAPBOX_TOKEN }}" >> .env
+          echo "RESEND_API_KEY=${{ env.RESEND_API_KEY }}" >> .env
+          echo "CRON_SECRET=${{ env.CRON_SECRET }}" >> .env
           chmod 600 .env
 
           echo "Actualizando código fuente…"

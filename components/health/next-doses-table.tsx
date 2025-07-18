@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { useHealth } from "@/stores/health";
 import { useActivePet } from "@/stores/activePet";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -44,6 +43,7 @@ export function NextDosesTable() {
     isOverdue: boolean;
     isUpcoming: boolean;
     details: string;
+    send?: boolean;
   }
 
   const nextDoses = useMemo(() => {
@@ -57,7 +57,8 @@ export function NextDosesTable() {
         (med) =>
           med.pet_id.toString() == activePet.id &&
           med.active &&
-          med.next_dose_date
+          med.next_dose_date &&
+          new Date(med.next_dose_date) > today
       )
       .forEach((med) => {
         const nextDate = new Date(med.next_dose_date!);
@@ -73,6 +74,7 @@ export function NextDosesTable() {
           }),
           details: `Dosis: ${med.dose}`,
           id: med.id,
+          send: med.send,
         });
       });
 
@@ -81,7 +83,8 @@ export function NextDosesTable() {
         (vac) =>
           vac.pet_id.toString() == activePet.id &&
           vac.active &&
-          vac.next_dose_date
+          vac.next_dose_date &&
+          new Date(vac.next_dose_date) > today
       )
       .forEach((vac) => {
         const nextDate = new Date(vac.next_dose_date!);
@@ -97,6 +100,7 @@ export function NextDosesTable() {
           }),
           details: vac.type ? `Tipo: ${vac.type}` : "",
           id: vac.id,
+          send: vac.send,
         });
       });
 
@@ -104,6 +108,8 @@ export function NextDosesTable() {
       (a, b) => a.next_dose_date.getTime() - b.next_dose_date.getTime()
     );
   }, [activePet, medications, vaccinations]);
+
+  console.log(nextDoses);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
@@ -164,6 +170,23 @@ export function NextDosesTable() {
       }
 
       alert(`Notificaciones habilitadas para ${dose.name}`);
+
+      console.log(`Notificaciones habilitadas para ${dose.name}`);
+
+      const updatedDoses = nextDoses.map((d) =>
+        d.global_id === dose.global_id ? { ...d, send: true } : d
+      );
+      useHealth.setState({
+        medications: medications.map((med) =>
+          med.id === dose.id ? { ...med, send: true } : med
+        ),
+        vaccinations: vaccinations.map((vac) =>
+          vac.id === dose.id ? { ...vac, send: true } : vac
+        ),
+      });
+      console.log("Dosis actualizadas:", updatedDoses);
+
+      console.log("Notificaciones habilitadas correctamente");
     } catch (error) {
       console.error("Error al habilitar notificaciones:", error);
       alert("No se pudo habilitar las notificaciones. Inténtalo más tarde.");
@@ -171,12 +194,7 @@ export function NextDosesTable() {
   };
 
   return (
-    <motion.div
-      className="rounded-lg border overflow-hidden"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.5 }}
-    >
+    <>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -184,74 +202,47 @@ export function NextDosesTable() {
               <TableHead>Tipo</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Próxima Dosis</TableHead>
-              <TableHead>Estado</TableHead>
               <TableHead>Avisar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            <AnimatePresence mode="wait">
-              {currentDoses.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    No hay próximas dosis programadas
+            {currentDoses.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  No hay próximas dosis programadas
+                </TableCell>
+              </TableRow>
+            ) : (
+              currentDoses.map((dose, index) => (
+                <TableRow key={dose.global_id}>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        dose.entry_type === "Medicamento"
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {dose.entry_type}
+                    </Badge>
                   </TableCell>
-                </TableRow>
-              ) : (
-                currentDoses.map((dose, index) => (
-                  <motion.tr
-                    key={`${dose.global_id}-${currentPage}`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ delay: 0.05 * index, duration: 0.3 }}
-                    className="group hover:bg-muted/50 transition-colors duration-200"
-                  >
-                    <TableCell>
-                      <Badge
-                        variant={
-                          dose.entry_type === "Medicamento"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {dose.entry_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{dose.name}</TableCell>
-                    <TableCell>
-                      {format(dose.next_dose_date, "PPP", { locale: es })}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {dose.isOverdue && (
-                          <>
-                            <AlertTriangle className="h-4 w-4 text-destructive" />
-                            <Badge variant="destructive">Vencido</Badge>
-                          </>
-                        )}
-                        {dose.isUpcoming && !dose.isOverdue && (
-                          <Badge
-                            variant="outline"
-                            className="border-orange-500 text-orange-600"
-                          >
-                            Próximo
-                          </Badge>
-                        )}
-                        {!dose.isOverdue && !dose.isUpcoming && (
-                          <Badge variant="outline">Programado</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
+                  <TableCell className="font-medium">{dose.name}</TableCell>
+                  <TableCell>
+                    {format(dose.next_dose_date, "PPP", { locale: es })}
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      {dose.send ? (
+                        <Badge>Te avisaremos!</Badge>
+                      ) : (
                         <ConfirmationButton
                           onConfirm={() => handleEnableNotifications(dose)}
                           triggerText={
                             <span className="flex items-center gap-2">
-                              <BellRing className="h-4 w-4" />
+                              <BellRing className="h-2 w-2" />
                               {isMobile ? "" : "Notificar"}
                             </span>
                           }
@@ -260,18 +251,19 @@ export function NextDosesTable() {
                           confirmText="Notificar"
                           cancelText="Cancelar"
                           variant="secondary"
+                          size="sm"
                         />
-                      </div>
-                    </TableCell>
-                  </motion.tr>
-                ))
-              )}
-            </AnimatePresence>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
           <TableFooter>
             <TableRow>
               <TableCell
-                colSpan={4}
+                colSpan={5}
                 className={`text-right ${isMobile ? "text-sm" : ""}`}
               >
                 Mostrando {startIndex + 1}-
@@ -285,12 +277,7 @@ export function NextDosesTable() {
 
       {/* Controles de paginación */}
       {totalPages > 1 && (
-        <motion.div
-          className="flex items-center justify-center gap-4 p-4 border-t bg-muted/20"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
           {isMobile && (
             <div className="text-sm text-muted-foreground">
               Página {currentPage} de {totalPages}
@@ -365,8 +352,8 @@ export function NextDosesTable() {
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </>
   );
 }

@@ -43,6 +43,12 @@ export const medicationSchema = z.object({
     .max(500, "Las notas deben contener máximo 500 caracteres")
     .optional()
     .nullable(),
+  send: z
+    .boolean({
+      invalid_type_error: "El estado de envío debe ser verdadero o falso",
+    })
+    .default(false)
+    .optional(),
   active: z
     .boolean({
       invalid_type_error: "Esta opción debe ser verdadero o falso",

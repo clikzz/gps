@@ -1,4 +1,3 @@
-import OthersReportsModal from "@/components/find/OthersReports";
 import { authenticateUser } from "@/server/middlewares/auth.middleware";
 import { getMedications } from "@/server/services/medication.service";
 import { getVaccinations } from "@/server/services/vaccination.service";
@@ -34,6 +33,8 @@ export async function GET(req: Request) {
       (item) =>
         item.active && item.next_dose_date && item.next_dose_date > new Date()
     );
+
+    console.log("Next doses:", nextDoses);
 
     return new Response(
       JSON.stringify({

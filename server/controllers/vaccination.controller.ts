@@ -3,6 +3,7 @@ import {
   updateVaccinationById,
   deleteVaccination,
   getVaccinations as getVaccinationsByUserId,
+  enableVaccinationNotification,
 } from "@/server/services/vaccination.service";
 import { vaccinationSchema } from "../validations/vaccination.validation";
 import { Vaccination } from "@/types/vaccination";

@@ -2,9 +2,18 @@ import {
   createHealthAlert,
   deleteHealthAlert,
   updateHealthAlert,
+  getHealthAlertById,
 } from "../services/healthAlert.service";
-import { getMedicationById } from "../services/medication.service";
-import { getVaccinationById } from "../services/vaccination.service";
+import {
+  getMedicationById,
+  updateMedicationById,
+  enableMedicationNotification,
+} from "../services/medication.service";
+import {
+  getVaccinationById,
+  updateVaccinationById,
+  enableVaccinationNotification,
+} from "../services/vaccination.service";
 import { getPetById } from "../services/pets.service";
 import { healthAlertSchema } from "../validations/healthAlert.validation";
 import { HealthAlert } from "../../types/healthAlert";
@@ -58,6 +67,20 @@ export const addHealthAlert = async (user_id: string, data: any) => {
       id: newAlert.id.toString(),
       pet_id: newAlert.pet_id.toString(),
     };
+
+    const notsEnabled = await enableMedicationNotification(
+      Number(medication.id)
+    );
+
+    if (!notsEnabled) {
+      return new Response(
+        JSON.stringify({ error: "Failed to enable medication notification" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
 
     return new Response(JSON.stringify(fixedAlert), {
       status: 201,
@@ -114,6 +137,19 @@ export const addHealthAlert = async (user_id: string, data: any) => {
       id: newAlert.id.toString(),
       pet_id: newAlert.pet_id.toString(),
     };
+
+    const notsEnabled = await enableVaccinationNotification(
+      Number(vaccination.id)
+    );
+    if (!notsEnabled) {
+      return new Response(
+        JSON.stringify({ error: "Failed to enable vaccination notification" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
 
     return new Response(JSON.stringify(fixedAlert), {
       status: 201,

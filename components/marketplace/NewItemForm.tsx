@@ -22,8 +22,8 @@ import { Separator } from "@/components/ui/separator";
 import { DollarSign, MapPin, Plus } from "lucide-react";
 import { useNewItemForm } from "@/hooks/marketplace/useNewItemForm";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker";
-import type { ItemCondition, ItemCategory } from "@prisma/client";
-import { CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/types/marketplace";
+import type { ItemCondition, ItemCategory, PetCategory } from "@prisma/client";
+import { CATEGORY_OPTIONS, CONDITION_OPTIONS, PET_OPTIONS } from "@/types/marketplace";
 
 interface NewItemFormProps {
   onSuccess?: () => void;
@@ -60,6 +60,7 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
 
   const condition = watch("condition");
   const category = watch("category");
+  const petCategory = watch("pet_category");
 
   const handleFiles = (files: FileList) => {
     imageUpload.handleFileChange({ target: { files } } as any);
@@ -120,29 +121,27 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
             )}
           </div>
 
-          {/* Condición y Categoría */}
+          {/* Tipo de mascota y Categoría */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Condición *</Label>
+              <Label>Tipo de mascota *</Label>
               <Select
-                value={condition}
-                onValueChange={(v: ItemCondition) => setValue("condition", v)}
+                value={petCategory}
+                onValueChange={(v: PetCategory) => setValue("pet_category", v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona condición" />
+                  <SelectValue placeholder="Selecciona tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CONDITION_OPTIONS.map((o) => (
+                  {PET_OPTIONS.map((o) => (
                     <SelectItem key={o.value} value={o.value}>
                       {o.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.condition && (
-                <p className="text-sm text-destructive">
-                  {errors.condition.message}
-                </p>
+              {errors.pet_category && (
+                <p className="text-sm text-destructive">{errors.pet_category.message}</p>
               )}
             </div>
             <div>
@@ -170,29 +169,55 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
             </div>
           </div>
 
-          {/* Precio */}
-          <div className="space-y-1">
-            <Label htmlFor="price">Precio *</Label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="price"
-                type="number"
-                {...register("price", { valueAsNumber: true })}
-                className="pl-10"
-              />
+          {/* Precio y Condición */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="price">Precio *</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="price"
+                  type="number"
+                  {...register("price", { valueAsNumber: true })}
+                  className="pl-10"
+                />
+              </div>
+              {errors.price && (
+                <p className="text-sm text-destructive">
+                  {errors.price.message}
+                </p>
+              )}
             </div>
-            {errors.price && (
-              <p className="text-sm text-destructive">
-                {errors.price.message}
-              </p>
-            )}
+            <div>
+              <Label>Condición *</Label>
+              <Select
+                value={condition}
+                onValueChange={(v: ItemCondition) => setValue("condition", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona condición" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONDITION_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.condition && (
+                <p className="text-sm text-destructive">
+                  {errors.condition.message}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Ubicación */}
           <div className="space-y-1 flex flex-col">
             <Label>Ubicación *</Label>
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => setPickerOpen(true)}

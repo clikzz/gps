@@ -82,10 +82,10 @@ export default function LocationPicker({
           </div>
 
           <div className="border-t p-4 flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button onClick={() => picked && onSelect(picked)} disabled={!picked}>
+            <Button type="button" onClick={() => picked && onSelect(picked)} disabled={!picked}>
               Confirmar
             </Button>
           </div>

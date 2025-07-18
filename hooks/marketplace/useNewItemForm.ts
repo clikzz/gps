@@ -41,8 +41,8 @@ export function useNewItemForm(onSuccess?: () => void) {
         value.latitude,
         value.longitude
       )
-      value.city    = city
-      value.region  = region
+      value.city = city
+      value.region = region
       value.country = country
 
       const res = await fetch("/api/marketplace", {

@@ -173,7 +173,6 @@ export function NextDosesTable() {
 
       console.log(`Notificaciones habilitadas para ${dose.name}`);
 
-      // Actualizar el estado de la dosis para reflejar el cambio
       const updatedDoses = nextDoses.map((d) =>
         d.global_id === dose.global_id ? { ...d, send: true } : d
       );

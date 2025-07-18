@@ -4,23 +4,19 @@ import { Resend } from "resend";
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Para Pages Router
 export async function POST(request: Request) {
-  // El mismo código pero adaptado para App Router
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return Response.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // Obtener la fecha actual (solo fecha, sin hora)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Buscar alertas para hoy que no han sido enviadas
     const alertsToSend = await prisma.healthAlerts.findMany({
       where: {
         alert_date: {
@@ -64,7 +60,6 @@ export async function POST(request: Request) {
     let sentCount = 0;
     let errorCount = 0;
 
-    // Enviar cada alerta
     for (const alert of alertsToSend) {
       try {
         const emailContent = generateEmailContent(alert);
@@ -88,7 +83,6 @@ export async function POST(request: Request) {
           continue;
         }
 
-        // Marcar como enviada
         await prisma.healthAlerts.update({
           where: { id: alert.id },
           data: { sent: true },
@@ -125,7 +119,6 @@ export async function POST(request: Request) {
   }
 }
 
-// Función para generar el contenido del email
 function generateEmailContent(alert: any): string {
   const { users, Pets, Medications, Vaccinations } = alert;
 
@@ -165,7 +158,7 @@ function generateEmailContent(alert: any): string {
         </div>
         
         <div class="content">
-          <h2>Hola ${users.first_name} ${users.last_name}!</h2>
+          <h2>Hola!</h2>
           
           <div class="pet-info">
             <h3>Información de la Mascota</h3>
@@ -192,16 +185,3 @@ function generateEmailContent(alert: any): string {
     </html>
   `;
 }
-
-// Para App Router (app/api/cron/health-alerts/route.ts)
-/*
-export async function POST(request: Request) {
-  // El mismo código pero adaptado para App Router
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return Response.json({ message: 'Unauthorized' }, { status: 401 });
-  }
-
-  // ... resto del código igual pero retornando Response.json() en lugar de res.status()
-}
-*/

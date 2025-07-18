@@ -445,7 +445,7 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
                             </div>
 
                             {user && review.users.id === user.id && (
-                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                              <span className="bg-secondary text-white text-xs px-2 py-1 rounded-full">
                                 Tu reseña
                               </span>
                             )}

@@ -427,32 +427,6 @@ export default function ProfileConfigPage() {
                         )}
                       </div>
                     </div>
-
-                    {selectedBadgeIds.length > 0 && (
-                      <div>
-                        <h4 className="text-md font-semibold mb-3">Vista previa de insignias seleccionadas</h4>
-                        <div className="flex gap-3 p-4 bg-muted rounded-lg">
-                          {selectedBadgeIds.map((badgeId) => {
-                            const badge = user.unlockedBadges?.find(b => b.id === badgeId)
-                            if (!badge) return null
-                            return (
-                              <div key={badge.id} className="text-center">
-                                <img
-                                  src={badge.icon}
-                                  alt={badge.label}
-                                  title={badge.label}
-                                  className="w-8 h-8 mx-auto"
-                                />
-                                <div className="text-xs mt-1">{badge.label}</div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Así se verán en tu perfil público
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </TabsContent>
 

@@ -7,6 +7,7 @@ import {
   softDeleteMarketplaceItem as softDeleteService,
   markItemAsSold as markAsSoldService,
   listMarketplaceCities as listCitiesService,
+  listMarketplacePetCategories as listPetCategoriesService,
 } from "@/server/services/marketplace.service";
 import {
   createItemSchema,
@@ -219,6 +220,21 @@ export const fetchMarketplaceCities = async () => {
   try {
     const cities = await listCitiesService();
     return NextResponse.json({ cities }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
+  }
+};
+
+/**
+ * Listar tipos de mascotas disponibles en el marketplace.
+ */
+export const fetchMarketplacePetCategories = async () => {
+  try {
+    const categories = await listPetCategoriesService();
+    return NextResponse.json({ categories }, { status: 200 });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Error interno" },

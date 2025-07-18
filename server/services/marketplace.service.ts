@@ -1,7 +1,7 @@
 import prisma from "@/lib/db";
 import { reverseGeocode } from "@/utils/geocode";
 import type { MarketplaceItemInput, ListFilters } from "@/types/marketplace";
-import { ItemStatus, Prisma } from "@prisma/client";
+import { ItemStatus, PetCategory, Prisma } from "@prisma/client";
 
 /**
  * Crea un nuevo anuncio en el marketplace.
@@ -183,4 +183,20 @@ export const listMarketplaceCities = async (): Promise<string[]> => {
   return raws
     .map((r) => r.city)
     .filter((c): c is string => Boolean(c));
+};
+
+/**
+ * Listar los tipos de mascotas existentes en el marketplace.
+ */
+export const listMarketplacePetCategories = async (): Promise<string[]> => {
+  const raws = await prisma.marketplaceItem.findMany({
+    where: { status: ItemStatus.ACTIVE },
+    select: { pet_category: true },
+    distinct: ["pet_category"],
+    orderBy: { pet_category: "asc" },
+  });
+
+  return raws
+    .map((r) => r.pet_category)
+    .filter((c): c is PetCategory => Boolean(c));
 };

@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { PET_OPTIONS, CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/types/marketplace";
 import { PetCategory } from "@prisma/client";
 import { useMarketplaceCities } from "@/hooks/marketplace/useMarketplaceCities";
+import { useMarketplacePetCategories } from "@/hooks/marketplace/useMarketplacePetCategories";
 import { Search, Loader2 } from "lucide-react";
 
 interface Props {
@@ -35,7 +36,9 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
   const { search, city, petCats, artCats, priceRange, condition } = filters;
   const { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition } = setters;
 
-  const { cities, loading, error } = useMarketplaceCities();
+  const { cities, loading: citiesLoading, error: citiesError } = useMarketplaceCities();
+  const { categories, loading: petsLoading, error: petsError } = useMarketplacePetCategories();
+  const petCatsAvailable = Array.isArray(categories) ? categories : [];
 
   const onConditionChange = (value: string, checked: boolean) => {
     if (checked) {
@@ -106,7 +109,7 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
       <div className="space-y-2">
         <Label>Ciudad</Label>
 
-        {loading ? (
+        {citiesLoading ? (
           <div className="flex items-center justify-center h-10">
             <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
           </div>
@@ -160,17 +163,27 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
       {/* Mascotas */}
       <div className="space-y-3">
         <Label>Tipo de mascota</Label>
-        {PET_OPTIONS.map(({ value, label }) => (
-          <div key={value} className="flex items-center space-x-2">
-            <Checkbox
-              checked={petCats.includes(value)}
-              onCheckedChange={(checked: boolean) =>
-                onPetChange(value, checked)
-              }
-            />
-            <Label className="text-sm font-normal">{label}</Label>
+        {petsLoading ? (
+          <div className="flex justify-center py-2">
+            <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
           </div>
-        ))}
+        ) : (
+        PET_OPTIONS
+          .filter(
+            (o) =>
+              o.value === PetCategory.ALL ||
+              petCatsAvailable.includes(o.value as PetCategory),
+          )
+          .map(({ value, label }) => (
+            <div key={value} className="flex items-center space-x-2">
+              <Checkbox
+                checked={petCats.includes(value)}
+                onCheckedChange={(raw) => onPetChange(value, Boolean(raw))}
+              />
+              <Label className="text-sm font-normal">{label}</Label>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

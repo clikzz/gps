@@ -6,6 +6,8 @@ import { Label }  from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PET_OPTIONS, CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/types/marketplace";
+import { PetCategory } from "@prisma/client";
 import { Search } from "lucide-react";
 
 interface Props {
@@ -14,6 +16,7 @@ interface Props {
     city: string;
     petCats: string[];
     artCats: string[];
+    condition: string;
     priceRange: [number,number];
   };
   setters: {
@@ -21,16 +24,42 @@ interface Props {
     setCity: (v:string)=>void;
     setPetCats: (v:string[])=>void;
     setArtCats: (v:string[])=>void;
+    setCondition: (v:string)=>void;
     setPriceRange: (v:[number,number])=>void;
   };
   clear: () => void;
 }
 
 export function FilterSidebar({ filters, setters, clear }: Props) {
-  const { search, city, petCats, artCats, priceRange } = filters;
-  const { setSearch, setCity, setPetCats, setArtCats, setPriceRange } = setters;
-  const petCategories = ["Perros","Gatos","Aves","Reptiles","Roedores"];
-  const articleCategories = ["Alimentos","Juguetes","Accesorios","Casas y Camas","Higiene","Transporte"];
+  const { search, city, petCats, artCats, priceRange, condition } = filters;
+  const { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition } = setters;
+
+  const onConditionChange = (value: string, checked: boolean) => {
+    if (checked) {
+      setCondition(value);
+    } else {
+      setCondition("");
+    }
+  };
+
+  const onPetChange = (value: string, checked: boolean) => {
+    if (value === PetCategory.ALL) {
+      setPetCats(checked ? [PetCategory.ALL] : []);
+      return;
+    }
+    let next = petCats.filter((v) => v !== PetCategory.ALL);
+    if (checked) next = [...next, value];
+    else next = next.filter((v) => v !== value);
+    setPetCats(next);
+  };
+
+  const onArtChange = (value: string, checked: boolean) => {
+    if (checked) {
+      setArtCats([...artCats, value]);
+    } else {
+      setArtCats(artCats.filter((v) => v !== value));
+    }
+  };
 
   return (
     <div className="w-full space-y-6 p-2">
@@ -84,34 +113,50 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
         </Select>
       </div>
 
-      {/* Mascotas */}
+      {/* Artículos */}
       <div className="space-y-3">
-        <Label>Tipo de mascota</Label>
-        {petCategories.map((cat) => (
-          <div key={cat} className="flex items-center space-x-2">
+        <Label>Categoría</Label>
+        {CATEGORY_OPTIONS.map(({ value, label }) => (
+          <div key={value} className="flex items-center space-x-2">
             <Checkbox
-              checked={petCats.includes(cat)}
-              onCheckedChange={(v: any) =>
-                setPetCats(v ? [...petCats,cat] : petCats.filter(x=>x!==cat))
+              checked={artCats.includes(value)}
+              onCheckedChange={(checked: boolean) =>
+                onArtChange(value, checked)
               }
             />
-            <Label className="text-sm font-normal">{cat}</Label>
+            <Label className="text-sm font-normal">{label}</Label>
           </div>
         ))}
       </div>
 
-      {/* Artículos */}
+      {/* Condición */}
       <div className="space-y-3">
-        <Label>Categoría</Label>
-        {articleCategories.map((cat) => (
-          <div key={cat} className="flex items-center space-x-2">
+        <Label>Condición</Label>
+        {CONDITION_OPTIONS.map(({ value, label }) => (
+          <div key={value} className="flex items-center space-x-2">
             <Checkbox
-              checked={artCats.includes(cat)}
-              onCheckedChange={(v: any) =>
-                setArtCats(v ? [...artCats,cat] : artCats.filter(x=>x!==cat))
+              checked={condition === value}
+              onCheckedChange={(checked: boolean) =>
+                onConditionChange(value, checked)
               }
             />
-            <Label className="text-sm font-normal">{cat}</Label>
+            <Label className="text-sm font-normal">{label}</Label>
+          </div>
+        ))}
+      </div>
+
+      {/* Mascotas */}
+      <div className="space-y-3">
+        <Label>Tipo de mascota</Label>
+        {PET_OPTIONS.map(({ value, label }) => (
+          <div key={value} className="flex items-center space-x-2">
+            <Checkbox
+              checked={petCats.includes(value)}
+              onCheckedChange={(checked: boolean) =>
+                onPetChange(value, checked)
+              }
+            />
+            <Label className="text-sm font-normal">{label}</Label>
           </div>
         ))}
       </div>

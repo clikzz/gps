@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge }  from "@/components/ui/badge";
+import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import { MapPin, Heart } from "lucide-react";
 import type { Item } from "@/types/marketplace";
 
@@ -14,6 +15,10 @@ interface Props {
 }
 
 export function ProductCard({ item, onToggleFav, onViewDetails }: Props) {
+  const petLabel = getPetCategoryLabel(item.pet_category);
+  const categoryLabel = getItemCategoryLabel(item.category);
+  const conditionLabel = getItemConditionLabel(item.condition);
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
@@ -30,7 +35,7 @@ export function ProductCard({ item, onToggleFav, onViewDetails }: Props) {
         >
           <Heart className="h-4 w-4" />
         </Button>
-        <Badge variant="secondary" className="absolute top-2 left-2">{item.category}</Badge>
+        <Badge variant="secondary" className="absolute top-2 left-2">{petLabel}</Badge>
       </div>
 
       <CardHeader className="pb-2">
@@ -47,7 +52,7 @@ export function ProductCard({ item, onToggleFav, onViewDetails }: Props) {
             <p className="text-2xl font-bold text-primary">${item.price.toLocaleString()}</p>
             <p className="text-sm text-muted-foreground">por {item.seller.name}</p>
           </div>
-          <Badge variant="outline">{item.category}</Badge>
+          <Badge variant="outline">{categoryLabel}</Badge>
         </div>
       </CardContent>
 

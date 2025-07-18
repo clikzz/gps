@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import type { Item } from "@/types/marketplace";
 import { formatTimeAgo } from "@/utils/timeAgo";
 
@@ -19,6 +20,10 @@ interface Props {
 
 export function ProductDetailsDialog({ item, open, onClose, onToggleFav }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const petLabel = getPetCategoryLabel(item.pet_category);
+  const categoryLabel = getItemCategoryLabel(item.category);
+  const conditionLabel = getItemConditionLabel(item.condition);
 
   const prevImage = () => {
     setCurrentIndex((i) => Math.max(0, i - 1));
@@ -105,8 +110,8 @@ export function ProductDetailsDialog({ item, open, onClose, onToggleFav }: Props
               <div>
                 <p className="text-3xl font-bold text-primary">${item.price.toLocaleString()}</p>
                 <div className="flex gap-2 my-2">
-                  <Badge variant="secondary">{item.category}</Badge>
-                  <Badge variant="outline">{item.condition}</Badge>
+                  <Badge variant="secondary">{petLabel}</Badge>
+                  <Badge variant="outline">{categoryLabel}</Badge>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -133,6 +138,7 @@ export function ProductDetailsDialog({ item, open, onClose, onToggleFav }: Props
               <section>
                 <h3 className="font-semibold mb-1">Descripción</h3>
                 <p className="text-muted-foreground">{item.description}</p>
+                <Badge variant="outline" className="mt-2">{conditionLabel}</Badge>
               </section>
             )}
 

@@ -24,6 +24,7 @@ export const createMarketplaceItem = async (
         condition: data.condition,
         price: data.price,
         category: data.category,
+        pet_category: data.pet_category ?? "ALL",
         photo_urls: data.photo_urls,
         latitude: data.latitude,
         longitude: data.longitude,
@@ -114,6 +115,7 @@ export const listMarketplaceItems = async (
 ) => {
   const {
     category,
+    pet_category,
     minPrice,
     maxPrice,
     lat,
@@ -126,6 +128,7 @@ export const listMarketplaceItems = async (
 
   const where: any = { status: ItemStatus.ACTIVE };
   if (category) where.category = category;
+  if (pet_category) where.pet_category = pet_category;
   if (minPrice !== undefined || maxPrice !== undefined) {
     where.price = {};
     if (minPrice !== undefined) where.price.gte = minPrice;

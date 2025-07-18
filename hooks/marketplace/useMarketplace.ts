@@ -12,6 +12,7 @@ export function useMarketplace() {
   const [city, setCity] = useState("all");
   const [petCats, setPetCats] = useState<string[]>([]);
   const [artCats, setArtCats] = useState<string[]>([]);
+  const [condition, setCondition] = useState<string>("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
 
   useEffect(() => {
@@ -38,20 +39,21 @@ export function useMarketplace() {
       if (artCats.length && !artCats.includes(p.category)) return false;
       const price = Number(p.price);
       if (price < priceRange[0] || price > priceRange[1]) return false;
+      if (condition && p.condition !== condition) return false;
       return true;
     });
-  }, [items, search, city, petCats, artCats, priceRange]);
+  }, [items, search, city, petCats, artCats, priceRange, condition]);
 
   const clearFilters = () => {
-    setSearch(""); setCity("all"); setPetCats([]); setArtCats([]); setPriceRange([0,100000]);
+    setSearch(""); setCity("all"); setPetCats([]); setArtCats([]); setPriceRange([0,100000]); setCondition("");
   };
 
   return {
     items: filtered,
     loading,
     error,
-    filters: { search, city, petCats, artCats, priceRange },
-    setters: { setSearch, setCity, setPetCats, setArtCats, setPriceRange },
+    filters: { search, city, petCats, artCats, priceRange, condition },
+    setters: { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition },
     toggleFav,
     clearFilters,
   };

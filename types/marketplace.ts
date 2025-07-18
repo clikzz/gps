@@ -1,4 +1,4 @@
-import { ItemCategory, ItemCondition, ItemStatus } from "@prisma/client";
+import { ItemCategory, ItemCondition, ItemStatus, PetCategory } from "@prisma/client";
 
 export interface MarketplaceItem {
   id: bigint;
@@ -10,6 +10,7 @@ export interface MarketplaceItem {
   }
   title: string;
   description?: string;
+  pet_category: PetCategory;
   category: ItemCategory;
   condition: ItemCondition;
   price: number;
@@ -40,6 +41,7 @@ export interface MarketplaceItemInput {
   condition: ItemCondition;
   price: number;
   category: ItemCategory;
+  pet_category: PetCategory;
   photo_urls: string[];
   latitude: number;
   longitude: number;
@@ -47,6 +49,7 @@ export interface MarketplaceItemInput {
 
 export interface ListFilters {
   category?: ItemCategory;
+  pet_category?: PetCategory;
   minPrice?: number;
   maxPrice?: number;
   lat?: number;
@@ -82,16 +85,6 @@ export interface SelectOption {
   label: string;
 }
 
-export const ITEM_OPTIONS: SelectOption[] = [
-  { label: "Comida", value: "FOOD" },
-  { label: "Juguetes", value: "TOYS" },
-  { label: "Camas", value: "BEDDING" },
-  { label: "Paseo", value: "WALK_WEAR" },
-  { label: "Salud", value: "HEALTH_GROOM" },
-  { label: "Viajes", value: "TRAVEL" },
-  { label: "Otros", value: "OTHER" },
-];
-
 export const CATEGORY_OPTIONS: SelectOption[] = [
   { label: "Comida", value: ItemCategory.FOOD },
   { label: "Juguetes", value: ItemCategory.TOYS },
@@ -105,6 +98,26 @@ export const CATEGORY_OPTIONS: SelectOption[] = [
 export const CONDITION_OPTIONS: SelectOption[] = [
   { label: "Nuevo", value: ItemCondition.NEW },
   { label: "Usado", value: ItemCondition.USED },
+];
+
+export const PET_OPTIONS: SelectOption[] = [
+  { label: "Todos", value: PetCategory.ALL },
+  { label: "Perro", value: PetCategory.DOG },
+  { label: "Gato", value: PetCategory.CAT },
+  { label: "Conejo", value: PetCategory.RABBIT },
+  { label: "Hámster", value: PetCategory.HAMSTER },
+  { label: "Tortuga", value: PetCategory.TURTLE },
+  { label: "Ave", value: PetCategory.BIRD },
+  { label: "Pez", value: PetCategory.FISH },
+  { label: "Cobaya", value: PetCategory.GUINEA_PIG },
+  { label: "Hurón", value: PetCategory.FERRET },
+  { label: "Ratón", value: PetCategory.MOUSE },
+  { label: "Chinchilla", value: PetCategory.CHINCHILLA },
+  { label: "Erizo", value: PetCategory.HEDGEHOG },
+  { label: "Serpiente", value: PetCategory.SNAKE },
+  { label: "Rana", value: PetCategory.FROG },
+  { label: "Lagarto", value: PetCategory.LIZARD },
+  { label: "Otro", value: PetCategory.OTHER },
 ];
 
 export interface ImageUploadResult {

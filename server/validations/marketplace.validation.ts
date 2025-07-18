@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ItemCategory, ItemCondition } from "@prisma/client";
+import { ItemCategory, ItemCondition, PetCategory } from "@prisma/client";
 
 export const createItemSchema = z.object({
   title: z
@@ -11,6 +11,10 @@ export const createItemSchema = z.object({
   category: z
     .nativeEnum(ItemCategory, {
       errorMap: () => ({ message: "Categoría inválida." }),
+    }),
+  pet_category: z
+    .nativeEnum(PetCategory, {
+      errorMap: () => ({ message: "Categoría de mascota inválida." }),
     }),
   condition: z
     .nativeEnum(ItemCondition, {

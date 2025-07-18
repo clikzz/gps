@@ -83,6 +83,11 @@ export const fetchPublicMarketplaceItems = async (
   const output = list.map(item => ({
     id: item.id.toString(),
     user_id: item.user_id,
+    seller: {
+      name: item.seller.name,
+      email: item.seller.email,
+      avatar_url: item.seller.avatar_url,
+    },
     title: item.title,
     description: item.description ?? undefined,
     category: item.category,

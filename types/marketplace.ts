@@ -3,6 +3,11 @@ import { ItemCategory, ItemCondition, ItemStatus } from "@prisma/client";
 export interface MarketplaceItem {
   id: bigint;
   user_id: string;
+  seller: {
+    name: string;
+    email: string;
+    avatar_url: string;
+  }
   title: string;
   description?: string;
   category: ItemCategory;
@@ -65,4 +70,19 @@ export const ITEM_OPTIONS: SelectOption[] = [
   { label: "Salud", value: "HEALTH_GROOM" },
   { label: "Viajes", value: "TRAVEL" },
   { label: "Otros", value: "OTHER" },
+];
+
+export const CATEGORY_OPTIONS: SelectOption[] = [
+  { label: "Comida", value: ItemCategory.FOOD },
+  { label: "Juguetes", value: ItemCategory.TOYS },
+  { label: "Camas", value: ItemCategory.BEDDING },
+  { label: "Paseo", value: ItemCategory.WALK_WEAR },
+  { label: "Salud", value: ItemCategory.HEALTH_GROOM },
+  { label: "Viajes", value: ItemCategory.TRAVEL },
+  { label: "Otros", value: ItemCategory.OTHER },
+];
+
+export const CONDITION_OPTIONS: SelectOption[] = [
+  { label: "Nuevo", value: ItemCondition.NEW },
+  { label: "Usado", value: ItemCondition.USED },
 ];

@@ -151,6 +151,16 @@ export const listMarketplaceItems = async (
     orderBy,
     skip: page * pageSize,
     take: pageSize,
+    include: {
+      seller: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar_url: true,
+        },
+      },
+    },
   });
 
   return items;

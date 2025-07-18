@@ -7,6 +7,7 @@ import {
   fetchUserSoldMarketplaceItems,
   deleteMarketplaceItem,
   markMarketplaceItemAsSold,
+  fetchMarketplaceCities,
 } from "@/server/controllers/marketplace.controller";
 
 
@@ -30,6 +31,8 @@ export async function GET(req: NextRequest) {
       return fetchUserMarketplaceItems(user.id);
     case "sold":
       return fetchUserSoldMarketplaceItems(user.id);
+    case "cities":
+      return fetchMarketplaceCities();
     default:
       return fetchPublicMarketplaceItems(filters);
   }

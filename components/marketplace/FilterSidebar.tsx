@@ -8,7 +8,8 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { PET_OPTIONS, CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/types/marketplace";
 import { PetCategory } from "@prisma/client";
-import { Search } from "lucide-react";
+import { useMarketplaceCities } from "@/hooks/marketplace/useMarketplaceCities";
+import { Search, Loader2 } from "lucide-react";
 
 interface Props {
   filters: {
@@ -33,6 +34,8 @@ interface Props {
 export function FilterSidebar({ filters, setters, clear }: Props) {
   const { search, city, petCats, artCats, priceRange, condition } = filters;
   const { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition } = setters;
+
+  const { cities, loading, error } = useMarketplaceCities();
 
   const onConditionChange = (value: string, checked: boolean) => {
     if (checked) {
@@ -102,15 +105,24 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
       {/* Ciudad */}
       <div className="space-y-2">
         <Label>Ciudad</Label>
-        <Select value={city} onValueChange={setCity}>
-          <SelectTrigger><SelectValue placeholder="Todas"/></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            {["Concepción","Hualpén","San Pedro de la Paz","Chiguayante", "Los Ángeles"].map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+        {loading ? (
+          <div className="flex items-center justify-center h-10">
+            <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
+          </div>
+        ) : (
+          <Select value={city} onValueChange={setCity}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {cities.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Artículos */}

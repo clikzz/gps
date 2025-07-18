@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import {
   createMarketplaceItem as createItemService,
   listMarketplaceItems as listItemsService,
@@ -5,6 +6,7 @@ import {
   listUserSoldItems as listUserSoldItemsService,
   softDeleteMarketplaceItem as softDeleteService,
   markItemAsSold as markAsSoldService,
+  listMarketplaceCities as listCitiesService,
 } from "@/server/services/marketplace.service";
 import {
   createItemSchema,
@@ -207,5 +209,20 @@ export const markMarketplaceItemAsSold = async (
       status: 403,
       headers: { "Content-Type": "application/json" },
     });
+  }
+};
+
+/**
+ * Listar ciudades existentes en el marketplace.
+ */
+export const fetchMarketplaceCities = async () => {
+  try {
+    const cities = await listCitiesService();
+    return NextResponse.json({ cities }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
   }
 };

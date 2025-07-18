@@ -390,11 +390,11 @@ export function MembersSearch({ users }: MembersSearchProps) {
               {paginatedUsers.map((user) => (
                 <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                   <TableCell className="font-medium">
-                    <Link href={`/forum/user/${user.id}`} className="hover:underline text-primary">
+                    <Link href={`/forum/user/${user.id}`} className="text-foreground hover:underline">
                       {user.name}#{user.tag}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-foreground">{getUserTitle(user.menssageCount)}</TableCell>
+                  <TableCell className="hover:underline font-semibold  text-primary">{getUserTitle(user.menssageCount)}</TableCell>
                   {isModerator && (
                     <TableCell>
                       {user.status === UserStatus.ACTIVE && (

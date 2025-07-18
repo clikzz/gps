@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { useState } from "react"
 import { useEffect } from "react"
-import { useUserProfile } from "@/stores/userProfile"
+import { useUserProfile, useSelectedBadges } from "@/stores/userProfile"
 
 export interface Reply {
   id: number
@@ -41,8 +41,8 @@ export function ReplyList({ replies }: ReplyListProps) {
   const totalPages = Math.ceil(replyList.length / itemsPerPage)
   const currentUserId = useUserProfile((state) => state.user?.id)
   const currentUserRole = useUserProfile((state) => state.user?.role)
-  // const userBadges = (replyList.authorBadges || []).slice(0, 3)
-  
+  const selectedBadges = useSelectedBadges()
+
   useEffect(() => {
     setReplyList(replies)
     setCurrentPage(1)
@@ -144,20 +144,29 @@ export function ReplyList({ replies }: ReplyListProps) {
                     />
                   )}
                 </div>
-                {/*
-                {userBadges.length > 0 && (
-                  <div className="mt-2 text-sm">
-                    <div className="font-semibold mb-1">Insignias:</div>
-                    <div className="flex flex-wrap justify-center gap-1">
-                      {userBadges.map((badge, index) => (
-                        <span key={index} className="text-xl" title={badge.name}>
-                          {badge}
-                        </span>
-                      ))}
-                    </div>
+              {selectedBadges.length > 0 ? (
+                <div className="mt-2 text-sm">
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {selectedBadges.map((badge) => (
+                      <span
+                        key={badge.id}
+                        className="text-xl"
+                        title={badge.label}
+                      >
+                        <img
+                          src={badge.icon}
+                          alt={badge.label}
+                          className="inline-block w-6 h-6"
+                        />
+                      </span>
+                    ))}
                   </div>
-                )}
-                */}
+                </div>
+              ) : (
+                <div className="mt-2 text-sm opacity-50">
+                </div>
+              )}
+
                 <div className="text-xs">Mensajes: {reply.author.menssageCount.toLocaleString()}</div>
               </div>
               <div className="flex-1 p-4 min-h-[150px] relative">

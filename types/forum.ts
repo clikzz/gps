@@ -9,5 +9,6 @@ export interface ForumTopic {
     name: string
     tag: number
   }
-  locked: boolean       
+  locked: boolean 
+  featured: boolean      
 }

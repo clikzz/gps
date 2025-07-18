@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import Link from "next/link";
+import { BadgeListenerProvider } from "@/components/BadgeListenerProvider";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -36,6 +37,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <BadgeListenerProvider>
           <main className="min-h-screen flex flex-col items-center">
             <div className="flex-1 w-full flex flex-col gap-20 items-center">
               <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
@@ -67,6 +69,7 @@ export default function RootLayout({
             </div>
           </main>
           <Toaster />
+          </BadgeListenerProvider>
         </ThemeProvider>
         <Toaster />
       </body>

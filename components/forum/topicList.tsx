@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
-import { Lock } from "lucide-react"
+import { Lock, Pin, PinOff } from "lucide-react"
 import { ForumTopic } from "@/types/forum"
 
 interface TopicListProps {
@@ -31,6 +31,7 @@ export function TopicList({ topics, subforumSlug }: TopicListProps) {
                   href={`/forum/subforum/${subforumSlug}/topic/${topic.id}`}
                   className="flex items-center font-medium hover:underline text-base space-x-2"
                 >
+                  {topic.featured && <Pin className="w-5 h-5 text-muted-foreground" />}
                   {topic.locked && <Lock className="w-5 h-5 text-muted-foreground" />}
                   <span>{topic.title}</span>
                 </Link>

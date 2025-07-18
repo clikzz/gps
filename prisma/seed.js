@@ -65,6 +65,24 @@ const badges = [
       description: "Por publicar 10 mensajes en el foro",
       icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//msg_10.png",
     },
+    {
+      key: "MSG_30",
+      name: "30 Mensajes",
+      description: "Por publicar 30 mensajes en el foro",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//msg_30.png",
+    },
+    {
+      key: "DOG_LOVER",
+      name: "Dog Lover",
+      description: "Por registrar al menos una mascota de especie perro",
+      icon_url:"https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//dog_lover.png",
+    },
+    {
+      key: "CAT_LOVER",
+      name: "Cat Lover",
+      description: "Por registrar al menos una mascota de especie gato",
+      icon_url:"https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//cat_lover.png",
+    },
   ];
 
   for (const b of badges) {

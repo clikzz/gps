@@ -4,7 +4,7 @@ import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { useUserProfile } from "@/stores/userProfile"
+import { useUserProfile, useSelectedBadges } from "@/stores/userProfile"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 
@@ -25,7 +25,7 @@ interface TopicDetailProps {
     locked: boolean
   }
   mainPost: {
-    id: number                
+    id: number
     content: string
     createdAt: string
     author: {
@@ -53,8 +53,9 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
   const currentUserRole = useUserProfile((s) => s.user?.role)
 
   const isAuthor = currentUserId === topic.author.id
-  const canEdit  = isAuthor || currentUserRole === "MODERATOR" || currentUserRole === "ADMIN"
-  const canDelete= isAuthor || currentUserRole === "ADMIN"
+  const canEdit = isAuthor || currentUserRole === "MODERATOR" || currentUserRole === "ADMIN"
+  const canDelete = isAuthor || currentUserRole === "ADMIN"
+  const selectedBadges = useSelectedBadges()
 
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(mainPost?.content ?? "")
@@ -144,9 +145,31 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
               />
             )}
           </div>
+
+          {selectedBadges.length > 0 ? (
+            <div className="mt-2 text-sm">
+              <div className="flex flex-wrap justify-center gap-1">
+                {selectedBadges.map((badge) => (
+                  <span
+                    key={badge.id}
+                    className="text-xl"
+                    title={badge.label}
+                  >
+                    <img
+                      src={badge.icon}
+                      alt={badge.label}
+                      className="inline-block w-6 h-6"
+                    />
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-2 text-sm opacity-50">
+            </div>
+          )}
           <div className="text-xs">Mensajes: {topic.author.menssageCount.toLocaleString()}</div>
         </div>
-
 
         <div className="flex-1 p-4 min-h-[200px] relative">
           {isEditing ? (

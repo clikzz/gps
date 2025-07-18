@@ -86,14 +86,6 @@ export function ProfilePreview({ onClose }: ProfilePreviewProps) {
             <p className="text-xs text-muted-foreground mt-2">Insignias de ejemplo</p>
           </div>
         </div>
-        <div className="pt-4 border-t">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground mb-1">Puntuación de logros:</div>
-              <div className="text-2xl font-bold">1500</div>
-            </CardContent>
-          </Card>
-        </div>
 
         <div className="pt-4 border-t space-y-2">
           <div className="text-sm">

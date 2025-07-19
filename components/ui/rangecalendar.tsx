@@ -45,44 +45,38 @@ export default function RangeCalendar({
   selectedBgColorClass = "bg-primary",
   maxDate,
 }: RangeCalendarProps) {
-const [startDate, setStartDate] = useState<Date | null>(initialStartDate)
-const todayLocal = new Date();
-const localMaxDate = new Date(
-  todayLocal.getFullYear(),
-  todayLocal.getMonth(),
-  todayLocal.getDate()
-);
-const [endDate, setEndDate] = useState<Date | null>(initialEndDate)
-const [hoverDate, setHoverDate] = useState<Date | null>(null)
+  const [startDate, setStartDate] = useState<Date | null>(initialStartDate)
+  const todayLocal = new Date()
+  const localMaxDate = new Date(todayLocal.getFullYear(), todayLocal.getMonth(), todayLocal.getDate())
 
+  const [endDate, setEndDate] = useState<Date | null>(initialEndDate)
+  const [hoverDate, setHoverDate] = useState<Date | null>(null)
 
-const initialStartMs = initialStartDate?.getTime() ?? null
-const initialEndMs   = initialEndDate?.getTime()   ?? null
-const currentStartMs = startDate?.getTime()       ?? null
-const currentEndMs   = endDate?.getTime()         ?? null
-const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== initialEndMs
+  const initialStartMs = initialStartDate?.getTime() ?? null
+  const initialEndMs = initialEndDate?.getTime() ?? null
+  const currentStartMs = startDate?.getTime() ?? null
+  const currentEndMs = endDate?.getTime() ?? null
+  const hasChanges = currentStartMs !== initialStartMs || currentEndMs !== initialEndMs
 
   const today = new Date()
   const currentMonth = new Date(today.getFullYear(), today.getMonth())
-  
 
   const [rightCalendarDate, setRightCalendarDate] = useState<Date>(currentMonth)
   const [leftCalendarDate, setLeftCalendarDate] = useState<Date>(new Date(today.getFullYear(), today.getMonth() - 1))
 
-  const daysInMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+  // Estado para controlar qué calendario mostrar en móvil
+  const [mobileActiveCalendar, setMobileActiveCalendar] = useState<"left" | "right">("right")
 
+  const daysInMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
   const firstDayIndex = (d: Date) => {
     const dow = new Date(d.getFullYear(), d.getMonth(), 1).getDay()
     return dow === 0 ? 6 : dow - 1
   }
 
-
   const navigateRightMonth = (dir: "prev" | "next") => {
     setRightCalendarDate((prev) => {
       const nd = new Date(prev)
       nd.setMonth(prev.getMonth() + (dir === "prev" ? -1 : 1))
-
-
       if (
         dir === "next" &&
         (nd.getFullYear() > currentMonth.getFullYear() ||
@@ -90,7 +84,6 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
       ) {
         return prev
       }
-
       if (
         nd.getFullYear() < leftCalendarDate.getFullYear() ||
         (nd.getFullYear() === leftCalendarDate.getFullYear() && nd.getMonth() <= leftCalendarDate.getMonth())
@@ -98,7 +91,6 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
         const newLeftDate = new Date(nd.getFullYear(), nd.getMonth() - 1)
         setLeftCalendarDate(newLeftDate)
       }
-
       return nd
     })
   }
@@ -107,7 +99,6 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
     setLeftCalendarDate((prev) => {
       const nd = new Date(prev)
       nd.setMonth(prev.getMonth() + (dir === "prev" ? -1 : 1))
-
       const maxLeftMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1)
       if (
         dir === "next" &&
@@ -116,7 +107,6 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
       ) {
         return prev
       }
-
       if (
         nd.getFullYear() > rightCalendarDate.getFullYear() ||
         (nd.getFullYear() === rightCalendarDate.getFullYear() && nd.getMonth() >= rightCalendarDate.getMonth())
@@ -132,9 +122,17 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
           return prev
         }
       }
-
       return nd
     })
+  }
+
+  // Navegación para móvil
+  const navigateMobileCalendar = (dir: "prev" | "next") => {
+    if (mobileActiveCalendar === "left") {
+      navigateLeftMonth(dir)
+    } else {
+      navigateRightMonth(dir)
+    }
   }
 
   const generateCalendarCells = (currentDate: Date) => {
@@ -200,12 +198,12 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
   const getLastWeekStart = (date: Date) => {
     const d = new Date(date)
     const day = d.getDay()
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1) - 7 
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1) - 7
     return new Date(d.setDate(diff))
   }
 
   const getLastWeekEnd = (date: Date) => {
-    return new Date(date) 
+    return new Date(date)
   }
 
   const setQuickRange = (type: "lastWeek" | "lastMonth" | "last6Months" | "lastYear") => {
@@ -229,14 +227,13 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
         start = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate())
         break
     }
-
     setStartDate(start)
     setEndDate(end)
   }
 
   const handleApply = () => {
-  onDateRangeSelect?.(startDate, endDate)
-}
+    onDateRangeSelect?.(startDate, endDate)
+  }
 
   const formatDateRange = () => {
     if (!startDate && !endDate) return "Selecciona un rango de fechas"
@@ -244,46 +241,58 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
     return `${startDate!.toLocaleDateString("es-ES")} - ${endDate!.toLocaleDateString("es-ES")}`
   }
 
-  const renderCalendar = (currentDate: Date, isRight = false) => {
+  const renderCalendar = (currentDate: Date, isRight = false, isMobile = false) => {
     const cells = generateCalendarCells(currentDate)
 
     return (
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className={`${isMobile ? "p-3" : "flex-1 p-4 sm:p-6"}`}>
+        <div className={`flex items-center justify-between ${isMobile ? "mb-3" : "mb-4 sm:mb-6"}`}>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => (isRight ? navigateRightMonth("prev") : navigateLeftMonth("prev"))}
-            className="h-8 w-8 p-0 hover:bg-muted"
+            onClick={() =>
+              isMobile
+                ? navigateMobileCalendar("prev")
+                : isRight
+                  ? navigateRightMonth("prev")
+                  : navigateLeftMonth("prev")
+            }
+            className={`${isMobile ? "h-6 w-6 p-0" : "h-8 w-8 p-0"} hover:bg-muted`}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
           </Button>
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 className={`${isMobile ? "text-sm" : "text-base sm:text-lg"} font-semibold text-foreground`}>
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h2>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => (isRight ? navigateRightMonth("next") : navigateLeftMonth("next"))}
-            className="h-8 w-8 p-0 hover:bg-muted"
+            onClick={() =>
+              isMobile
+                ? navigateMobileCalendar("next")
+                : isRight
+                  ? navigateRightMonth("next")
+                  : navigateLeftMonth("next")
+            }
+            className={`${isMobile ? "h-6 w-6 p-0" : "h-8 w-8 p-0"} hover:bg-muted`}
             disabled={
-              isRight
-                ? 
-                  currentDate.getFullYear() >= currentMonth.getFullYear() &&
+              isRight || (isMobile && mobileActiveCalendar === "right")
+                ? currentDate.getFullYear() >= currentMonth.getFullYear() &&
                   currentDate.getMonth() >= currentMonth.getMonth()
-                : 
-                  currentDate.getFullYear() >= currentMonth.getFullYear() &&
+                : currentDate.getFullYear() >= currentMonth.getFullYear() &&
                   currentDate.getMonth() >= currentMonth.getMonth() - 1
             }
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
           </Button>
         </div>
 
-        <div className="grid grid-cols-7 gap-1 mb-3">
+        <div className={`grid grid-cols-7 gap-1 ${isMobile ? "mb-2" : "mb-3"}`}>
           {dayNames.map((dn) => (
-            <div key={dn} className="h-10 flex items-center justify-center">
-              <span className="text-sm font-medium text-muted-foreground">{dn}</span>
+            <div key={dn} className={`${isMobile ? "h-6" : "h-8 sm:h-10"} flex items-center justify-center`}>
+              <span className={`${isMobile ? "text-xs" : "text-xs sm:text-sm"} font-medium text-muted-foreground`}>
+                {dn}
+              </span>
             </div>
           ))}
         </div>
@@ -294,9 +303,7 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
             const isEnd = isCurrent && isEndDate(date)
             const inRange = isCurrent && isInRange(date)
             const inHover = isCurrent && isInHoverRange(date)
-            const isDisabled = localMaxDate
-  ? date > localMaxDate
-  : false
+            const isDisabled = localMaxDate ? date > localMaxDate : false
             const isToday = date.toDateString() === new Date().toDateString()
 
             return (
@@ -309,7 +316,8 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
                 onMouseEnter={() => setHoverDate(date)}
                 onMouseLeave={() => setHoverDate(null)}
                 className={`
-                  h-10 w-10 p-0 font-normal transition-all duration-200 relative
+                  ${isMobile ? "h-6 w-6 p-0 text-xs" : "h-8 w-8 sm:h-10 sm:w-10 p-0 text-xs sm:text-sm"} 
+                  font-normal transition-all duration-200 relative
                   ${
                     isStart || isEnd
                       ? "bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
@@ -321,7 +329,7 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
                   }
                   ${isDisabled ? "opacity-40 cursor-not-allowed" : ""}
                   ${!isCurrent ? "text-muted-foreground/50" : ""}
-                  ${isToday && !isStart && !isEnd && isCurrent ? "ring-2 ring-primary ring-offset-2" : ""}
+                  ${isToday && !isStart && !isEnd && isCurrent ? "ring-1 ring-primary ring-offset-1" : ""}
                 `}
               >
                 {date.getDate()}
@@ -342,48 +350,86 @@ const hasChanges     = currentStartMs !== initialStartMs || currentEndMs !== ini
     setLeftCalendarDate(previousMonth)
   }
 
+  const currentMobileDate = mobileActiveCalendar === "left" ? leftCalendarDate : rightCalendarDate
+
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-lg">
-      <CardHeader className="pb-4">
-        <p className="text-sm text-muted-foreground">{formatDateRange()}</p>
+      <CardHeader className={`pb-2 sm:pb-4`}>
+        <p className="text-xs sm:text-sm text-muted-foreground">{formatDateRange()}</p>
       </CardHeader>
+
       <CardContent className="p-0">
-        <div className="flex border-t">
+        {/* Vista móvil - Un solo calendario */}
+        <div className="sm:hidden border-t">
+          {/* Selector de calendario en móvil */}
+          <div className="flex border-b bg-muted/20">
+            <button
+              onClick={() => setMobileActiveCalendar("left")}
+              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                mobileActiveCalendar === "left"
+                  ? "bg-background text-foreground border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {monthNames[leftCalendarDate.getMonth()]} {leftCalendarDate.getFullYear()}
+            </button>
+            <button
+              onClick={() => setMobileActiveCalendar("right")}
+              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                mobileActiveCalendar === "right"
+                  ? "bg-background text-foreground border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {monthNames[rightCalendarDate.getMonth()]} {rightCalendarDate.getFullYear()}
+            </button>
+          </div>
+          {renderCalendar(currentMobileDate, mobileActiveCalendar === "right", true)}
+        </div>
+
+        {/* Vista desktop - Dos calendarios */}
+        <div className="hidden sm:flex border-t">
           {renderCalendar(leftCalendarDate, false)}
           <div className="w-px bg-border"></div>
           {renderCalendar(rightCalendarDate, true)}
         </div>
-        <div className="border-t bg-muted/30 p-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex flex-wrap gap-2">
+
+        {/* Footer con opciones rápidas y botones */}
+        <div className="border-t bg-muted/30 p-3 sm:p-6">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Opciones rápidas */}
+            <div className="flex flex-wrap gap-1 sm:gap-2">
               {quickRangeOptions.map((option) => (
                 <Badge
                   key={option.key}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-secondary/80 transition-colors"
+                  variant="outline"
+                  className="cursor-pointer hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-colors text-xs px-2 py-1 border-muted-foreground/20"
                   onClick={() => setQuickRange(option.key as any)}
                 >
                   {option.label}
                 </Badge>
               ))}
             </div>
-            <div className="flex gap-2">
+
+            {/* Botones de acción */}
+            <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleClear}
                 disabled={!startDate && !endDate}
-                className="min-w-[100px] bg-transparent"
+                className="min-w-[80px] sm:min-w-[100px] text-xs sm:text-sm h-8 sm:h-9 bg-transparent"
               >
                 Limpiar
               </Button>
               <Button
-  onClick={handleApply}
-  disabled={!hasChanges}
-  className="min-w-[100px]"
->
-  Aplicar
-</Button>
+                onClick={handleApply}
+                disabled={!hasChanges}
+                size="sm"
+                className="min-w-[80px] sm:min-w-[100px] text-xs sm:text-sm h-8 sm:h-9"
+              >
+                Aplicar
+              </Button>
             </div>
           </div>
         </div>

@@ -1,14 +1,15 @@
 "use client"
+
+import React from "react"
+
 import type { Pets as Pet } from "@prisma/client"
 import { calculateAge } from "@/utils/calculateAge"
-import { PawPrint, Info, Calendar as CalendarIcon } from "lucide-react"
+import { PawPrint, Info, CalendarIcon } from "lucide-react"
 import Image from "next/image"
-import type React from "react"
 import { motion } from "framer-motion"
 import RangeCalendar from "@/components/ui/rangecalendar"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-
 
 interface PetTimelineHeaderProps {
   petData: Pet
@@ -20,7 +21,6 @@ interface PetTimelineHeaderProps {
   selectedMilestone: string
   onMilestoneChange: (id: string) => void
 }
-
 
 const containerVariants = {
   hidden: { opacity: 0, y: -20 },
@@ -34,7 +34,6 @@ const containerVariants = {
   },
 }
 
-
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -44,7 +43,6 @@ const itemVariants = {
   },
 }
 
-
 const avatarVariants = {
   hidden: { opacity: 0, scale: 0.8 },
   visible: {
@@ -53,7 +51,6 @@ const avatarVariants = {
     transition: { duration: 0.4, ease: "easeOut" },
   },
 }
-
 
 const filtersVariants = {
   hidden: { opacity: 0, y: 10 },
@@ -77,7 +74,7 @@ export default function PetTimelineHeader({
   selectedMilestone,
   onMilestoneChange,
   children,
-}: PetTimelineHeaderProps & { children?: React.ReactNode }) {
+}: PetTimelineHeaderProps & { children?: any }) {
   const age = petData.date_of_birth ? calculateAge(petData.date_of_birth) : null
 
   function getTodayLocalISO() {
@@ -89,24 +86,23 @@ export default function PetTimelineHeader({
   }
 
   const today = getTodayLocalISO()
-
   const [open, setOpen] = useState(false)
-const wrapperRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
-useEffect(() => {
-  function handleClickOutside(event: MouseEvent) {
-    if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-      setOpen(false)
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
     }
-  }
-  document.addEventListener("mousedown", handleClickOutside)
-  return () => document.removeEventListener("mousedown", handleClickOutside)
-}, [])
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
-function parseLocalDate(iso: string): Date {
-  const [year, month, day] = iso.split("-")
-  return new Date(Number(year), Number(month) - 1, Number(day))
-}
+  function parseLocalDate(iso: string): Date {
+    const [year, month, day] = iso.split("-")
+    return new Date(Number(year), Number(month) - 1, Number(day))
+  }
 
   return (
     <motion.div
@@ -115,33 +111,32 @@ function parseLocalDate(iso: string): Date {
       initial="hidden"
       animate="visible"
     >
-      <motion.div className="flex items-center justify-between" variants={itemVariants}>
-        <div className="flex items-center gap-4">
-          <motion.div variants={avatarVariants}>
+      <motion.div className="flex items-center justify-between gap-2" variants={itemVariants}>
+        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+          <motion.div variants={avatarVariants} className="flex-shrink-0">
             {petData.photo_url ? (
               <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.2 }}>
                 <Image
                   src={petData.photo_url || "/placeholder.svg"}
                   alt={`Foto de ${petData.name}`}
-                  width={80}
-                  height={80}
-                  className="rounded-full object-cover w-20 h-20 border-2"
+                  width={56}
+                  height={56}
+                  className="rounded-full object-cover w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 border-2 aspect-square"
                 />
               </motion.div>
             ) : (
               <motion.div
-                className="w-20 h-20 rounded-full bg-muted flex items-center justify-center"
+                className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-muted flex items-center justify-center aspect-square"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
               >
-                <PawPrint className="w-10 h-10 text-muted-foreground" />
+                <PawPrint className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-muted-foreground" />
               </motion.div>
             )}
           </motion.div>
-
-          <motion.div variants={itemVariants}>
+          <motion.div variants={itemVariants} className="flex-1 min-w-0">
             <motion.h1
-              className="text-2xl font-bold"
+              className="text-base sm:text-lg md:text-xl font-bold leading-tight truncate"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
@@ -149,7 +144,7 @@ function parseLocalDate(iso: string): Date {
               Timeline de {petData.name}
             </motion.h1>
             <motion.p
-              className="text-md text-muted-foreground"
+              className="text-xs sm:text-sm md:text-base text-muted-foreground"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 0.3 }}
@@ -158,54 +153,75 @@ function parseLocalDate(iso: string): Date {
             </motion.p>
           </motion.div>
         </div>
-
         <motion.div className="flex-shrink-0" variants={itemVariants}>
-          {children}
+          <div className="sm:hidden">
+            {/* Botón vertical para móviles */}
+            {children &&
+              React.cloneElement(children as any, {
+                className:
+                  "px-2 py-1 text-xs h-auto min-h-[2.5rem] flex flex-col items-center justify-center leading-tight whitespace-nowrap",
+                children: (
+                  <span className="text-center leading-tight">
+                    Cambiar
+                    <br />
+                    mascota
+                  </span>
+                ),
+              })}
+          </div>
+          <div className="hidden sm:block">
+            {/* Botón horizontal para pantallas más grandes */}
+            {children}
+          </div>
         </motion.div>
       </motion.div>
 
       <motion.div className="border-b pb-4" variants={itemVariants}>
-        <motion.div className="flex flex-wrap items-start gap-6" variants={filtersVariants}>
+        <motion.div
+          className="flex flex-col sm:flex-row sm:flex-wrap items-start gap-3 sm:gap-4 md:gap-6"
+          variants={filtersVariants}
+        >
+          <motion.div className="flex flex-col w-full sm:min-w-0 sm:flex-1 md:flex-initial" variants={itemVariants}>
+            <label htmlFor="dateRange" className="text-xs font-medium mb-1">
+              Rango de fechas
+            </label>
+            <div ref={wrapperRef} className="relative">
+              <Button
+                variant="outline"
+                onClick={() => setOpen((o) => !o)}
+                className="w-full justify-start text-xs sm:text-sm h-9"
+                type="button"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="truncate">
+                  {startDate && endDate
+                    ? `${parseLocalDate(startDate).toLocaleDateString("es-ES")} - ${parseLocalDate(endDate).toLocaleDateString("es-ES")}`
+                    : "-- / -- / --"}
+                </span>
+              </Button>
+              <div
+                className={`absolute z-50 mt-2 transform left-0 transition ease-out duration-150 origin-top-left ${
+                  open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+                }`}
+              >
+                <div className="w-[280px] sm:w-[300px] md:w-[600px]">
+                  <RangeCalendar
+                    initialStartDate={startDate ? new Date(startDate) : null}
+                    initialEndDate={endDate ? new Date(endDate) : null}
+                    maxDate={new Date(today)}
+                    onDateRangeSelect={(s, e) => {
+                      onStartDateChange(s ? s.toISOString().split("T")[0] : "")
+                      onEndDateChange(e ? e.toISOString().split("T")[0] : "")
+                      setOpen(false)
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
 
-    <motion.div className="flex flex-col" variants={itemVariants}>
-      <label htmlFor="dateRange" className="text-xs font-medium">
-        Rango de fechas
-      </label>
-      <div ref={wrapperRef} className="relative mt-1">
-        <Button
-  variant="outline"
-  onClick={() => setOpen(o => !o)}
-  className="w-full justify-start"
-  type="button"
->
-  <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-  {startDate && endDate
-    ? `${parseLocalDate(startDate).toLocaleDateString("es-ES")} - ${parseLocalDate(endDate).toLocaleDateString("es-ES")}`
-    : "-- / -- / --"}
-</Button>
-        <div
-  className={`absolute z-50 mt-2 transform left-0 transition ease-out duration-150 origin-top-left ${
-    open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
-  }`}
->
-  <div className="w-[600px]">
-    <RangeCalendar
-      initialStartDate={startDate ? new Date(startDate) : null}
-      initialEndDate={endDate ? new Date(endDate) : null}
-      maxDate={new Date(today)}
-      onDateRangeSelect={(s,e) => {
-        onStartDateChange(s ? s.toISOString().split("T")[0] : "")
-        onEndDateChange(e ? e.toISOString().split("T")[0] : "")
-        setOpen(false)
-      }}
-    />
-  </div>
-</div>
-      </div>
-    </motion.div>
-
-          <motion.div className="flex flex-col" variants={itemVariants}>
-            <label htmlFor="milestones" className="flex items-center text-xs font-medium">
+          <motion.div className="flex flex-col w-full sm:min-w-0 sm:flex-1 md:flex-initial" variants={itemVariants}>
+            <label htmlFor="milestones" className="flex items-center text-xs font-medium mb-1">
               Hito
               <motion.span
                 className="ml-1 cursor-pointer"
@@ -220,7 +236,7 @@ function parseLocalDate(iso: string): Date {
               id="milestones"
               value={selectedMilestone}
               onChange={(e) => onMilestoneChange(e.target.value)}
-              className="mt-1 block w-full rounded border px-2 py-1 bg-background transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="block w-full rounded border px-2 py-2 bg-background transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-xs sm:text-sm h-9"
               whileFocus={{ scale: 1.02 }}
             >
               <option value="">Todos los hitos</option>

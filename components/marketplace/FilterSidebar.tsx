@@ -178,7 +178,7 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
             <div key={value} className="flex items-center space-x-2">
               <Checkbox
                 checked={petCats.includes(value)}
-                onCheckedChange={(raw) => onPetChange(value, Boolean(raw))}
+                onCheckedChange={(raw: any) => onPetChange(value, Boolean(raw))}
               />
               <Label className="text-sm font-normal">{label}</Label>
             </div>

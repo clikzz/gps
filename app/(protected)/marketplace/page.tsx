@@ -20,7 +20,7 @@ export default function MarketplacePage() {
   } = useMarketplace();
 
   return (
-    <div className="min-h-screen container mx-auto -mt-16">
+    <div className="min-h-screen container mx-auto">
       <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 lg:max-w-7xl md:max-w-5xl px-6">
         <header>
           <div className="container mx-auto px-4">

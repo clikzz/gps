@@ -9,6 +9,9 @@ export const getUserProfile = async (userId: string) => {
           deleted: false,
         },
       },
+      userBadges: {
+        include: { badge: true }
+      }
     },
   });
 };
@@ -33,6 +36,19 @@ export const updateUserProfile = async (
           deleted: false,
         },
       },
-    },
-  });
+        userBadges: {
+          include: { badge: true },
+        },
+      },
+    });
 };
+
+export async function updateBadgeSelection(
+  userId: string,
+  badgeIds: string[]
+) {
+  return prisma.users.update({
+    where: { id: userId },
+    data: { selectedBadgeIds: badgeIds },
+  });
+}

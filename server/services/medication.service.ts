@@ -51,3 +51,10 @@ export const getMedicationById = async (id: number) => {
     where: { id },
   });
 };
+
+export const enableMedicationNotification = async (id: number) => {
+  return prisma.medications.update({
+    where: { id },
+    data: { send: true },
+  });
+};

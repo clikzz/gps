@@ -49,3 +49,10 @@ export const getVaccinationById = async (id: number) => {
     where: { id },
   });
 };
+
+export const enableVaccinationNotification = async (id: number) => {
+  return prisma.vaccinations.update({
+    where: { id },
+    data: { send: true },
+  });
+};

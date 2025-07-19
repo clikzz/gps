@@ -8,6 +8,7 @@ interface Medication {
   duration: string;
   start_date: string;
   next_dose_date?: string;
+  send?: boolean;
   notes?: string;
   active: boolean;
   created_at: string;
@@ -21,6 +22,7 @@ interface Vaccination {
   type?: string;
   application_date: string;
   next_dose_date?: string;
+  send?: boolean;
   notes?: string;
   active: boolean;
   created_at: string;

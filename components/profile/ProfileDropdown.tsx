@@ -1,78 +1,113 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { LogOut, Settings, User } from "lucide-react";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { User, Settings, LogOut, ChevronDown } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { ProfilePreview } from "./ProfilePreview"
-import { signOutAction } from "@/app/actions"
-import { useUserProfile } from "@/stores/userProfile"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { signOutAction } from "@/app/actions";
+import { ProfilePreview } from "./ProfilePreview";
+import { useUserProfile } from "@/stores/userProfile";
 
-export function ProfileDropdown() {
-  const router = useRouter()
-  const { user } = useUserProfile()
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+interface UserProfile {
+  id: string;
+  name: string | null;
+  avatar_url: string | null;
+  email: string;
+  public_id: string | null;
+  menssageCount: number;
+}
 
-  if (!user) {
-    return (
-      <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">
-        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-          <span className="text-sm font-medium text-slate-600">?</span>
-        </div>
-        <div className="flex flex-col items-start">
-          <span className="text-sm font-medium">Cargando...</span>
-        </div>
-      </Button>
-    )
-  }
+interface ProfileDropdownProps {
+  user: SupabaseUser;
+  userProfile: UserProfile | null;
+}
 
-  const displayName = user.name || (user.email ? user.email.split("@")[0] : "Usuario")
+export function ProfileDropdown({ user, userProfile }: ProfileDropdownProps) {
+  const displayName = userProfile?.name || "Usuario";
+  const displayEmail = user.email || "";
+  const avatarUrl = userProfile?.avatar_url;
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const { setUser } = useUserProfile();
 
-  const handleViewProfile = () => setIsPreviewOpen(true)
-  const handleSettings = () => router.push("/profile")
+  useEffect(() => {
+    if (userProfile) {
+      setUser({
+        id: userProfile.id,
+        email: userProfile.email,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        name: userProfile.name || undefined,
+        avatar_url: userProfile.avatar_url || undefined,
+        tag: userProfile.public_id || undefined,
+        Pets: [],
+        photoLogs: [],
+        forums: [],
+        badges: [],
+        reviews: [],
+        lostPets: [],
+        marketplaceItems: [],
+        role: "USER" as any,
+        status: "ACTIVE" as any,
+        menssageCount: userProfile.menssageCount,
+        selectedBadgeIds: [],
+      });
+    }
+  }, [userProfile, setUser]);
+
   const handleSignOut = async () => {
-    await signOutAction()
-  }
+    await signOutAction();
+  };
 
+  const handleViewProfile = () => setIsPreviewOpen(true);
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
-              <img
-                src={user.avatar_url || "/placeholder.svg"}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex flex-col items-start">
-              <span className="text-sm font-medium">Hola, {displayName}</span>
-              <span className="text-xs text-muted-foreground">{user.email}</span>
-            </div>
-            <ChevronDown className="w-4 h-4" />
+          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={avatarUrl || ""} alt={displayName} />
+              <AvatarFallback>
+                {displayName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
           </Button>
         </DropdownMenuTrigger>
-
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem onClick={handleViewProfile}>
-            <User className="w-4 h-4 mr-2" />
-            Ver Perfil
-          </DropdownMenuItem>
-
-          <DropdownMenuItem onClick={handleSettings}>
-            <Settings className="w-4 h-4 mr-2" />
-            Configurar Perfil
-          </DropdownMenuItem>
-
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{displayName}</p>
+              <p className="text-xs leading-none text-muted-foreground">
+                {displayEmail}
+              </p>
+            </div>
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
-
+          <DropdownMenuItem
+            onClick={handleViewProfile}
+            className="flex items-center cursor-pointer"
+          >
+            <User className="mr-2 h-4 w-4" />
+            <span>Ver Perfil</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/profile" className="flex items-center cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Configuración</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
             <LogOut className="w-4 h-4 mr-2" />
             Cerrar Sesión
@@ -80,14 +115,19 @@ export function ProfileDropdown() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {isPreviewOpen && user && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsPreviewOpen(false)} />
-          <div className="relative z-10">
-            <ProfilePreview onClose={() => setIsPreviewOpen(false)} />
-          </div>
-        </div>
-      )}
+      {isPreviewOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setIsPreviewOpen(false)}
+            />
+            <div className="relative z-10 w-full max-w-2xl">
+              <ProfilePreview onClose={() => setIsPreviewOpen(false)} />
+            </div>
+          </div>,
+          document.body
+        )}
     </>
-  )
+  );
 }

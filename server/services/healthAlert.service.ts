@@ -1,6 +1,12 @@
 import prisma from "@/lib/db";
 import { HealthAlert } from "@/types/healthAlert";
 
+export const getHealthAlertById = async (id: number) => {
+  return prisma.healthAlerts.findUnique({
+    where: { id },
+  });
+};
+
 export const createHealthAlert = async (user_id: string, data: HealthAlert) => {
   return prisma.healthAlerts.create({
     data: {

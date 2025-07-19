@@ -1,0 +1,68 @@
+# .github/workflows/health-alerts-cron-ssh.yml
+name: Health Alerts Cron Job (SSH)
+
+on:
+  schedule:
+    # Ejecutar todos los días a las 9 AM UTC
+    - cron: "0 9 * * *"
+  workflow_dispatch: # Permite ejecución manual
+
+jobs:
+  send-health-alerts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar dependencias (OpenVPN, SSH y sshpass)
+        run: |
+          sudo apt update -qq > /dev/null 2>&1
+          sudo apt install -y -qq openvpn openvpn-systemd-resolved openssh-client sshpass
+
+      - name: Crear archivo de configuración OpenVPN
+        run: echo "${{ secrets.VPN_CONFIG_FILE }}" > /dev/shm/face-ubb.ovpn
+
+      - name: Conexión a la VPN de la UBB
+        uses: kota65535/github-openvpn-connect-action@v3.1.0
+        timeout-minutes: 2
+        continue-on-error: false
+        with:
+          config_file: /dev/shm/face-ubb.ovpn
+          username: ${{ secrets.VPN_USERNAME }}
+          password: ${{ secrets.VPN_PASSWORD }}
+
+      - name: Ejecutar Health Alerts Cron Job via SSH
+        timeout-minutes: 5
+        run: |
+          sshpass -p "${{ secrets.PROD_PASSWORD }}" ssh \
+          -q \
+          -o StrictHostKeyChecking=no \
+          -p ${{ secrets.PROD_PORT }} \
+          ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
+          set -eo pipefail
+          cd cicd/gps
+
+          echo "🚀 Ejecutando Health Alerts Cron Job..."
+
+          # Ejecutar el cron job usando curl desde el servidor
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: SSH-Cron-Job" \
+            --connect-timeout 30 \
+            --max-time 300 \
+            "http://localhost:3000/api/cron/health-alerts")
+
+          # Extraer el código de estado HTTP
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "Código de respuesta HTTP: $HTTP_CODE"
+          echo "Respuesta del servidor: $RESPONSE_BODY"
+
+          # Verificar si la respuesta fue exitosa
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Health alerts enviadas exitosamente"
+          else
+            echo "❌ Error al enviar health alerts"
+            exit 1
+          fi
+          EOF

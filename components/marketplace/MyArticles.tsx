@@ -7,34 +7,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserArticleCard } from "@/components/marketplace/UserArticleCard";
 import type { UserArticle } from "@/types/marketplace";
-// import { MarkAsSoldModal } from "./MarkAsSoldModal";
+import { MarkAsSoldModal } from "@/components/marketplace/MarkAsSold";
 
 interface Props {
   articles: UserArticle[];
   onSwitchToSell: () => void;
+  onMarkAsSold?: (id: number) => void;
 }
 
-export function MyArticles({ articles, onSwitchToSell }: Props) {
+export function MyArticles({ articles, onSwitchToSell, onMarkAsSold }: Props) {
   const [activeTab, setActiveTab] = useState<"activos" | "vendidos">("activos");
-  const [toSell, setToSell] = useState<UserArticle | null>(null);
 
   const active = articles.filter((a) => a.status === "ACTIVE");
   const sold = articles.filter((a) => a.status === "SOLD");
-
-  const handleMark = (id: number) => {
-    const art = articles.find((a) => a.id === id);
-    if (art) setToSell(art);
-  };
-
-  const handleConfirm = (
-    id: number,
-    soldPrice: number,
-    soldAt: string,
-    notes?: string
-  ) => {
-    setToSell(null);
-    setActiveTab("vendidos");
-  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -73,7 +58,7 @@ export function MyArticles({ articles, onSwitchToSell }: Props) {
               <UserArticleCard
                 key={a.id}
                 article={a}
-                onMarkAsSold={handleMark}
+                onMarkAsSold={onMarkAsSold}
               />
             ))}
           </div>
@@ -92,7 +77,7 @@ export function MyArticles({ articles, onSwitchToSell }: Props) {
               <UserArticleCard
                 key={a.id}
                 article={a}
-                onRepost={() => console.log("Repost", a.id)}
+                onMarkAsSold={onMarkAsSold}
               />
             ))}
           </div>
@@ -105,12 +90,6 @@ export function MyArticles({ articles, onSwitchToSell }: Props) {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* <MarkAsSoldModal
-        article={toSell}
-        onClose={() => setToSell(null)}
-        onConfirm={handleConfirm}
-      /> */}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { UserArticle } from "@/types/marketplace";
 
 export function useUserArticles() {
@@ -20,5 +20,26 @@ export function useUserArticles() {
       .finally(() => setLoading(false));
   }, []);
 
-  return { articles, loading, error };
+  const markAsSold = useCallback(
+    async (id: number, sold_price: number, sold_at: string, notes?: string) => {
+      const res = await fetch(`/api/marketplace?mode=sold&id=${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sold_price: sold_price.toString(), sold_at: sold_at, notes }),
+      });
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}`);
+      }
+      setArticles((prev) =>
+        prev.map((a) =>
+          a.id === id
+            ? { ...a, status: "SOLD", sold_price, sold_at, notes }
+            : a
+        )
+      );
+    },
+    []
+  );
+
+  return { articles, loading, error, markAsSold };
 }

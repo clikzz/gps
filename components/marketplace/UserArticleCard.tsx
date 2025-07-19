@@ -69,9 +69,6 @@ export function UserArticleCard({
                 </p>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Vendido: {new Date(article.sold_at!).toLocaleDateString()}
-            </p>
           </div>
         ) : (
           <div className="flex items-baseline justify-between">
@@ -84,7 +81,7 @@ export function UserArticleCard({
           </div>
         )}
         <p className="text-sm text-muted-foreground">
-          {isSold ? article.sold_at ? formatTimeAgo(article.sold_at) : "" : formatTimeAgo(article.created_at)}
+          {isSold ? article.sold_at ? `Vendido ${formatTimeAgo(article.sold_at)}` : "" : formatTimeAgo(article.created_at)}
         </p>
       </CardContent>
       <CardFooter className="flex gap-2 justify-center">

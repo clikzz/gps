@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Package, Filter, Heart, Store } from "lucide-react";
+import { ShoppingBag, Package, Filter, Heart, Store, DollarSign } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMarketplace } from "@/hooks/marketplace/useMarketplace";
 import { useUserArticles } from "@/hooks/marketplace/useUserArticles";
@@ -11,16 +11,35 @@ import { FilterSidebar } from "@/components/marketplace/FilterSidebar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import NewItemForm from "@/components/marketplace/NewItemForm";
 import { MyArticles } from "@/components/marketplace/MyArticles";
+import { MarkAsSoldModal }  from "@/components/marketplace/MarkAsSold";
+import { UserArticle } from "@/types/marketplace";
 import { Card, CardHeader } from "@/components/ui/card";
 
 export default function MarketplacePage() {
   const [tab, setTab] = useState("para-ti");
+  const [toSell, setToSell] = useState<UserArticle | null>(null);
   const {
     items, loading, error,
     filters, setters,
     toggleFav, clearFilters,
   } = useMarketplace();
-  const { articles: userArticles, loading: userLoading, error: userError } = useUserArticles();
+  const { articles: userArticles, loading: userLoading, error: userError, markAsSold } = useUserArticles();
+
+  const handleOpenMark = (id: number) => {
+    const art = userArticles.find((a) => a.id === id);
+    if (art) setToSell(art);
+  };
+  const handleCloseMark = () => setToSell(null);
+
+  const handleConfirmMark = async (
+    id: number,
+    soldPrice: number,
+    soldDate: string,
+    notes?: string
+  ) => {
+    await markAsSold(id, soldPrice, soldDate, notes);
+    handleCloseMark();
+  };
 
   return (
     <div className="min-h-screen container mx-auto">
@@ -39,7 +58,7 @@ export default function MarketplacePage() {
                     <ShoppingBag className="mr-1 h-4 w-4"/> Para ti
                   </TabsTrigger>
                   <TabsTrigger value="vender">
-                    <Package className="mr-1 h-4 w-4"/> Vender
+                    <DollarSign className="mr-1 h-4 w-4"/> Vender
                   </TabsTrigger>
                   <TabsTrigger value="mis-articulos">
                     <Package className="mr-1 h-4 w-4"/> Mis artículos
@@ -114,14 +133,22 @@ export default function MarketplacePage() {
           {/* “Mis artículos” */}
           <TabsContent value="mis-articulos" className="mt-4">
             {userLoading && <p>Cargando tus artículos…</p>}
-            {userError   && <p className="text-red-600">Error: {userError}</p>}
+            {userError && <p className="text-red-600">Error: {userError}</p>}
             {!userLoading && !userError && (
               <MyArticles
                 articles={userArticles}
                 onSwitchToSell={() => setTab("vender")}
+                onMarkAsSold={handleOpenMark}
               />
             )}
           </TabsContent>
+
+          {/* Modal para marcar como vendido */}
+          <MarkAsSoldModal
+            article={toSell}
+            onClose={handleCloseMark}
+            onConfirm={handleConfirmMark}
+          />
         </Tabs>
       </div>
     </div>

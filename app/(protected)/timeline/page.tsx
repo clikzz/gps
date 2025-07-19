@@ -28,8 +28,8 @@ export default function PetTimelinePage() {
 }, [startDate, endDate, selectedMilestone])
 
   if (!activePet?.id) {
-    return <PetSelector />
-  }
+  return <PetSelector opened={true} />
+}
 
   const isLoading = isLoadingData || isLoadingMilestones
   const error = dataError || milestonesError

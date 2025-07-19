@@ -155,7 +155,6 @@ export default function PetTimelineHeader({
         </div>
         <motion.div className="flex-shrink-0" variants={itemVariants}>
           <div className="sm:hidden">
-            {/* Botón vertical para móviles */}
             {children &&
               React.cloneElement(children as any, {
                 className:
@@ -170,7 +169,6 @@ export default function PetTimelineHeader({
               })}
           </div>
           <div className="hidden sm:block">
-            {/* Botón horizontal para pantallas más grandes */}
             {children}
           </div>
         </motion.div>
@@ -178,10 +176,10 @@ export default function PetTimelineHeader({
 
       <motion.div className="border-b pb-4" variants={itemVariants}>
         <motion.div
-          className="flex flex-col sm:flex-row sm:flex-wrap items-start gap-3 sm:gap-4 md:gap-6"
+          className="flex flex-col md:flex-row md:flex-wrap items-start gap-3 md:gap-4 lg:gap-6"
           variants={filtersVariants}
         >
-          <motion.div className="flex flex-col w-full sm:min-w-0 sm:flex-1 md:flex-initial" variants={itemVariants}>
+          <motion.div className="flex flex-col w-full md:min-w-0 md:flex-1 lg:flex-initial" variants={itemVariants}>
             <label htmlFor="dateRange" className="text-xs font-medium mb-1">
               Rango de fechas
             </label>
@@ -220,7 +218,7 @@ export default function PetTimelineHeader({
             </div>
           </motion.div>
 
-          <motion.div className="flex flex-col w-full sm:min-w-0 sm:flex-1 md:flex-initial" variants={itemVariants}>
+          <motion.div className="flex flex-col w-full md:min-w-0 md:flex-1 lg:flex-initial" variants={itemVariants}>
             <label htmlFor="milestones" className="flex items-center text-xs font-medium mb-1">
               Hito
               <motion.span

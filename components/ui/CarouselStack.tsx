@@ -1,7 +1,7 @@
 "use client"
+
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface CarouselStackProps {
   images: string[]
@@ -13,10 +13,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
 
   if (total === 0) return null
 
-  const prevImage = () => setIndex((i) => (i - 1 + total) % total)
-  const nextImage = () => setIndex((i) => (i + 1) % total)
-
-
   const dist = (i: number) => (i - index + total) % total
 
   return (
@@ -26,16 +22,12 @@ export default function CarouselStack({ images }: CarouselStackProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-
       <div className="relative w-full mb-4 overflow-visible">
-
-        <div className="relative w-80 h-60 mx-auto">
+        <div className="relative w-64 h-48 sm:w-80 sm:h-60 md:w-96 md:h-72 lg:w-[28rem] lg:h-80 mx-auto">
           <AnimatePresence initial={false} mode="popLayout">
             {images.map((src, i) => {
               const d = dist(i)
-
               if (d > 1 && d < total - 1) return null
-
 
               let offsetX = 0
               let scale = 1
@@ -44,20 +36,18 @@ export default function CarouselStack({ images }: CarouselStackProps) {
               let rotateY = 0
               let blur = 0
 
-
               if (d === 1) {
-                offsetX = 120
-                scale = 0.85
+                offsetX = window.innerWidth < 640 ? 80 : window.innerWidth < 768 ? 100 : 120
+                scale = window.innerWidth < 640 ? 0.75 : 0.85
                 opacity = 0.7
                 zIndex = 10
                 rotateY = -15
                 blur = 1
               }
 
-
               if (total > 1 && d === total - 1) {
-                offsetX = -120
-                scale = 0.85
+                offsetX = window.innerWidth < 640 ? -80 : window.innerWidth < 768 ? -100 : -120
+                scale = window.innerWidth < 640 ? 0.75 : 0.85
                 opacity = 0.7
                 zIndex = 10
                 rotateY = 15
@@ -93,13 +83,13 @@ export default function CarouselStack({ images }: CarouselStackProps) {
                   }}
                   transition={{
                     duration: 0.6,
-                    ease: [0.25, 0.46, 0.45, 0.94], 
+                    ease: [0.25, 0.46, 0.45, 0.94],
                   }}
                   whileHover={
                     d === 0
                       ? {
-                          scale: 1.02,
-                          y: -5,
+                          scale: window.innerWidth < 640 ? 1.01 : 1.02,
+                          y: window.innerWidth < 640 ? -3 : -5,
                           transition: { duration: 0.3, ease: "easeOut" },
                         }
                       : {
@@ -119,8 +109,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
                     animate={{ scale: 1 }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
                   />
-
-
                   {d !== 0 && (
                     <motion.div
                       className="absolute inset-0 bg-black/20"
@@ -135,55 +123,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
             })}
           </AnimatePresence>
         </div>
-
-
-        {total > 1 && (
-          <>
-            <motion.button
-              onClick={prevImage}
-              aria-label="Anterior"
-              className="absolute top-1/2 left-0 -translate-y-1/2 bg-card/90 backdrop-blur-sm p-3 rounded-full shadow-lg z-30 border border-border/50"
-              whileHover={{
-                scale: 1.1,
-                backgroundColor: "hsl(var(--card))",
-                transition: { duration: 0.2 },
-              }}
-              whileTap={{
-                scale: 0.95,
-                transition: { duration: 0.1 },
-              }}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-            >
-              <motion.div whileHover={{ x: -2 }} transition={{ duration: 0.2 }}>
-                <ChevronLeft size={20} className="text-foreground" />
-              </motion.div>
-            </motion.button>
-
-            <motion.button
-              onClick={nextImage}
-              aria-label="Siguiente"
-              className="absolute top-1/2 right-0 -translate-y-1/2 bg-card/90 backdrop-blur-sm p-3 rounded-full shadow-lg z-30 border border-border/50"
-              whileHover={{
-                scale: 1.1,
-                backgroundColor: "hsl(var(--card))",
-                transition: { duration: 0.2 },
-              }}
-              whileTap={{
-                scale: 0.95,
-                transition: { duration: 0.1 },
-              }}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-            >
-              <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.2 }}>
-                <ChevronRight size={20} className="text-foreground" />
-              </motion.div>
-            </motion.button>
-          </>
-        )}
       </div>
 
       {total > 1 && (
@@ -214,7 +153,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
                   }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
                 />
-
                 {i === index && (
                   <motion.div
                     className="absolute inset-0 rounded-full border-2 border-primary/30"
@@ -227,10 +165,9 @@ export default function CarouselStack({ images }: CarouselStackProps) {
               </motion.button>
             ))}
           </div>
-
           <motion.span
             className="text-sm text-muted-foreground font-medium"
-            key={index} 
+            key={index}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}

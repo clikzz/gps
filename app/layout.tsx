@@ -2,6 +2,7 @@ import type React from "react";
 import { Poppins } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
+import { BadgeListenerProvider } from "@/components/BadgeListenerProvider";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -34,8 +35,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
+          <BadgeListenerProvider>
+            {children}
+            <Toaster />
           </BadgeListenerProvider>
         </ThemeProvider>
       </body>

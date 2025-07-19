@@ -118,6 +118,7 @@ model MarketplaceItem {
   title          String
   description    String?
   category       ItemCategory
+  pet_category   PetCategory   @default(ALL)
   condition      ItemCondition
   price          Decimal       @db.Decimal(10,2)
   photo_urls     String[]
@@ -132,9 +133,36 @@ model MarketplaceItem {
   created_at     DateTime      @default(now())
   updated_at     DateTime      @updatedAt
 
+  favorites      Favorite[]
+  sales          Sale[]
+
   seller         users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([status, category, created_at])
+}
+
+model Sale {
+  id        BigInt          @id @default(autoincrement())
+  item_id   BigInt          @unique
+  user_id   String          @db.Uuid
+  price     Decimal         @db.Decimal(10,2)
+  sold_at   DateTime
+  notes     String?
+  item      MarketplaceItem @relation(fields: [item_id], references: [id])
+  user      users           @relation(fields: [user_id], references: [id])
+}
+
+model Favorite {
+  id           BigInt          @id @default(autoincrement())
+  userId       String          @db.Uuid
+  itemId       BigInt
+  createdAt    DateTime        @default(now())
+
+  user         users           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item         MarketplaceItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@index([itemId])
 }
 
 model Pets {
@@ -287,6 +315,8 @@ status           UserStatus         @default(ACTIVE)
 suspensionUntil  DateTime?
 suspensionReason String?
 MarketplaceItems MarketplaceItem[]
+Sales            Sale[]
+favorites        Favorite[]
 MissingPets      MissingPets[]
 FoundReports     FoundReports[]
 Pets             Pets[]
@@ -330,5 +360,25 @@ enum ItemCategory {
   WALK_WEAR
   HEALTH_GROOM
   TRAVEL
+  OTHER
+}
+
+enum PetCategory {
+  ALL
+  DOG
+  CAT
+  RABBIT
+  HAMSTER
+  TURTLE
+  BIRD
+  FISH
+  GUINEA_PIG
+  FERRET
+  MOUSE
+  CHINCHILLA
+  HEDGEHOG
+  SNAKE
+  FROG
+  LIZARD
   OTHER
 }

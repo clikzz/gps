@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { ShoppingBag, Package, Filter, Heart, Store } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMarketplace } from "@/hooks/marketplace/useMarketplace";
+import { useUserArticles } from "@/hooks/marketplace/useUserArticles";
 import { FilterSidebar } from "@/components/marketplace/FilterSidebar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import NewItemForm from "@/components/marketplace/NewItemForm";
+import { MyArticles } from "@/components/marketplace/MyArticles";
 import { Card, CardHeader } from "@/components/ui/card";
 
 export default function MarketplacePage() {
@@ -18,6 +20,7 @@ export default function MarketplacePage() {
     filters, setters,
     toggleFav, clearFilters,
   } = useMarketplace();
+  const { articles: userArticles, loading: userLoading, error: userError } = useUserArticles();
 
   return (
     <div className="min-h-screen container mx-auto">
@@ -31,12 +34,15 @@ export default function MarketplacePage() {
               </div>
 
               <Tabs value={tab} onValueChange={setTab} className="flex-1 max-w-md">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="para-ti">
                     <ShoppingBag className="mr-1 h-4 w-4"/> Para ti
                   </TabsTrigger>
                   <TabsTrigger value="vender">
                     <Package className="mr-1 h-4 w-4"/> Vender
+                  </TabsTrigger>
+                  <TabsTrigger value="mis-articulos">
+                    <Package className="mr-1 h-4 w-4"/> Mis artículos
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -103,6 +109,18 @@ export default function MarketplacePage() {
           {/* — Vender — */}
           <TabsContent value="vender" className="mt-4">
             <NewItemForm onSuccess={() => {}} />
+          </TabsContent>
+
+          {/* “Mis artículos” */}
+          <TabsContent value="mis-articulos" className="mt-4">
+            {userLoading && <p>Cargando tus artículos…</p>}
+            {userError   && <p className="text-red-600">Error: {userError}</p>}
+            {!userLoading && !userError && (
+              <MyArticles
+                articles={userArticles}
+                onSwitchToSell={() => setTab("vender")}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>

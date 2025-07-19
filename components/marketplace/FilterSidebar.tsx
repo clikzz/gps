@@ -68,7 +68,7 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
   };
 
   return (
-    <div className="w-full space-y-6 p-2">
+    <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Filtros</h3>
         <Button variant="ghost" size="sm" onClick={clear}>Limpiar</Button>

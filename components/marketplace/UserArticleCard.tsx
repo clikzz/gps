@@ -1,0 +1,127 @@
+"use client";
+
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
+import { MapPin } from "lucide-react";
+import type { UserArticle } from "@/types/marketplace";
+import { formatTimeAgo } from "@/utils/timeAgo";
+
+interface Props {
+  article: UserArticle;
+  onEdit?: (id: number) => void;
+  onToggleStatus?: (id: number) => void;
+  onDelete?: (id: number) => void;
+  onMarkAsSold?: (id: number) => void;
+  onRepost?: (id: number) => void;
+}
+
+export function UserArticleCard({
+  article,
+  onEdit,
+  onToggleStatus,
+  onDelete,
+  onMarkAsSold,
+  onRepost,
+}: Props) {
+  const isSold = article.status === "SOLD";
+  const isActive = article.status === "ACTIVE";
+
+  const petLabel = getPetCategoryLabel(article.pet_category);
+  const categoryLabel = getItemCategoryLabel(article.category);
+  const conditionLabel = getItemConditionLabel(article.condition);
+
+  return (
+    <Card>
+      <div className="relative">
+        <Image
+          src={article.photo_urls[0] || "/placeholder.svg"}
+          alt={article.title}
+          width={300}
+          height={200}
+          className={`w-full h-48 object-cover ${isSold ? "opacity-60" : ""}`}
+        />
+        <Badge variant="secondary" className="absolute top-2 left-2">{petLabel}</Badge>
+      </div>
+      <CardHeader className="pb-2">
+        <h3 className="font-semibold line-clamp-2">{article.title}</h3>
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <MapPin className="h-3 w-3" />
+          <span>{article.city || "No existe"}</span>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {isSold ? (
+          <div className="space-y-1">
+            <div className="flex justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Precio original</p>
+                <p className="line-through">
+                  ${article.price != null ? article.price.toLocaleString() : "-"}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Precio venta</p>
+                <p className="font-bold text-green-600">
+                  ${article.sold_price != null ? article.sold_price.toLocaleString() : ""}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Vendido: {new Date(article.sold_at!).toLocaleDateString()}
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-bold text-primary">
+              ${article.price != null ? article.price.toLocaleString() : ""}
+            </span>
+            <Badge variant="outline" className="ml-2">
+              {categoryLabel}
+            </Badge>
+          </div>
+        )}
+        <p className="text-sm text-muted-foreground">
+          {isSold ? article.sold_at ? formatTimeAgo(article.sold_at) : "" : formatTimeAgo(article.created_at)}
+        </p>
+      </CardContent>
+      <CardFooter className="flex gap-2 justify-center">
+        {isSold ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onRepost?.(article.id)}
+          >
+            Volver a publicar
+          </Button>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit?.(article.id)}
+            >
+              Editar
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onMarkAsSold?.(article.id)}
+            >
+              Vendido
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onDelete?.(article.id)}
+            >
+              Eliminar
+            </Button>
+          </>
+        )}
+      </CardFooter>
+    </Card>
+  );
+}

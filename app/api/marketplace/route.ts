@@ -9,6 +9,7 @@ import {
   markMarketplaceItemAsSold,
   fetchMarketplaceCities,
   fetchMarketplacePetCategories,
+  fetchUserMarketplaceStats,
 } from "@/server/controllers/marketplace.controller";
 
 
@@ -36,6 +37,8 @@ export async function GET(req: NextRequest) {
       return fetchMarketplaceCities();
     case "pet-categories":
       return fetchMarketplacePetCategories();
+    case "stats":
+      return fetchUserMarketplaceStats(user.id);
     default:
       return fetchPublicMarketplaceItems(filters);
   }
@@ -65,14 +68,31 @@ export async function PUT(req: NextRequest) {
   const url = new URL(req.url);
   const mode = url.searchParams.get("mode");
   const id = url.searchParams.get("id");
-  if (mode !== "sold" || !id) { 
-    return new NextResponse(
-      JSON.stringify({ error: "Parámetros inválidos" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+  if (mode !== "sold" || !id) {
+    return NextResponse.json(
+      { error: "Parámetros inválidos" },
+      { status: 400 }
     );
   }
 
-  return markMarketplaceItemAsSold(user.id, { id });
+  let payload: any;
+  try {
+    payload = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "JSON inválido" },
+      { status: 400 }
+    );
+  }
+
+  const params = {
+    id,
+    sold_price: payload.sold_price,
+    sold_at: payload.sold_at,
+    notes: payload.notes,
+  };
+
+  return markMarketplaceItemAsSold(user.id, params);
 }
 
 export async function DELETE(req: NextRequest) {

@@ -91,6 +91,11 @@ export const deleteItemSchema = z.object({
   id: z.string().regex(/^\d+$/, { message: "ID inválido." }),
 });
 
-export const markSoldSchema = deleteItemSchema;
+export const markSoldSchema = z.object({
+  id: z.string(),
+  sold_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Precio inválido"),
+  sold_at: z.string().refine((s) => !Number.isNaN(Date.parse(s)), "Fecha inválida"),
+  notes: z.string().optional(),
+});
 
 export type CreateItemInput = z.infer<typeof createItemSchema>;

@@ -8,6 +8,7 @@ import {
   markItemAsSold as markAsSoldService,
   listMarketplaceCities as listCitiesService,
   listMarketplacePetCategories as listPetCategoriesService,
+  countUserMarketplaceItems as countUserItemsService,
 } from "@/server/services/marketplace.service";
 import {
   createItemSchema,
@@ -126,6 +127,13 @@ export const fetchUserMarketplaceItems = async (
     id: item.id.toString(),
     title: item.title,
     status: item.status,
+    price: item.price.toString(),
+    pet_category: item.pet_category,
+    category: item.category,
+    photo_urls: item.photo_urls,
+    city: item.city ?? undefined,
+    region: item.region ?? undefined,
+    country: item.country ?? undefined,
     created_at: item.created_at.toISOString(),
   }));
 
@@ -187,7 +195,7 @@ export const deleteMarketplaceItem = async (
  */
 export const markMarketplaceItemAsSold = async (
   userId: string,
-  params: { id: string }
+  params: { id: string; sold_price: string; sold_at: string; notes?: string }
 ) => {
   const parseResult = markSoldSchema.safeParse(params);
   if (!parseResult.success) {
@@ -197,19 +205,26 @@ export const markMarketplaceItemAsSold = async (
     });
   }
 
-  const itemId = BigInt(params.id);
+  const { id, sold_price, sold_at, notes } = parseResult.data;
+
   try {
-    await markAsSoldService(itemId, userId);
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const sale = await markAsSoldService(
+      BigInt(id),
+      userId,
+      sold_price,
+      new Date(sold_at),
+      notes,
+    );
+    return NextResponse.json({
+      success: true,
+      sale: {
+        price: sale.price.toString(),
+        sold_at: sale.sold_at.toISOString(),
+        notes: sale.notes,
+      },
     });
   } catch (err: any) {
-    const msg = err.message || "No autorizado.";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 403,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ error: err.message }, { status: 403 });
   }
 };
 
@@ -242,3 +257,19 @@ export const fetchMarketplacePetCategories = async () => {
     );
   }
 };
+
+/**
+ * Listar cantidad de articulos ha publicado un usuario, cuantos tiene 
+ * activos y cuantos vendidos.
+ */
+export const fetchUserMarketplaceStats = async (userId: string) => {
+  try {
+    const stats = await countUserItemsService(userId);
+    return NextResponse.json(stats, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
+  }
+}

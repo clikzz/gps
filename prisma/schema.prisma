@@ -134,10 +134,22 @@ model MarketplaceItem {
   updated_at     DateTime      @updatedAt
 
   favorites      Favorite[]
+  sales          Sale[]
 
   seller         users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([status, category, created_at])
+}
+
+model Sale {
+  id        BigInt          @id @default(autoincrement())
+  item_id   BigInt          @unique
+  user_id   String          @db.Uuid
+  price     Decimal         @db.Decimal(10,2)
+  sold_at   DateTime
+  notes     String?
+  item      MarketplaceItem @relation(fields: [item_id], references: [id])
+  user      users           @relation(fields: [user_id], references: [id])
 }
 
 model Favorite {
@@ -303,6 +315,7 @@ status           UserStatus         @default(ACTIVE)
 suspensionUntil  DateTime?
 suspensionReason String?
 MarketplaceItems MarketplaceItem[]
+Sales            Sale[]
 favorites        Favorite[]
 MissingPets      MissingPets[]
 FoundReports     FoundReports[]

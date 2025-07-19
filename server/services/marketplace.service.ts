@@ -2,6 +2,7 @@ import prisma from "@/lib/db";
 import { reverseGeocode } from "@/utils/geocode";
 import type { MarketplaceItemInput, ListFilters } from "@/types/marketplace";
 import { ItemStatus, PetCategory, Prisma } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
 /**
  * Crea un nuevo anuncio en el marketplace.
@@ -68,7 +69,10 @@ export const softDeleteMarketplaceItem = async (
  */
 export const markItemAsSold = async (
   itemId: bigint,
-  userId: string
+  userId: string,
+  soldPrice: string,
+  soldAt: Date,
+  notes?: string
 ) => {
   const res = await prisma.marketplaceItem.updateMany({
     where: {
@@ -84,7 +88,18 @@ export const markItemAsSold = async (
   if (res.count === 0) {
     throw new Error("No tienes permiso o el anuncio ya no está activo.");
   }
-  return true;
+
+  const sale = await prisma.sale.create({
+    data: {
+      item_id: itemId,
+      user_id: userId,
+      price: new Prisma.Decimal(soldPrice),
+      sold_at: soldAt,
+      notes,
+    },
+  });
+
+  return sale;
 }
 
 /**
@@ -199,4 +214,24 @@ export const listMarketplacePetCategories = async (): Promise<string[]> => {
   return raws
     .map((r) => r.pet_category)
     .filter((c): c is PetCategory => Boolean(c));
+};
+
+/**
+ * Listar cantidad de articulos ha publicado un usuario, cuantos tiene 
+ * activos y cuantos vendidos.
+ */
+export async function countUserMarketplaceItems(userId: string) {
+  const [total, active, sold] = await Promise.all([
+    prisma.marketplaceItem.count({
+      where: { user_id: userId },
+    }),
+    prisma.marketplaceItem.count({
+      where: { user_id: userId, status: ItemStatus.ACTIVE },
+    }),
+    prisma.marketplaceItem.count({
+      where: { user_id: userId, status: ItemStatus.SOLD },
+    }),
+  ])
+
+  return { total, active, sold };
 };

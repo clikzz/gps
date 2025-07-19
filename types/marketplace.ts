@@ -60,24 +60,14 @@ export interface ListFilters {
   pageSize?: number;        // default 20
 }
 
-export interface MarketplaceProduct {
+export type UserArticle = Omit<
+  MarketplaceItem, 
+  "user_id" | "seller" | "latitude" | "longitude"
+> & {
   id: number;
-  title: string;
-  price: number;
-  location: string;
-  petCategory: string;
-  articleCategory: string;
-  images: string[];
-  seller: string;
-  sellerAvatar: string;
-  sellerRating: number;
-  sellerReviews: number;
-  rating: number;
-  isFavorite: boolean;
-  description: string;
-  specifications: Record<string,string>;
-  publishedDate: string;
-  views: number;
+  created_at: string;
+  sold_price?: number;
+  sold_at?: string;
 }
 
 export interface SelectOption {

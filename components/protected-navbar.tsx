@@ -17,6 +17,7 @@ import {
   BookCopy,
   Search,
   Hospital,
+  Store
 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -68,6 +69,7 @@ export default function ProtectedNavbar({
     { id: "find", label: "Encontrar", icon: Search, href: "/find" },
     { id: "services", label: "Servicios", icon: HelpCircle, href: "/services" },
     { id: "health", label: "Salud", icon: Hospital, href: "/health" },
+    { id: "marketplace", label: "Marketplace", icon: Store, href: "/marketplace" },
   ];
 
   const handleSignOut = async () => {

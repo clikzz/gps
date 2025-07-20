@@ -5,8 +5,9 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge }  from "@/components/ui/badge";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
-import { MapPin, Heart } from "lucide-react";
+import { MapPin, Heart, Clock } from "lucide-react";
 import type { Item } from "@/types/marketplace";
+import { formatTimeAgo } from "@/utils/timeAgo";
 
 interface Props {
   item: Item;
@@ -53,6 +54,10 @@ export function ProductCard({ item, onToggleFav, onViewDetails }: Props) {
             <p className="text-sm text-muted-foreground">por {item.seller.name}</p>
           </div>
           <Badge variant="outline">{categoryLabel}</Badge>
+        </div>
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground pt-1">
+          <Clock className="h-3 w-3" />
+          <span>{formatTimeAgo(item.created_at).toLowerCase()}</span>
         </div>
       </CardContent>
 

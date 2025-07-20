@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserArticleCard } from "@/components/marketplace/UserArticleCard";
 import type { UserArticle } from "@/types/marketplace";
-import { MarkAsSoldModal } from "@/components/marketplace/MarkAsSold";
 
 interface Props {
   articles: UserArticle[];
@@ -27,19 +26,19 @@ export function MyArticles({ articles, onSwitchToSell, onMarkAsSold }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{active.length}</div>
+            <div className="text-2xl font-bold text-foreground">{active.length}</div>
             <p className="text-sm text-muted-foreground">Activos</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{sold.length}</div>
+            <div className="text-2xl font-bold text-secondary">{sold.length}</div>
             <p className="text-sm text-muted-foreground">Vendidos</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{articles.reduce((s, a) => s + (a.status === "ACTIVE" ? 1 : 0), 0)}</div>
+            <div className="text-2xl font-bold text-primary">{active.length + sold.length}</div>
             <p className="text-sm text-muted-foreground">Total</p>
           </CardContent>
         </Card>

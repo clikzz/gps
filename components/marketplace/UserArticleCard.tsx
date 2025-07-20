@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
-import { MapPin } from "lucide-react";
+import { MapPin, Clock } from "lucide-react";
 import type { UserArticle } from "@/types/marketplace";
 import { formatTimeAgo } from "@/utils/timeAgo";
 
@@ -64,8 +64,8 @@ export function UserArticleCard({
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Precio venta</p>
-                <p className="font-bold text-green-600">
-                  ${article.sold_price != null ? article.sold_price.toLocaleString() : ""}
+                <p className={`font-bold ${article.sold_price ? (article.sold_price >= article.price ? "text-primary" : "text-secondary") : "text-muted-foreground"}`}>
+                  ${article.sold_price?.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -73,16 +73,17 @@ export function UserArticleCard({
         ) : (
           <div className="flex items-baseline justify-between">
             <span className="text-2xl font-bold text-primary">
-              ${article.price != null ? article.price.toLocaleString() : ""}
+              ${article.price?.toLocaleString()}
             </span>
             <Badge variant="outline" className="ml-2">
               {categoryLabel}
             </Badge>
           </div>
         )}
-        <p className="text-sm text-muted-foreground">
-          {isSold ? article.sold_at ? `Vendido ${formatTimeAgo(article.sold_at)}` : "" : formatTimeAgo(article.created_at)}
-        </p>
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <Clock className="h-3 w-3" />
+          <span>{isSold ? article.sold_at ? `Vendido ${formatTimeAgo(article.sold_at).toLowerCase()}` : "" :formatTimeAgo(article.created_at).toLowerCase()}</span>
+        </div>
       </CardContent>
       <CardFooter className="flex gap-2 justify-center">
         {isSold ? (

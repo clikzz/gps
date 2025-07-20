@@ -5,19 +5,19 @@ export function formatTimeAgo(dateString: string): string {
 
   const seconds = Math.floor(diff / 1000);
   if (seconds < 60) {
-    return `hace ${seconds} ${seconds === 1 ? 'segundo' : 'segundos'}`;
+    return `Hace ${seconds} ${seconds === 1 ? 'segundo' : 'segundos'}`;
   }
 
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
-    return `hace ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
+    return `Hace ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
   }
 
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
-    return `hace ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+    return `Hace ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
   }
 
   const days = Math.floor(hours / 24);
-  return `hace ${days} ${days === 1 ? 'día' : 'días'}`;
+  return `Hace ${days} ${days === 1 ? 'día' : 'días'}`;
 }

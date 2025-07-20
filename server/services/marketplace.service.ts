@@ -41,6 +41,21 @@ export const createMarketplaceItem = async (
 }
 
 /**
+ * Obtener anuncio por ID.
+ */
+export const getMarketplaceItemById = async (itemId: bigint) => {
+  const item = await prisma.marketplaceItem.findUnique({
+    where: { id: itemId },
+  });
+
+  if (!item) {
+    throw new Error("Anuncio no encontrado.");
+  }
+
+  return item;
+}
+
+/**
  * Elimina un anuncio del marketplace cambiando su estado a REMOVED.
  */
 export const softDeleteMarketplaceItem = async (
@@ -118,6 +133,7 @@ export const listUserItems = async (userId: string) => {
 export const listUserSoldItems = async (userId: string) => {
   return prisma.marketplaceItem.findMany({
     where: { user_id: userId, status: ItemStatus.SOLD },
+    include: { sales: true },
     orderBy: { created_at: "desc" },
   });
 }

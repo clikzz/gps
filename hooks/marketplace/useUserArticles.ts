@@ -10,14 +10,15 @@ export function useUserArticles() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/marketplace?mode=user")
-      .then((res) => {
-        if (!res.ok) throw new Error(`Error ${res.status}`);
-        return res.json();
-      })
-      .then((data: UserArticle[]) => setArticles(data))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch("/api/marketplace?mode=user").then(r => r.json() as Promise<UserArticle[]>),
+      fetch("/api/marketplace?mode=sold").then(r => r.json() as Promise<UserArticle[]>),
+    ]).then(([act, sold]) => {
+      setArticles([...act, ...sold]);
+      setLoading(false);
+    })
+    .catch(e => setError((e as Error).message))
+    .finally(() => setLoading(false));
   }, []);
 
   const markAsSold = useCallback(

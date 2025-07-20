@@ -10,6 +10,7 @@ import {
   fetchMarketplaceCities,
   fetchMarketplacePetCategories,
   fetchUserMarketplaceStats,
+  fetchMarketplaceItemById
 } from "@/server/controllers/marketplace.controller";
 
 
@@ -19,6 +20,7 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const mode = url.searchParams.get("mode") || "public";
+  const id = url.searchParams.get("id");
 
   const filters = {
     category: url.searchParams.get("category") || undefined,
@@ -39,6 +41,8 @@ export async function GET(req: NextRequest) {
       return fetchMarketplacePetCategories();
     case "stats":
       return fetchUserMarketplaceStats(user.id);
+    case "item":
+      return fetchMarketplaceItemById({ id: id ?? undefined });
     default:
       return fetchPublicMarketplaceItems(filters);
   }

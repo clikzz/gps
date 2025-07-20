@@ -11,7 +11,6 @@ import {
   TextField,
   DateField,
   TextAreaField,
-  FileField,
 } from "@/components/timeline/NewTimelineFormField";
 import {
   DndContext,
@@ -29,6 +28,112 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+
+function FileField({
+  label,
+  onChange,
+  multiple = false,
+  accept,
+  error,
+  selectedCount = 0,
+  maxFiles = 5,
+}: {
+  label: string;
+  onChange: (files: FileList | null) => void;
+  multiple?: boolean;
+  accept?: string;
+  error?: string;
+  selectedCount?: number;
+  maxFiles?: number;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isOpening, setIsOpening] = useState(false);
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpening(false);
+    onChange(e.target.files);
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+  };
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isOpening) return; 
+    
+    setIsOpening(true);
+    
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.click();
+      }
+      setTimeout(() => setIsOpening(false), 1000);
+    }, 50);
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-foreground">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="file"
+          onChange={handleFileChange}
+          multiple={multiple}
+          accept={accept}
+          className="sr-only"
+          onClick={(e) => e.stopPropagation()}
+        />
+        <button
+          type="button"
+          onClick={handleButtonClick}
+          disabled={isOpening}
+          className={cn(
+            "flex items-center justify-center w-full px-4 py-2 border border-input rounded-md cursor-pointer transition-colors",
+            "hover:bg-accent hover:text-accent-foreground",
+            "focus:ring-2 focus:ring-ring focus:ring-offset-2",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+            error && "border-destructive"
+          )}
+        >
+          <div className="flex items-center space-x-2">
+            <svg
+              className="w-5 h-5 text-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+            <span className="text-primary font-medium">
+              {isOpening 
+                ? "Abriendo..."
+                : selectedCount > 0 
+                ? `${selectedCount} archivo${selectedCount !== 1 ? 's' : ''} seleccionado${selectedCount !== 1 ? 's' : ''}`
+                : "Elegir archivos"
+              }
+            </span>
+            <span className="text-muted-foreground text-sm">
+              ({selectedCount}/{maxFiles})
+            </span>
+          </div>
+        </button>
+      </div>
+      {error && <p className="text-sm text-destructive">{error}</p>}
+    </div>
+  );
+}
 
 const SortablePhoto = React.memo(function SortablePhoto({
   id,
@@ -91,15 +196,12 @@ export default function NewTimelineForm({
   }
   const today = getTodayLocalISO();
 
-
   const { milestones } = useMilestones();
   const { isUploading, uploadTimelinePhotos } = useTimelineImageUpload();
   const { isSubmitting, createEntry } = useNewTimelineEntry(petId);
 
-
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -112,11 +214,9 @@ export default function NewTimelineForm({
     photos?: string;
   }>({});
 
-
   const TITLE_MAX = 50;
   const DESC_MAX = 200;
   const PHOTOS_MAX = 5;
-
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -137,7 +237,6 @@ export default function NewTimelineForm({
     [photoIds]
   );
 
-
   const toggleMilestone = (id: string) =>
     setSelectedMilestones((prev) =>
       prev.includes(id)
@@ -154,7 +253,6 @@ export default function NewTimelineForm({
     }
     const picked = Array.from(files).slice(0, PHOTOS_MAX);
     setSelectedPhotos(picked);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleRemovePhoto = useCallback((idx: number) => {
@@ -162,47 +260,45 @@ export default function NewTimelineForm({
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setErrors({});
+    e.preventDefault();
+    setErrors({});
 
-  if (!title.trim()) {
-    setErrors({ title: "El título es obligatorio." });
-    formRef.current?.scrollIntoView({ behavior: "smooth" });
-    return;
-  }
-  if (!description.trim() && selectedPhotos.length === 0) {
-    setErrors({ description: "Agrega una descripción o al menos una foto." });
-    formRef.current?.scrollIntoView({ behavior: "smooth" });
-    return;
-  }
+    if (!title.trim()) {
+      setErrors({ title: "El título es obligatorio." });
+      formRef.current?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    if (!description.trim() && selectedPhotos.length === 0) {
+      setErrors({ description: "Agrega una descripción o al menos una foto." });
+      formRef.current?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
 
+    const localDate = new Date(eventDate + "T00:00:00");
+    const utcDateString = new Date(
+      Date.UTC(localDate.getFullYear(), localDate.getMonth(), localDate.getDate())
+    ).toISOString();
 
-  const localDate = new Date(eventDate + "T00:00:00");
-  const utcDateString = new Date(
-    Date.UTC(localDate.getFullYear(), localDate.getMonth(), localDate.getDate())
-  ).toISOString();
+    const photoUrls = selectedPhotos.length
+      ? await uploadTimelinePhotos(selectedPhotos as unknown as FileList)
+      : [];
 
-  const photoUrls = selectedPhotos.length
-    ? await uploadTimelinePhotos(selectedPhotos as unknown as FileList)
-    : [];
+    await createEntry({
+      title: title.trim(),
+      description: description.trim() || undefined,
+      eventDate: utcDateString,
+      photos: selectedPhotos as unknown as FileList,
+      milestoneIds: selectedMilestones,
+    });
 
-  await createEntry({
-    title: title.trim(),
-    description: description.trim() || undefined,
-    eventDate: utcDateString,
-    photos: selectedPhotos as unknown as FileList,
-    milestoneIds: selectedMilestones,
-  });
-
-  onSuccess?.();
-  setTitle("");
-  setDescription("");
-  setEventDate(today);
-  setSelectedMilestones([]);
-  setSelectedPhotos([]);
-  setErrors({});
-  if (fileInputRef.current) fileInputRef.current.value = "";
-};
+    onSuccess?.();
+    setTitle("");
+    setDescription("");
+    setEventDate(today);
+    setSelectedMilestones([]);
+    setSelectedPhotos([]);
+    setErrors({});
+  };
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
@@ -250,6 +346,8 @@ export default function NewTimelineForm({
           multiple
           accept="image/jpeg, image/png"
           error={errors.photos}
+          selectedCount={selectedPhotos.length}
+          maxFiles={PHOTOS_MAX}
         />
         <p className="absolute top-2 right-2 text-xs text-muted-foreground">
           {selectedPhotos.length}/{PHOTOS_MAX}

@@ -176,10 +176,10 @@ export default function PetTimelineHeader({
 
       <motion.div className="border-b pb-4" variants={itemVariants}>
         <motion.div
-          className="flex flex-col md:flex-row md:flex-wrap items-start gap-3 md:gap-4 lg:gap-6"
+          className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4"
           variants={filtersVariants}
         >
-          <motion.div className="flex flex-col w-full md:min-w-0 md:flex-1 lg:flex-initial" variants={itemVariants}>
+          <motion.div className="flex flex-col w-full sm:w-auto" variants={itemVariants}>
             <label htmlFor="dateRange" className="text-xs font-medium mb-1">
               Rango de fechas
             </label>
@@ -187,7 +187,7 @@ export default function PetTimelineHeader({
               <Button
                 variant="outline"
                 onClick={() => setOpen((o) => !o)}
-                className="w-full justify-start text-xs sm:text-sm h-9"
+                className="w-full sm:w-auto justify-start text-xs sm:text-sm h-9"
                 type="button"
               >
                 <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -218,7 +218,7 @@ export default function PetTimelineHeader({
             </div>
           </motion.div>
 
-          <motion.div className="flex flex-col w-full md:min-w-0 md:flex-1 lg:flex-initial" variants={itemVariants}>
+          <motion.div className="flex flex-col w-full sm:w-auto" variants={itemVariants}>
             <label htmlFor="milestones" className="flex items-center text-xs font-medium mb-1">
               Hito
               <motion.span
@@ -234,7 +234,7 @@ export default function PetTimelineHeader({
               id="milestones"
               value={selectedMilestone}
               onChange={(e) => onMilestoneChange(e.target.value)}
-              className="block w-full rounded border px-2 py-2 bg-background transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-xs sm:text-sm h-9"
+              className="block w-full sm:w-auto rounded border px-2 py-2 bg-background transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-xs sm:text-sm h-9"
               whileFocus={{ scale: 1.02 }}
             >
               <option value="">Todos los hitos</option>

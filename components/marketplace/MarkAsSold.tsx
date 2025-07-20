@@ -29,7 +29,7 @@ interface Props {
 
 export function MarkAsSoldModal({ article, onClose, onConfirm }: Props) {
   const [soldPrice, setSoldPrice] = useState("");
-  const [soldDate,  setSoldDate]  = useState<"today"|"yesterday"|"this-week"|"last-week"|"custom">("today");
+  const [soldDate,  setSoldDate]  = useState<"today"|"yesterday"|"custom">("today");
   const [customDate, setCustomDate] = useState("");
   const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -101,8 +101,6 @@ export function MarkAsSoldModal({ article, onClose, onConfirm }: Props) {
               <SelectContent>
                 <SelectItem value="today">Hoy</SelectItem>
                 <SelectItem value="yesterday">Ayer</SelectItem>
-                <SelectItem value="this-week">Esta semana</SelectItem>
-                <SelectItem value="last-week">La semana pasada</SelectItem>
                 <SelectItem value="custom">Fecha personalizada</SelectItem>
               </SelectContent>
             </Select>
@@ -135,7 +133,7 @@ export function MarkAsSoldModal({ article, onClose, onConfirm }: Props) {
                 <span className={`text-sm font-bold ${
                     +soldPrice >= article.price ? "text-primary" : "text-secondary"
                   }`}>
-                  {(+soldPrice - article.price >= 0 ? "+" : "")}
+                  {(+soldPrice - article.price >= 0 ? "+" : "-")}
                   ${Math.abs(+soldPrice - article.price).toLocaleString()}
                 </span>
               </div>

@@ -178,22 +178,16 @@ export function ReplyList({ replies }: ReplyListProps) {
                   )}
                 </div>
                 {selectedBadges.length > 0 ? (
-                  <div className="mt-2 text-sm">
-                    <div className="flex flex-wrap justify-center gap-1">
-                      {selectedBadges.map((badge) => (
-                        <span 
-                          key={badge.id} 
-                          className="text-xl" 
-                          title={badge.label}
-                          >
-                          <img
-                            src={badge.icon}
-                            alt={badge.label}
-                            className="inline-block w-6 h-6"
-                          />
-                        </span>
-                      ))}
-                    </div>
+                  <div className="flex flex-wrap justify-center gap-1">
+                    {selectedBadges.map((badge) => (
+                      <div key={badge.id} className="text-center">
+                        <img
+                          src={badge.icon}
+                          alt={badge.label}
+                          className="inline-block w-6 h-6"
+                        />
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="mt-2 text-sm opacity-50"></div>

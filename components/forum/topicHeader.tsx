@@ -11,7 +11,6 @@ type Topic = {
   id: number;
   title: string;
   isLocked: boolean;
-  isPinned: boolean;
 };
 
 interface TopicHeaderProps {
@@ -20,7 +19,6 @@ interface TopicHeaderProps {
 
 export function TopicHeader({ topic }: TopicHeaderProps) {
   const [isLocked, setIsLocked] = useState(topic.isLocked);
-  const [isPinned, setIsPinned] = useState(topic.isPinned);
   const currentUserRole = useUserProfile((s) => s.user?.role)
   const canModerate = currentUserRole === "MODERATOR" || currentUserRole === "ADMIN";
   const router = useRouter();
@@ -56,49 +54,15 @@ export function TopicHeader({ topic }: TopicHeaderProps) {
     }
   };
 
-    const togglePin = async () => {
-    try {
-      const res = await fetch(`/api/forum/topics/${topic.id}/feature`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ featured: !isPinned }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Error al togglear pin");
-      }
-      const { featured } = await res.json();
-      setIsPinned(featured);
-      toast.success(featured ? "Tema destacado" : "Tema des-destacado");
-      router.refresh();
-    } catch (e: any) {
-      toast.error(e.message);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isLocked && <Lock className="h-5 w-5 text-muted-foreground" />}
-          {isPinned && <Pin className="h-5 w-5 text-muted-foreground" />}
         </div>
 
         {canModerate && (
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={togglePin}>
-              {isPinned ? (
-                <>
-                  <PinOff className="h-4 w-4 mr-1" />
-                  Des-destacar
-                </>
-              ) : (
-                <>
-                  <Pin className="h-4 w-4 mr-1" />
-                  Destacar
-                </>
-              )}
-            </Button>
             <Button size="sm" variant="outline" onClick={toggleLock}>
               {isLocked ? (
                 <>

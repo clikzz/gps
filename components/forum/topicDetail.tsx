@@ -160,25 +160,19 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
               />
             )}
           </div>
-          {selectedBadges.length > 0 ? (
-            <div className="mt-2 text-sm">
+            {selectedBadges.length > 0 ? (
               <div className="flex flex-wrap justify-center gap-1">
                 {selectedBadges.map((badge) => (
-                  <span 
-                    key={badge.id} 
-                    className="text-xl" 
-                    title={badge.label}
-                    >
-                    <img 
-                    src={badge.icon} 
-                    alt={badge.label} 
-                    className="inline-block w-6 h-6" 
+                  <div key={badge.id} className="text-center">
+                    <img
+                      src={badge.icon}
+                      alt={badge.label}
+                      className="inline-block w-6 h-6"
                     />
-                  </span>
+                  </div>
                 ))}
               </div>
-            </div>
-          ) : (
+            ): (
             <div className="mt-2 text-sm opacity-50"></div>
           )}
           <div className="text-xs">Mensajes: {topic.author.menssageCount.toLocaleString()}</div>

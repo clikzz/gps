@@ -20,7 +20,6 @@ import {
   updateUserStatus,
   listUsers, 
   updateTopicLock,
-  updateTopicFeatured,
 } from "../services/forum.service";
 import { createTopicSchema, createPostSchema,  editTopicSchema, editPostSchema, changeUserStatusSchema} from "@/server/validations/forum.validation";
 import { authenticateUser, ensureAdmin, ensureModerator } from "@/server/middlewares/auth.middleware";
@@ -541,31 +540,3 @@ export async function lockTopicHandler(req: Request) {
   }
 }
 
-export async function featureTopicHandler(req: Request) {
-  const user = await authenticateUser(req);
-  if (user instanceof Response) return user;
-
-  try {
-    ensureModerator(user);
-  } catch {
-    return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
-  }
-
-  const segments = new URL(req.url).pathname.split("/").filter(Boolean);
-  const topicId = Number(segments[segments.length - 2]);
-  if (isNaN(topicId)) {
-    return NextResponse.json({ error: "ID de tema inválido" }, { status: 400 });
-  }
-
-  const { featured } = (await req.json()) as { featured: boolean };
-
-  try {
-    await updateTopicFeatured(user.id, topicId, featured);
-    return NextResponse.json({ featured }, { status: 200 });
-  } catch (err: any) {
-    if (err.message === "FORBIDDEN_MODERATOR") {
-      return NextResponse.json({ error: "No tienes permisos" }, { status: 403 });
-    }
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
-  }
-}

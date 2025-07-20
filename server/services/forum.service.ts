@@ -374,18 +374,3 @@ export async function updateTopicLock(
     data: { locked: locked, updated_at: new Date() },
   });
 }
-
-export async function updateTopicFeatured(
-  currentUserId: string,
-  topicId: number,
-  featured: boolean
-) {
-  const me = await prisma.users.findUnique({ where: { id: currentUserId } });
-  if (!me || (me.role !== "MODERATOR" && me.role !== "ADMIN")) {
-    throw new Error("FORBIDDEN_MODERATOR");
-  }
-  return prisma.topics.update({
-    where: { id: topicId },
-    data: { featured, updated_at: new Date() },
-  });
-}

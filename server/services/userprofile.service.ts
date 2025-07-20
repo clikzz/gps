@@ -16,20 +16,42 @@ export const getUserProfile = async (userId: string) => {
   });
 };
 
+export const getAllBadges = async () => {
+  return await prisma.badge.findMany({
+    orderBy: { name: 'asc' }
+  });
+};
+
 export const updateUserProfile = async (
   userId: string,
   {
     name,
     email,
     avatar_url,
-  }: { name: string; email: string; avatar_url: string | null }
+    selectedBadgeIds,
+  }: { 
+    name: string; 
+    email: string; 
+    avatar_url: string | null;
+    selectedBadgeIds?: string[];
+  }
 ) => {
   const defaultAvatarUrl = "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/images/profile/defaultpfp.png";
   const finalAvatarUrl = avatar_url === null ? defaultAvatarUrl : avatar_url;
 
+  const updateData: any = { 
+    name, 
+    email, 
+    avatar_url: finalAvatarUrl 
+  };
+
+  if (selectedBadgeIds !== undefined) {
+    updateData.selectedBadgeIds = selectedBadgeIds;
+  }
+
   return await prisma.users.update({
     where: { id: userId },
-    data: { name, email, avatar_url: finalAvatarUrl },
+    data: updateData,
     include: {
       Pets: {
         where: {

@@ -20,8 +20,9 @@ export default function Calendar({
   initialDate = null,
   onDateSelect,
   selectedBgColorClass = "bg-primary",
-  maxDate,
+  maxDate: maxDateProp,
 }: CalendarProps) {
+  const maxDate = maxDateProp ?? new Date();
   const [currentDate, setCurrentDate] = useState<Date>(
     initialDate
       ? new Date(initialDate.getFullYear(), initialDate.getMonth())
@@ -30,6 +31,10 @@ export default function Calendar({
   const [selectedDate, setSelectedDate] = useState<Date | null>(
     initialDate
   );
+
+  const disableNext =
+  currentDate.getFullYear() > maxDate.getFullYear() ||
+  (currentDate.getFullYear() === maxDate.getFullYear() && currentDate.getMonth() >= maxDate.getMonth());
 
   const daysInMonth = (d: Date) =>
     new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -114,7 +119,8 @@ export default function Calendar({
         <button
           type="button"
           onClick={() => navigate("next")}
-          className="p-1 hover:bg-muted rounded transition"
+          disabled={disableNext}
+          className={disableNext ? "opacity-50 cursor-not-allowed" : "p-1 hover:bg-muted rounded transition"}
         >
           <ChevronRight className="w-5 h-5 text-foreground" />
         </button>

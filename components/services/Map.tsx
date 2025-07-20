@@ -5,7 +5,6 @@ import dynamic from "next/dynamic"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { Marker, Popup, NavigationControl, FullscreenControl, ScaleControl } from "react-map-gl/mapbox"
 import { CircleUserRound, MapPin, Navigation, Map as MapIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import PetService, { type PetServiceRef } from "@/components/services/PetService"
 import LoadingScreen from "@/components/LoadingScreen"
 

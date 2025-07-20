@@ -18,7 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { signOutAction } from "@/app/actions";
 import { ProfilePreview } from "./ProfilePreview";
-import { useUserProfile, loadUserFromStorage } from "@/stores/userProfile";
+import { useUserProfile } from "@/stores/userProfile";
 
 interface UserProfile {
   id: string;
@@ -40,39 +40,39 @@ export function ProfileDropdown({ user, userProfile }: ProfileDropdownProps) {
   const displayEmail = user.email || "";
   const avatarUrl = userProfile?.avatar_url;
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const { setUser, resetUser, clearUserStorage } = useUserProfile();
+  const { setUser, resetUser, user: currentUser } = useUserProfile();
 
   useEffect(() => {
     if (userProfile) {
-      const storedUser = loadUserFromStorage(userProfile.id);
+      // Solo actualizar si no hay usuario cargado o es un usuario diferente
+      if (!currentUser || currentUser.id !== userProfile.id) {
+        const userToSet = {
+          id: userProfile.id,
+          email: userProfile.email,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          name: userProfile.name || undefined,
+          avatar_url: userProfile.avatar_url || undefined,
+          tag: userProfile.public_id || undefined,
+          Pets: [],
+          photoLogs: [],
+          forums: [],
+          badges: [],
+          reviews: [],
+          lostPets: [],
+          marketplaceItems: [],
+          role: userProfile.role as any,
+          status: "ACTIVE" as any,
+          menssageCount: userProfile.menssageCount,
+          selectedBadgeIds: currentUser?.selectedBadgeIds || [],
+        };
 
-      const userToSet = {
-        id: userProfile.id,
-        email: userProfile.email,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        name: userProfile.name || undefined,
-        avatar_url: userProfile.avatar_url || undefined,
-        tag: userProfile.public_id || undefined,
-        Pets: [],
-        photoLogs: [],
-        forums: [],
-        badges: [],
-        reviews: [],
-        lostPets: [],
-        marketplaceItems: [],
-        role: userProfile.role as any,
-        status: "ACTIVE" as any,
-        menssageCount: userProfile.menssageCount,
-        selectedBadgeIds: storedUser?.selectedBadgeIds || [],
-      };
-
-      setUser(userToSet);
+        setUser(userToSet);
+      }
     }
-  }, [userProfile, setUser]);
+  }, [userProfile, setUser, currentUser]);
 
   const handleSignOut = async () => {
-    clearUserStorage();
     resetUser(); 
     await signOutAction();
   };

@@ -2,23 +2,26 @@
 
 import React from "react";
 import { useActivePet } from "@/stores/activePet";
-import { Hospital } from "lucide-react";
+import { Hospital, Heart } from "lucide-react";
 import { TabSelector } from "@/components/health/tab-selector";
 import { useHealth } from "@/stores/health";
 import { handleGetHealth } from "@/hooks/health/useHealth";
 import dynamic from "next/dynamic";
 import { AddMedicationDrawer } from "@/components/health/medications/add-medication-drawer";
 import { AddVaccinationDrawer } from "@/components/health/vaccinations/add-vaccination-drawer";
+import LoadingScreen from "@/components/LoadingScreen";
 
 function HealthPage() {
   const pet = useActivePet((state) => state.activePet);
   const setHealthResume = useHealth((state) => state.setHealthResume);
+  const [isLoading, setIsLoading] = React.useState(false);
   const PetSelector = dynamic(() => import("@/components/PetSelector"), {
     ssr: false,
   });
 
   React.useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const data = await handleGetHealth();
         setHealthResume({
@@ -28,6 +31,8 @@ function HealthPage() {
         });
       } catch (error) {
         console.error("Error fetching health data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -35,6 +40,17 @@ function HealthPage() {
       fetchData();
     }
   }, [pet, setHealthResume]);
+
+  if (isLoading) {
+    return (
+      <LoadingScreen
+        title="Cargando"
+        subtext="Obteniendo información de salud"
+        icon={Heart}
+        accentIcon={Heart}
+      />
+    );
+  }
 
   return (
     <div>

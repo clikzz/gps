@@ -1,5 +1,5 @@
-import { createReview, getReviewsByServiceId } from "../services/reviews.service"
-import type { GetReviewsInput } from "../validations/reviews.validation"
+import { createReview, getReviewsByServiceId, updateReview, deleteReview } from "../services/reviews.service"
+import type { GetReviewsInput, UpdateReviewInput } from "../validations/reviews.validation"
 
 const serializeBigInt = (obj: any): any => {
   if (obj === null || obj === undefined) {
@@ -77,6 +77,72 @@ export const addReview = async ({
     })
   } catch (error) {
     console.error("Error en addReview:", error)
+    return new Response(JSON.stringify({ error: "Error interno del servidor" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+}
+
+export const updateReviewById = async ({
+  reviewId,
+  userId,
+  data,
+}: {
+  reviewId: string
+  userId: string
+  data: UpdateReviewInput
+}) => {
+  try {
+    const updatedReview = await updateReview(reviewId, userId, data)
+
+    const serializedReview = serializeBigInt(updatedReview)
+
+    return new Response(JSON.stringify(serializedReview), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })
+  } catch (error: any) {
+    console.error("Error en updateReviewById:", error)
+    
+    if (error.message === "Reseña no encontrada o no tienes permisos para editarla") {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
+
+    return new Response(JSON.stringify({ error: "Error interno del servidor" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+}
+
+export const deleteReviewById = async ({
+  reviewId,
+  userId,
+}: {
+  reviewId: string
+  userId: string
+}) => {
+  try {
+    await deleteReview(reviewId, userId)
+
+    return new Response(JSON.stringify({ message: "Reseña eliminada correctamente" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })
+  } catch (error: any) {
+    console.error("Error en deleteReviewById:", error)
+    
+    if (error.message === "Reseña no encontrada o no tienes permisos para eliminarla") {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
+
     return new Response(JSON.stringify({ error: "Error interno del servidor" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

@@ -150,13 +150,7 @@ export default function MapsPage() {
   }
 
   const mapContent = (
-    <div
-      className="fixed left-0 right-0 z-30"
-      style={{
-        top: "64px",
-        bottom: "0",
-      }}
-    >
+    <div className="fixed left-0 right-0 z-30 top-0 md:top-16 bottom-0">
       <Map
         userLocation={location}
         isSelectingLocation={isSelectingLocation || isSelectingEditLocation}
@@ -166,18 +160,20 @@ export default function MapsPage() {
         refreshTrigger={refreshTrigger}
       />
 
-      <div className="absolute top-4 right-4 z-40 pr-8">
-        <NewServiceDrawer
-          userLocation={location}
-          onStartLocationSelection={handleStartLocationSelection}
-          onCancelLocationSelection={handleCancelLocationSelection}
-          onOpenExistingSelection={handleOpenExistingSelection}
-          selectedServiceLocation={selectedServiceLocation}
-          isSelectingLocation={isSelectingLocation}
-          open={drawerOpen}
-          onOpenChange={setDrawerOpen}
-          onServiceCreated={handleServiceCreated}
-        />
+      <div className="absolute top-4 right-4 z-40 pr-8 md:pr-8">
+        <div className="md:block">
+          <NewServiceDrawer
+            userLocation={location}
+            onStartLocationSelection={handleStartLocationSelection}
+            onCancelLocationSelection={handleCancelLocationSelection}
+            onOpenExistingSelection={handleOpenExistingSelection}
+            selectedServiceLocation={selectedServiceLocation}
+            isSelectingLocation={isSelectingLocation}
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
+            onServiceCreated={handleServiceCreated}
+          />
+        </div>
       </div>
 
       <EditServiceDrawer
@@ -192,7 +188,6 @@ export default function MapsPage() {
         showDeleteButton={true}
       />
 
-      {/* Indicador de modo selección */}
       {(isSelectingLocation || isSelectingEditLocation) && (
         <div className="absolute top-4 left-4 z-40 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border">
           <div className="flex items-center space-x-3">
@@ -209,7 +204,6 @@ export default function MapsPage() {
         </div>
       )}
 
-      {/* Indicador de ubicación seleccionada */}
       {selectedServiceLocation && !isSelectingLocation && !drawerOpen && (
         <div className="absolute bottom-4 left-4 z-40 bg-gray-50 border border-gray-200 p-4 rounded-lg shadow-lg">
           <div className="flex items-center space-x-3">
@@ -229,7 +223,7 @@ export default function MapsPage() {
 
   return (
     <>
-      <div className="h-4" />
+      <div className="hidden md:block h-4" />
       {mounted ? createPortal(mapContent, document.body) : null}
     </>
   )

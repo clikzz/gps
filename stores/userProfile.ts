@@ -6,7 +6,12 @@ import { UserStatus } from ".prisma/client/default";
 
 type PhotoLog = { id: string; url: string };
 type Forum = { id: string; title: string };
-export type Badge = { id: string; label: string; icon: string; description: string; key?: string };
+export type Badge = {
+  id: string;
+  label: string;
+  icon: string;
+  description: string;
+};
 type Review = { id: string; content: string };
 type LostPet = { id: string; name: string };
 type MarketplaceItem = { id: string; title: string };
@@ -42,11 +47,12 @@ type UserProfileStore = {
     value: UserProfile[K]
   ) => void;
   resetUser: () => void;
+  clearStorage: () => void;
 
   setSelectedBadges: (ids: string[]) => void;
 };
 
-export const useUserProfile = create<UserProfileStore>()(
+const createUserProfileStore = () => create<UserProfileStore>()(
   persist(
     (set) => {
       const sortPets = (pets: Pet[]): Pet[] => {
@@ -88,6 +94,14 @@ export const useUserProfile = create<UserProfileStore>()(
 
         resetUser: () => set({ user: null }),
 
+        clearStorage: () => {
+          set({ user: null });
+          localStorage.removeItem("user-profile-storage");
+          setTimeout(() => {
+            localStorage.removeItem("user-profile-storage");
+          }, 50);
+        },
+
         setSelectedBadges: (ids: string[]) =>
           set((state) => {
             if (!state.user) return {};
@@ -107,14 +121,16 @@ export const useUserProfile = create<UserProfileStore>()(
   )
 );
 
+export const useUserProfile = createUserProfileStore();
+
 export const useSelectedBadges = () => {
   const user = useUserProfile(state => state.user);
   if (!user) return [];
-  
+
   const badgesToSearch = user.unlockedBadges || user.badges || [];
-  
+
   return (user.selectedBadgeIds || [])
-    .map(id => badgesToSearch.find(badge => badge.id === id))
+    .map(id => badgesToSearch.find((badge: Badge) => badge.id === id))
     .filter((badge): badge is NonNullable<typeof badge> => badge !== undefined)
     .slice(0, 3);
 };

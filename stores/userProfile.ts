@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { Pet } from "@/types/pet";
 import { Role } from ".prisma/client/default";
 import { UserStatus } from ".prisma/client/default";
@@ -42,77 +41,131 @@ type UserProfileStore = {
     value: UserProfile[K]
   ) => void;
   resetUser: () => void;
-
   setSelectedBadges: (ids: string[]) => void;
+  clearUserStorage: () => void;
 };
 
-export const useUserProfile = create<UserProfileStore>()(
-  persist(
-    (set) => {
-      const sortPets = (pets: Pet[]): Pet[] => {
-        return [...pets].sort((a, b) => {
-          if (a.active === false && b.active !== false) return 1;
-          if (a.active !== false && b.active === false) return -1;
-          return 0;
-        });
-      };
+const createUserProfileStore = () => create<UserProfileStore>()(
+  (set, get) => {
+    const sortPets = (pets: Pet[]): Pet[] => {
+      return [...pets].sort((a, b) => {
+        if (a.active === false && b.active !== false) return 1;
+        if (a.active !== false && b.active === false) return -1;
+        return 0;
+      });
+    };
 
-      return {
-        user: null,
+    const saveUserToStorage = (user: UserProfile) => {
+      try {
+        localStorage.setItem(
+          `user-profile-storage-${user.id}`,
+          JSON.stringify({ user })
+        );
+      } catch (error) {
+        console.error('Error saving user to storage:', error);
+      }
+    };
 
-        setUser: (user) => {
-          const sortedUser = user.Pets
-            ? { ...user, Pets: sortPets(user.Pets) }
-            : user;
+    const removeUserFromStorage = (userId: string) => {
+      try {
+        localStorage.removeItem(`user-profile-storage-${userId}`);
+      } catch (error) {
+        console.error('Error removing user from storage:', error);
+      }
+    };
 
-          set({ user: sortedUser });
-        },
+    return {
+      user: null,
 
-        updateUserField: (key, value) =>
-          set((state) => {
-            if (!state.user) return {};
+      setUser: (user) => {
+        const sortedUser = user.Pets
+          ? { ...user, Pets: sortPets(user.Pets) }
+          : user;
+        const currentUser = get().user;
+        if (currentUser && currentUser.id !== user.id) {
+          removeUserFromStorage(currentUser.id);
+        }
 
-            if (key === "Pets") {
-              return {
-                user: { ...state.user, Pets: sortPets(value as Pet[]) },
-              };
-            }
+        set({ user: sortedUser });
+        saveUserToStorage(sortedUser);
+      },
 
-            return {
-              user: {
-                ...state.user,
-                [key]: value,
-              },
-            };
-          }),
+      updateUserField: (key, value) =>
+        set((state) => {
+          if (!state.user) return {};
 
-        resetUser: () => set({ user: null }),
+          const updatedUser = key === "Pets"
+            ? { ...state.user, Pets: sortPets(value as Pet[]) }
+            : { ...state.user, [key]: value };
 
-        setSelectedBadges: (ids: string[]) =>
-          set((state) => {
-            if (!state.user) return {};
-            return {
-              user: {
-                ...state.user,
-                selectedBadgeIds: ids,
-              },
-            };
-          }),
-      };
-    },
-    {
-      name: "user-profile-storage",
-      partialize: (state) => ({ user: state.user }),
-    }
-  )
+          saveUserToStorage(updatedUser);
+          return { user: updatedUser };
+        }),
+
+      resetUser: () => {
+        const currentUser = get().user;
+        if (currentUser) {
+          removeUserFromStorage(currentUser.id);
+        }
+        set({ user: null });
+      },
+
+      setSelectedBadges: (ids: string[]) =>
+        set((state) => {
+          if (!state.user) return {};
+
+          const updatedUser = {
+            ...state.user,
+            selectedBadgeIds: ids,
+          };
+
+          saveUserToStorage(updatedUser);
+          return { user: updatedUser };
+        }),
+
+      clearUserStorage: () => {
+        const currentUser = get().user;
+        if (currentUser) {
+          removeUserFromStorage(currentUser.id);
+        }
+      },
+    };
+  }
 );
+
+export const useUserProfile = createUserProfileStore();
+export const loadUserFromStorage = (userId: string) => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const stored = localStorage.getItem(`user-profile-storage-${userId}`);
+    if (stored) {
+      const data = JSON.parse(stored);
+      return data.user;
+    }
+  } catch (error) {
+    console.error('Error loading user from storage:', error);
+  }
+  return null;
+};
+
+export const clearAllUserStorages = () => {
+  if (typeof window === 'undefined') return;
+
+  const keys = Object.keys(localStorage);
+  keys.forEach(key => {
+    if (key.startsWith('user-profile-storage-')) {
+      localStorage.removeItem(key);
+    }
+  });
+};
 
 export const useSelectedBadges = () => {
   const user = useUserProfile(state => state.user);
   if (!user) return [];
-  
+
   const badgesToSearch = user.unlockedBadges || user.badges || [];
-  
+
   return (user.selectedBadgeIds || [])
     .map(id => badgesToSearch.find(badge => badge.id === id))
     .filter((badge): badge is NonNullable<typeof badge> => badge !== undefined)

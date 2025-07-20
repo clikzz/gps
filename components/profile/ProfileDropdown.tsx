@@ -18,7 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { signOutAction } from "@/app/actions";
 import { ProfilePreview } from "./ProfilePreview";
-import { useUserProfile } from "@/stores/userProfile";
+import { useUserProfile, loadUserFromStorage } from "@/stores/userProfile";
 
 interface UserProfile {
   id: string;
@@ -40,11 +40,13 @@ export function ProfileDropdown({ user, userProfile }: ProfileDropdownProps) {
   const displayEmail = user.email || "";
   const avatarUrl = userProfile?.avatar_url;
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const { setUser } = useUserProfile();
+  const { setUser, resetUser, clearUserStorage } = useUserProfile();
 
   useEffect(() => {
     if (userProfile) {
-      setUser({
+      const storedUser = loadUserFromStorage(userProfile.id);
+
+      const userToSet = {
         id: userProfile.id,
         email: userProfile.email,
         created_at: new Date().toISOString(),
@@ -62,12 +64,16 @@ export function ProfileDropdown({ user, userProfile }: ProfileDropdownProps) {
         role: userProfile.role as any,
         status: "ACTIVE" as any,
         menssageCount: userProfile.menssageCount,
-        selectedBadgeIds: [],
-      });
+        selectedBadgeIds: storedUser?.selectedBadgeIds || [],
+      };
+
+      setUser(userToSet);
     }
   }, [userProfile, setUser]);
 
   const handleSignOut = async () => {
+    clearUserStorage();
+    resetUser(); 
     await signOutAction();
   };
 

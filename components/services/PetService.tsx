@@ -5,11 +5,13 @@ import { Marker, Source, Layer } from "react-map-gl/mapbox"
 import { X } from "lucide-react"
 import { toast } from "sonner"
 import { ServiceDetailTabs } from "./ServiceDetail"
+import { useUserProfile } from "@/stores/userProfile"
 
 interface PetServiceProps {
   userLocation: { lat: number; lng: number }
   onEditService?: (service: RealPetService) => void
   refreshTrigger?: number
+  onServiceDeleted?: () => void
 }
 
 interface RealPetService {
@@ -42,7 +44,8 @@ export interface PetServiceRef {
 }
 
 const PetService = forwardRef<PetServiceRef, PetServiceProps>(
-  ({ userLocation, onEditService, refreshTrigger }, ref) => {
+  ({ userLocation, onEditService, refreshTrigger, onServiceDeleted }, ref) => {
+    const { user } = useUserProfile()
     const [petServices, setPetServices] = useState<RealPetService[]>([])
     const [selectedService, setSelectedService] = useState<RealPetService | null>(null)
     const [customServicesLoading, setCustomServicesLoading] = useState(false)
@@ -185,6 +188,15 @@ const PetService = forwardRef<PetServiceRef, PetServiceProps>(
       }
     }
 
+    const handleDeleteService = () => {
+      if (onServiceDeleted) {
+        onServiceDeleted()
+      }
+      setSelectedService(null)
+      setShowServiceDetail(false)
+      refreshServices()
+    }
+
     useEffect(() => {
       fetchCustomServices()
     }, [userLocation])
@@ -268,12 +280,13 @@ const PetService = forwardRef<PetServiceRef, PetServiceProps>(
         ))}
 
         {selectedService && showServiceDetail && (
-          <div className="absolute top-0 left-0 h-full w-96 z-30 bg-white shadow-2xl">
+          <div className="absolute top-0 left-0 h-full w-full md:w-96 z-50 bg-white shadow-2xl">
             <ServiceDetailTabs
               service={selectedService}
               onClose={handleCloseServiceDetail}
               onCalculateRoute={calculateRoute}
               onEditService={handleEditService}
+              onDeleteService={user?.role === "ADMIN" ? handleDeleteService : undefined}
             />
           </div>
         )}

@@ -31,6 +31,7 @@ export default async function ProtectedLayout({
         email: user.email || "",
         public_id: null,
         menssageCount: 0,
+        role: "USER",
       };
     }
   }

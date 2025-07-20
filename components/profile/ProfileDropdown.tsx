@@ -27,6 +27,7 @@ interface UserProfile {
   email: string;
   public_id: string | null;
   menssageCount: number;
+  role: string;
 }
 
 interface ProfileDropdownProps {
@@ -58,7 +59,7 @@ export function ProfileDropdown({ user, userProfile }: ProfileDropdownProps) {
         reviews: [],
         lostPets: [],
         marketplaceItems: [],
-        role: "USER" as any,
+        role: userProfile.role as any,
         status: "ACTIVE" as any,
         menssageCount: userProfile.menssageCount,
         selectedBadgeIds: [],

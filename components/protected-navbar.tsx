@@ -36,6 +36,8 @@ import {
 import { ProfileDropdown } from "./profile/ProfileDropdown";
 import { ThemeSwitcher } from "./theme-switcher";
 import { signOutAction } from "@/app/actions";
+import { useUserProfile } from "@/stores/userProfile";
+import { useActivePet } from "@/stores/activePet";
 
 interface UserProfile {
   id: string;
@@ -57,6 +59,7 @@ export default function ProtectedNavbar({
   userProfile,
 }: ProtectedNavbarProps) {
   const [activeTab, setActiveTab] = useState("home");
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const mainNavItems = [
     { id: "home", label: "Home", icon: Home, href: "/home" },
@@ -72,6 +75,10 @@ export default function ProtectedNavbar({
   ];
 
   const handleSignOut = async () => {
+    setIsSigningOut(true);
+    useUserProfile.getState().clearStorage();
+    useActivePet.getState().clearStorage();
+
     await signOutAction();
   };
 
@@ -93,7 +100,11 @@ export default function ProtectedNavbar({
     return (
       <div className="flex items-center gap-2">
         <ThemeSwitcher />
-        <ProfileDropdown user={user} userProfile={userProfile} />
+        <ProfileDropdown
+          user={user}
+          userProfile={userProfile}
+          onSignOut={handleSignOut}
+        />
       </div>
     );
   };
@@ -141,13 +152,12 @@ export default function ProtectedNavbar({
           </div>
         </div>
         <Button
-          asChild
           size="sm"
           variant="outline"
           className="w-full bg-transparent"
           onClick={handleSignOut}
         >
-          <Link href="/sign-in">Cerrar sesión</Link>
+          Cerrar sesión
         </Button>
       </div>
     );

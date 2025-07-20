@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { signOutAction } from "@/app/actions";
 import { ProfilePreview } from "./ProfilePreview";
 import { useUserProfile } from "@/stores/userProfile";
+import { useActivePet } from "@/stores/activePet";
 
 interface UserProfile {
   id: string;
@@ -33,20 +34,27 @@ interface UserProfile {
 interface ProfileDropdownProps {
   user: SupabaseUser;
   userProfile: UserProfile | null;
+  onSignOut?: () => Promise<void>;
 }
 
-export function ProfileDropdown({ user, userProfile }: ProfileDropdownProps) {
+export function ProfileDropdown({
+  user,
+  userProfile,
+  onSignOut,
+}: ProfileDropdownProps) {
   const displayName = userProfile?.name || "Usuario";
   const displayEmail = user.email || "";
   const avatarUrl = userProfile?.avatar_url;
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const { setUser, resetUser, user: currentUser } = useUserProfile();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const { setUser, user: currentUser, updateUserField } = useUserProfile();
 
   useEffect(() => {
-    if (userProfile) {
-      // Solo actualizar si no hay usuario cargado o es un usuario diferente
-      if (!currentUser || currentUser.id !== userProfile.id) {
-        const userToSet = {
+    if (isSigningOut || !user) return;
+
+    if (userProfile && (!currentUser || currentUser.id !== userProfile.id)) {
+      if (!currentUser) {
+        setUser({
           id: userProfile.id,
           email: userProfile.email,
           created_at: new Date().toISOString(),
@@ -61,23 +69,39 @@ export function ProfileDropdown({ user, userProfile }: ProfileDropdownProps) {
           reviews: [],
           lostPets: [],
           marketplaceItems: [],
-          role: userProfile.role as any,
+          role: "USER" as any,
           status: "ACTIVE" as any,
           menssageCount: userProfile.menssageCount,
-          selectedBadgeIds: currentUser?.selectedBadgeIds || [],
-        };
-
-        setUser(userToSet);
+          selectedBadgeIds: [],
+        });
+      } else {
+        updateUserField("name", userProfile.name || undefined);
+        updateUserField("avatar_url", userProfile.avatar_url || undefined);
+        updateUserField("tag", userProfile.public_id || undefined);
+        updateUserField("menssageCount", userProfile.menssageCount);
       }
     }
-  }, [userProfile, setUser, currentUser]);
-
-  const handleSignOut = async () => {
-    resetUser(); 
-    await signOutAction();
-  };
+  }, [
+    userProfile,
+    setUser,
+    updateUserField,
+    currentUser?.id,
+    isSigningOut,
+    user,
+  ]);
 
   const handleViewProfile = () => setIsPreviewOpen(true);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    if (onSignOut) {
+      await onSignOut();
+    } else {
+      useUserProfile.getState().clearStorage();
+      useActivePet.getState().clearStorage();
+      await signOutAction();
+    }
+  };
   return (
     <>
       <DropdownMenu>

@@ -6,7 +6,12 @@ import { UserStatus } from ".prisma/client/default";
 
 type PhotoLog = { id: string; url: string };
 type Forum = { id: string; title: string };
-export type Badge = { id: string; label: string; icon: string; description: string };
+export type Badge = {
+  id: string;
+  label: string;
+  icon: string;
+  description: string;
+};
 type Review = { id: string; content: string };
 type LostPet = { id: string; name: string };
 type MarketplaceItem = { id: string; title: string };
@@ -40,6 +45,8 @@ type UserProfileStore = {
     value: UserProfile[K]
   ) => void;
   resetUser: () => void;
+  clearStorage: () => void;
+
   setSelectedBadges: (ids: string[]) => void;
 };
 
@@ -84,6 +91,15 @@ const createUserProfileStore = () => create<UserProfileStore>()(
           }),
 
         resetUser: () => set({ user: null }),
+
+        clearStorage: () => {
+          set({ user: null });
+          localStorage.removeItem("user-profile-storage");
+          // Forzar otra limpieza después de un pequeño delay para asegurar
+          setTimeout(() => {
+            localStorage.removeItem("user-profile-storage");
+          }, 50);
+        },
 
         setSelectedBadges: (ids: string[]) =>
           set((state) => {

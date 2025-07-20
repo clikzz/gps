@@ -350,14 +350,14 @@ export default function ProfileConfigPage() {
                         Seleccionadas: {selectedBadgeIds.length}/3
                       </p>
 
-                      {/* Insignias disponibles */}
+                      {/* Insignias desbloqueadas */}
                       <div className="mb-8">
-                        <h4 className="text-md font-semibold mb-3 text-secondary">🏆 Insignias Disponibles</h4>
-                        {user.badges?.length === 0 || !user.badges ? (
-                          <p className="text-muted-foreground">No tienes insignias disponibles aún.</p>
+                        <h4 className="text-md font-semibold mb-3 text-secondary">🏆 Insignias Desbloqueadas</h4>
+                        {user.unlockedBadges?.length === 0 || !user.unlockedBadges ? (
+                          <p className="text-muted-foreground">No tienes insignias desbloqueadas aún.</p>
                         ) : (
                           <div className="grid grid-cols-3 gap-4">
-                            {user.badges.map((badge) => {
+                            {user.unlockedBadges.map((badge) => {
                               const isSelected = selectedBadgeIds.includes(badge.id)
                               return (
                                 <div
@@ -388,6 +388,41 @@ export default function ProfileConfigPage() {
                                 </div>
                               )
                             })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Insignias por desbloquear */}
+                      <div>
+                        <h4 className="text-md font-semibold mb-3 text-muted-foreground">🔒 Insignias por Desbloquear</h4>
+                        {user.lockedBadges?.length === 0 || !user.lockedBadges ? (
+                          <p className="text-muted-foreground">¡Felicidades! Has desbloqueado todas las insignias disponibles.</p>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-4">
+                            {user.lockedBadges.map((badge) => (
+                              <div
+                                key={badge.id}
+                                className="text-center p-3 border rounded-lg bg-gray-50 opacity-75"
+                              >
+                                <div className="relative">
+                                  <img
+                                    src={badge.icon}
+                                    alt={badge.label}
+                                    title={badge.description || badge.label}
+                                    className="w-12 h-12 mx-auto grayscale"
+                                  />
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
+                                      <span className="text-white text-xs">🔒</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-sm mt-1 text-gray-500">{badge.label}</div>
+                                {badge.description && (
+                                  <div className="text-xs text-muted-foreground mt-1">{badge.description}</div>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>

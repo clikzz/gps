@@ -28,6 +28,8 @@ export type UserProfile = {
   photoLogs: PhotoLog[];
   forums: Forum[];
   badges: Badge[];
+  unlockedBadges?: Badge[];
+  lockedBadges?: Badge[];
   reviews: Review[];
   lostPets: LostPet[];
   marketplaceItems: MarketplaceItem[];
@@ -125,8 +127,10 @@ export const useSelectedBadges = () => {
   const user = useUserProfile(state => state.user);
   if (!user) return [];
 
+  const badgesToSearch = user.unlockedBadges || user.badges || [];
+
   return (user.selectedBadgeIds || [])
-    .map(id => user.badges.find((badge: Badge) => badge.id === id))
+    .map(id => badgesToSearch.find((badge: Badge) => badge.id === id))
     .filter((badge): badge is NonNullable<typeof badge> => badge !== undefined)
     .slice(0, 3);
 };

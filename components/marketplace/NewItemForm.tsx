@@ -24,17 +24,20 @@ import { useNewItemForm } from "@/hooks/marketplace/useNewItemForm";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker";
 import type { ItemCondition, ItemCategory, PetCategory } from "@prisma/client";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS, PET_OPTIONS } from "@/types/marketplace";
+import { CreateItemInput } from "@/server/validations/marketplace.validation";
 
 interface NewItemFormProps {
   onSuccess?: () => void;
+  initialData?: CreateItemInput;
 }
 
-export default function NewItemForm({ onSuccess }: NewItemFormProps) {
+export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps) {
   const {
     form,
     onSubmit,
     isSubmitting,
     imageUpload,
+    resetForm,
   } = useNewItemForm(onSuccess);
 
   const {
@@ -50,6 +53,14 @@ export default function NewItemForm({ onSuccess }: NewItemFormProps) {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      resetForm(initialData);
+      setPreviewUrls(initialData.photo_urls);
+      setLoc({ lat: initialData.latitude, lng: initialData.longitude });
+    }
+  }, [initialData, resetForm]);
 
   useEffect(() => {
     if (loc) {

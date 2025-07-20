@@ -18,6 +18,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 export default function MarketplacePage() {
   const [tab, setTab] = useState("para-ti");
   const [toSell, setToSell] = useState<UserArticle | null>(null);
+  const [repostData, setRepostData] = useState<UserArticle | null>(null);
   const {
     items, loading, error,
     filters, setters,
@@ -39,6 +40,14 @@ export default function MarketplacePage() {
   ) => {
     await markAsSold(id, soldPrice, soldDate, notes);
     handleCloseMark();
+  };
+
+  const handleRepost = (id: number) => {
+    const art = userArticles.find(a => a.id === id);
+    if (art) {
+      setRepostData(art);
+      setTab("vender");
+    }
   };
 
   return (
@@ -127,7 +136,10 @@ export default function MarketplacePage() {
 
           {/* — Vender — */}
           <TabsContent value="vender" className="mt-4">
-            <NewItemForm onSuccess={() => {}} />
+            <NewItemForm
+              onSuccess={() => setTab("mis-articulos")}
+              initialData={repostData ?? undefined}
+            />
           </TabsContent>
 
           {/* “Mis artículos” */}
@@ -139,6 +151,7 @@ export default function MarketplacePage() {
                 articles={userArticles}
                 onSwitchToSell={() => setTab("vender")}
                 onMarkAsSold={handleOpenMark}
+                onRepost={handleRepost}
               />
             )}
           </TabsContent>

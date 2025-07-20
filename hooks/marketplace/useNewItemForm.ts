@@ -7,7 +7,10 @@ import { reverseGeocode } from "@/utils/geocode"
 import { createItemSchema, type CreateItemInput } from "@/server/validations/marketplace.validation"
 import { useImageUpload } from "@/hooks/marketplace/useItemImageUpload"
 
-export function useNewItemForm(onSuccess?: () => void) {
+export function useNewItemForm(
+  onSuccess?: () => void,
+  initialData?: CreateItemInput
+) {
   const imageUpload = useImageUpload()
 
   const form = useForm<CreateItemInput>({
@@ -26,6 +29,8 @@ export function useNewItemForm(onSuccess?: () => void) {
       country: undefined,
     },
   })
+
+  const { reset } = form;
 
   const onSubmit = form.handleSubmit(async (value) => {
     console.log("Submitting new item:", value)
@@ -69,5 +74,6 @@ export function useNewItemForm(onSuccess?: () => void) {
     onSubmit,
     isSubmitting: form.formState.isSubmitting || imageUpload.isUploading,
     imageUpload,
+    resetForm: reset,
   }
 }

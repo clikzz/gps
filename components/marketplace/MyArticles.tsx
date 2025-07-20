@@ -12,9 +12,10 @@ interface Props {
   articles: UserArticle[];
   onSwitchToSell: () => void;
   onMarkAsSold?: (id: number) => void;
+  onRepost?: (id: number) => void;
 }
 
-export function MyArticles({ articles, onSwitchToSell, onMarkAsSold }: Props) {
+export function MyArticles({ articles, onSwitchToSell, onMarkAsSold, onRepost }: Props) {
   const [activeTab, setActiveTab] = useState<"activos" | "vendidos">("activos");
 
   const active = articles.filter((a) => a.status === "ACTIVE");
@@ -77,6 +78,7 @@ export function MyArticles({ articles, onSwitchToSell, onMarkAsSold }: Props) {
                 key={a.id}
                 article={a}
                 onMarkAsSold={onMarkAsSold}
+                onRepost={onRepost && (() => onRepost(a.id))}
               />
             ))}
           </div>

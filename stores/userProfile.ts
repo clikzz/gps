@@ -28,6 +28,8 @@ export type UserProfile = {
   photoLogs: PhotoLog[];
   forums: Forum[];
   badges: Badge[];
+  unlockedBadges?: Badge[];
+  lockedBadges?: Badge[];
   reviews: Review[];
   lostPets: LostPet[];
   marketplaceItems: MarketplaceItem[];
@@ -50,7 +52,7 @@ type UserProfileStore = {
   setSelectedBadges: (ids: string[]) => void;
 };
 
-export const useUserProfile = create<UserProfileStore>()(
+const createUserProfileStore = () => create<UserProfileStore>()(
   persist(
     (set) => {
       const sortPets = (pets: Pet[]): Pet[] => {
@@ -95,7 +97,6 @@ export const useUserProfile = create<UserProfileStore>()(
         clearStorage: () => {
           set({ user: null });
           localStorage.removeItem("user-profile-storage");
-          // Forzar otra limpieza después de un pequeño delay para asegurar
           setTimeout(() => {
             localStorage.removeItem("user-profile-storage");
           }, 50);
@@ -119,3 +120,17 @@ export const useUserProfile = create<UserProfileStore>()(
     }
   )
 );
+
+export const useUserProfile = createUserProfileStore();
+
+export const useSelectedBadges = () => {
+  const user = useUserProfile(state => state.user);
+  if (!user) return [];
+
+  const badgesToSearch = user.unlockedBadges || user.badges || [];
+
+  return (user.selectedBadgeIds || [])
+    .map(id => badgesToSearch.find((badge: Badge) => badge.id === id))
+    .filter((badge): badge is NonNullable<typeof badge> => badge !== undefined)
+    .slice(0, 3);
+};

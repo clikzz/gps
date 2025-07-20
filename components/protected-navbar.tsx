@@ -46,6 +46,7 @@ interface UserProfile {
   email: string;
   public_id: string | null;
   menssageCount: number;
+  role: string;
 }
 
 interface ProtectedNavbarProps {

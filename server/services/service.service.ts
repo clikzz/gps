@@ -31,6 +31,9 @@ export const createService = async (data: CreateServiceInput) => {
 
 export const getServices = async (filters: GetServicesInput) => {
   const services = await prisma.services.findMany({
+    where: {
+      deleted: false,
+    },
     include: {
       Reviews: true,
     },
@@ -81,7 +84,10 @@ export const updateService = async (serviceId: string, data: Partial<CreateServi
 }
 
 export const deleteService = async (serviceId: string) => {
-  return await prisma.services.delete({
+  return await prisma.services.update({
     where: { id: BigInt(serviceId) },
+    data: {
+      deleted: true,
+    },
   })
 }

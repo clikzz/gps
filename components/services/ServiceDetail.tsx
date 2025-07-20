@@ -1,12 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MapPin, Navigation, Star, Clock, X, Car, Info, Phone, MessageSquare, Edit } from "lucide-react"
+import { MapPin, Navigation, Star, Clock, X, Car, Info, Phone, MessageSquare, Edit, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { NewReviewDrawer } from "./NewReviewDrawer"
+import { ReviewActions } from "./ReviewActions"
 import { useUserProfile } from "@/stores/userProfile"
+import ConfirmationButton from "@/components/ConfirmationButton"
 
 interface Review {
   id: string
@@ -39,9 +42,10 @@ interface ServiceDetailTabsProps {
   onClose: () => void
   onCalculateRoute?: (service: any) => void
   onEditService?: (service: any) => void
+  onDeleteService?: () => void
 }
 
-export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditService }: ServiceDetailTabsProps) {
+export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditService, onDeleteService }: ServiceDetailTabsProps) {
   const { user } = useUserProfile()
   const [activeTab, setActiveTab] = useState("resumen")
   const [reviews, setReviews] = useState<Review[]>([])
@@ -97,18 +101,6 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
     }
   }, [service.address, service.lat, service.lng])
 
-  const getServiceIcon = (category: string): string => {
-    switch (category.toLowerCase()) {
-      case "veterinaria booster": return "🚀"
-      case "veterinaria":
-      case "clínica veterinaria":
-      case "hospital veterinario": return "🏥"
-      case "tienda de mascotas": return "🛒"
-      case "peluquería": return "✂️"
-      default: return "🐾"
-    }
-  }
-
   const getCategoryEmoji = (category: string): string => {
     switch (category.toLowerCase()) {
       case "veterinaria": return "🏥"
@@ -160,6 +152,35 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
     }
   }
 
+  const handleDeleteService = async () => {
+    try {
+      const serviceId = service.id.replace("custom-", "").split("-")[0]
+      const response = await fetch(`/api/services?id=${serviceId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        toast.success("Servicio eliminado correctamente")
+        if (onDeleteService) {
+          onDeleteService()
+        }
+        onClose()
+      } else {
+        const errorData = await response.json().catch(() => ({ error: "Error desconocido" }))
+        toast.error(errorData.error || "Error al eliminar el servicio")
+        throw new Error(errorData.error || "Error al eliminar el servicio")
+      }
+    } catch (error) {
+      console.error("Error al eliminar servicio:", error)
+      if (error instanceof Error) {
+        toast.error(error.message)
+      } else {
+        toast.error("Error inesperado al eliminar el servicio")
+      }
+      throw error
+    }
+  }
+
   const renderStars = (rating: number) => (
     <div className="flex items-center space-x-1">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -183,6 +204,11 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
       ? 0
       : Math.round((reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length) * 10) / 10
 
+  const hasUserReviewed = () => {
+    if (!user) return false
+    return reviews.some(review => review.users.id === user.id)
+  }
+
   return (
     <div className="h-full flex flex-col bg-background shadow-2xl border-r border-border">
       <div className="bg-gradient-to-r from-muted to-background border-b border-border p-6">
@@ -190,7 +216,7 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
           <div className="flex flex-col items-start">
             <div className="flex items-center mb-2">
               <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-xl mr-4 shadow-sm">
-                {getServiceIcon(service.category)}
+                {getCategoryEmoji(service.category)}
               </div>
               <div>
                 <h3 className="font-bold text-foreground text-xl leading-tight break-words">{service.name}</h3>
@@ -198,23 +224,37 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-2 ml-4">
+          <div className="flex items-center space-x-1 ml-4 flex-shrink-0">
             {onEditService && (
-              <button
+              <Button
                 onClick={handleEditService}
-                className="p-2.5 hover:bg-muted rounded-xl transition-all duration-200 hover:shadow-sm"
+                variant="ghost"
+                size="icon"
                 title="Editar servicio"
               >
-                <Edit className="w-5 h-5 text-muted-foreground" />
-              </button>
+                <Edit className="w-5 h-5" />
+              </Button>
             )}
-            <button
+            {onDeleteService && (
+              <ConfirmationButton
+                onConfirm={handleDeleteService}
+                triggerText={<Trash2 className="w-5 h-5" />}
+                dialogTitle="Eliminar servicio"
+                dialogDescription={`¿Estás seguro de que deseas eliminar el servicio "${service.name}"? Esta acción no se puede deshacer.`}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                variant="ghost"
+                size="icon"
+              />
+            )}
+            <Button
               onClick={onClose}
-              className="p-2.5 hover:bg-muted rounded-xl transition-all duration-200 hover:shadow-sm"
+              variant="ghost"
+              size="icon"
               title="Cerrar"
             >
-              <X className="w-5 h-5 text-muted-foreground" />
-            </button>
+              <X className="w-5 h-5" />
+            </Button>
           </div>
         </div>
         {reviews.length > 0 && (
@@ -279,68 +319,85 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
 
             <div className="space-y-4">
               {service.phone && (
-                <div className="flex items-center bg-green-50 dark:bg-green-900/20 rounded-xl p-4">
-                  <Phone className="w-5 h-5 mr-3 text-green-600 flex-shrink-0" />
-                  <a
-                    href={`tel:${service.phone}`}
-                    className="font-medium text-green-700 dark:text-green-400 hover:underline"
-                  >
-                    {service.phone}
-                  </a>
-                </div>
+                <Card className="border border-border shadow-sm hover:shadow-md transition-shadow duration-200 bg-background">
+                  <CardContent className="p-5">
+                    <div className="flex items-center">
+                      <Phone className="w-5 h-5 mr-3 text-muted-foreground flex-shrink-0" />
+                      <a
+                        href={`tel:${service.phone}`}
+                        className="font-medium text-muted-foreground hover:underline"
+                      >
+                        {service.phone}
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {service.description && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-                  <div className="flex items-start">
-                    <Info className="w-5 h-5 mr-3 mt-0.5 text-blue-600 flex-shrink-0" />
-                    <p className="text-foreground leading-relaxed">{service.description}</p>
-                  </div>
-                </div>
+                <Card className="border border-border shadow-sm hover:shadow-md transition-shadow duration-200 bg-background">
+                  <CardContent className="p-5">
+                    <div className="flex items-start">
+                      <Info className="w-5 h-5 mr-3 mt-0.5 text-muted-foreground flex-shrink-0" />
+                      <p className="text-foreground leading-relaxed">{service.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
-              <div className="bg-muted rounded-xl p-4">
-                <div className="flex items-start">
-                  <MapPin className="w-5 h-5 mr-3 mt-0.5 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1">
-                    {loadingAddress ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
-                        <span className="text-sm text-muted-foreground">Obteniendo dirección...</span>
-                      </div>
-                    ) : (
-                      <p className="text-foreground leading-relaxed">{resolvedAddress}</p>
-                    )}
+              <Card className="border border-border shadow-sm hover:shadow-md transition-shadow duration-200 bg-background">
+                <CardContent className="p-5">
+                  <div className="flex items-start">
+                    <MapPin className="w-5 h-5 mr-3 mt-0.5 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1">
+                      {loadingAddress ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
+                          <span className="text-sm text-muted-foreground">Obteniendo dirección...</span>
+                        </div>
+                      ) : (
+                        <p className="text-foreground leading-relaxed">{resolvedAddress}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {service.distance && (
-                <div className="flex items-center bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4">
-                  <Navigation className="w-5 h-5 mr-3 text-emerald-600 flex-shrink-0" />
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                    {service.distance} km de distancia
-                  </span>
-                </div>
+                <Card className="border border-border shadow-sm hover:shadow-md transition-shadow duration-200 bg-background">
+                  <CardContent className="p-5">
+                    <div className="flex items-center">
+                      <Navigation className="w-5 h-5 mr-3 ttext-muted-foreground flex-shrink-0" />
+                      <span className="font-semibold text-muted-foreground">
+                        {service.distance} km de distancia
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {service.routeDistance && service.routeDuration && (
-                <div className="flex items-center bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-                  <Car className="w-5 h-5 mr-3 text-blue-600 flex-shrink-0" />
-                  <span className="font-semibold text-blue-700 dark:text-blue-400">
-                    {service.routeDistance} • {service.routeDuration} en auto
-                  </span>
-                </div>
+                <Card className="border border-border shadow-sm hover:shadow-md transition-shadow duration-200 bg-background">
+                  <CardContent className="p-5">
+                    <div className="flex items-center">
+                      <Car className="w-5 h-5 mr-3 text-blue-600 flex-shrink-0" />
+                      <span className="font-semibold text-blue-700 dark:text-blue-400">
+                        {service.routeDistance} • {service.routeDuration} en auto
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
 
             {onCalculateRoute && (
               <div className="pt-6 border-t border-border">
                 <Button
+                  type="submit"
                   onClick={handleCalculateRoute}
-                  className="w-full bg-foreground hover:bg-muted-foreground text-background py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="w-full"
                   disabled={loadingRoute}
                 >
                   {loadingRoute ? (
@@ -364,13 +421,28 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
           <div className="p-6">
             <div className="space-y-6">
               {user && (
-                <Button
-                  onClick={() => setReviewDrawerOpen(true)}
-                  className="w-full bg-foreground hover:bg-muted-foreground text-background py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  <MessageSquare className="w-5 h-5 mr-2" />
-                  Escribir reseña
-                </Button>
+                <>
+                  {hasUserReviewed() ? (
+                    <div className="w-full p-4 bg-muted/50 border border-border rounded-lg text-center">
+                      <div className="flex items-center justify-center space-x-2 text-muted-foreground">
+                        <MessageSquare className="w-5 h-5" />
+                        <span className="text-sm font-medium">Ya has dejado una reseña en este servicio</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Puedes editarla o eliminarla en tu reseña existente
+                      </p>
+                    </div>
+                  ) : (
+                    <Button
+                      type="submit"
+                      onClick={() => setReviewDrawerOpen(true)}
+                      className="w-full"
+                    >
+                      <MessageSquare className="w-5 h-5 mr-2" />
+                      Escribir reseña
+                    </Button>
+                  )}
+                </>
               )}
 
               {loading ? (
@@ -386,10 +458,10 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
                       className="border border-border shadow-sm hover:shadow-md transition-shadow duration-200 bg-background"
                     >
                       <CardContent className="p-5">
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div className="relative">
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center space-x-3 flex-1">
+                              <div className="relative flex-shrink-0">
                                 {review.users.avatar_url ? (
                                   <>
                                     <img
@@ -418,25 +490,39 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
                                 )}
                               </div>
 
-                              <div>
-                                <p className="font-medium text-foreground">
-                                  {review.users.name || review.users.email.split("@")[0]}
-                                </p>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <p className="font-medium text-foreground">
+                                    {review.users.name || review.users.email.split("@")[0]}
+                                  </p>
+                                  {user && review.users.id === user.id && (
+                                    <span className="bg-secondary text-white text-xs px-2 py-1 rounded-full">
+                                      Tú
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="text-xs text-muted-foreground">{formatDate(review.created_at)}</span>
                               </div>
                             </div>
 
                             {user && review.users.id === user.id && (
-                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                Tu reseña
-                              </span>
+                              <div className="flex-shrink-0 ml-4">
+                                <ReviewActions
+                                  reviewId={review.id}
+                                  currentRating={review.rating}
+                                  currentComment={review.comment}
+                                  onReviewUpdated={fetchReviews}
+                                />
+                              </div>
                             )}
                           </div>
 
-                          <div className="ml-13">{renderStars(review.rating)}</div>
+                          <div className="pl-13">
+                            {renderStars(review.rating)}
+                          </div>
 
                           {review.comment && (
-                            <p className="text-foreground leading-relaxed ml-13">{review.comment}</p>
+                            <p className="text-foreground leading-relaxed pl-13">{review.comment}</p>
                           )}
                         </div>
                       </CardContent>

@@ -1,5 +1,5 @@
 import prisma from "@/lib/db"
-import type { CreateReviewInput, GetReviewsInput } from "../validations/reviews.validation"
+import type { CreateReviewInput, GetReviewsInput, UpdateReviewInput } from "../validations/reviews.validation"
 
 export const createReview = async (data: CreateReviewInput & { user_id: string }) => {
   const existingReview = await prisma.reviews.findFirst({
@@ -62,4 +62,56 @@ export const getReviewsByServiceId = async (filters: GetReviewsInput) => {
   })
 
   return reviews
+}
+
+export const updateReview = async (reviewId: string, userId: string, data: UpdateReviewInput) => {
+  const existingReview = await prisma.reviews.findFirst({
+    where: {
+      id: BigInt(reviewId),
+      user_id: userId,
+    },
+  })
+
+  if (!existingReview) {
+    throw new Error("Reseña no encontrada o no tienes permisos para editarla")
+  }
+
+  return await prisma.reviews.update({
+    where: {
+      id: BigInt(reviewId),
+    },
+    data: {
+      rating: data.rating,
+      comment: data.comment || null,
+    },
+    include: {
+      users: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar_url: true,
+        },
+      },
+    },
+  })
+}
+
+export const deleteReview = async (reviewId: string, userId: string) => {
+  const existingReview = await prisma.reviews.findFirst({
+    where: {
+      id: BigInt(reviewId),
+      user_id: userId,
+    },
+  })
+
+  if (!existingReview) {
+    throw new Error("Reseña no encontrada o no tienes permisos para eliminarla")
+  }
+
+  return await prisma.reviews.delete({
+    where: {
+      id: BigInt(reviewId),
+    },
+  })
 }

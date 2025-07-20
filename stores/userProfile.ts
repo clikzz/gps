@@ -95,7 +95,6 @@ const createUserProfileStore = () => create<UserProfileStore>()(
         clearStorage: () => {
           set({ user: null });
           localStorage.removeItem("user-profile-storage");
-          // Forzar otra limpieza después de un pequeño delay para asegurar
           setTimeout(() => {
             localStorage.removeItem("user-profile-storage");
           }, 50);

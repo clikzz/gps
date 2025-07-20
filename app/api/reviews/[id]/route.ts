@@ -2,11 +2,11 @@ import { updateReviewById, deleteReviewById } from "@/server/controllers/reviews
 import { authenticateUser } from "@/server/middlewares/auth.middleware"
 import { updateReviewSchema } from "@/server/validations/reviews.validation"
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await authenticateUser(req)
   if (user instanceof Response) return user
 
-  const { id } = params
+  const { id } = await params
   const body = await req.json()
 
   try {
@@ -31,11 +31,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await authenticateUser(req)
   if (user instanceof Response) return user
 
-  const { id } = params
+  const { id } = await params
 
   try {
     return deleteReviewById({ 

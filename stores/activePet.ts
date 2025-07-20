@@ -6,6 +6,7 @@ type activePetStore = {
   activePet: Pet | null;
   setActivePet: (pet: Pet) => void;
   resetActivePet: () => void;
+  clearStorage: () => void;
 };
 
 export const useActivePet = create<activePetStore>()(
@@ -14,6 +15,10 @@ export const useActivePet = create<activePetStore>()(
       activePet: null,
       setActivePet: (pet) => set({ activePet: pet }),
       resetActivePet: () => set({ activePet: null }),
+      clearStorage: () => {
+        set({ activePet: null });
+        localStorage.removeItem("active-pet-storage");
+      },
     }),
     {
       name: "active-pet-storage",

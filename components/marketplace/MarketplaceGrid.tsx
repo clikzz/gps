@@ -1,27 +1,37 @@
-"use client";
+"use client"
+import { ProductCard } from "@/components/marketplace/ProductCard"
+import { ProductDetailsDialog } from "@/components/marketplace/ProductDetails"
+import type { Item } from "@/types/marketplace"
+import { useState } from "react"
 
-import React from "react";
-import MarketplaceCard from "@/components/marketplace/MarketplaceCard";
+interface Props {
+  items: Item[];
+  // onToggleFav: (id: string) => void;
+}
 
-const SAMPLE_CARDS = Array(9).fill(null).map((_, i) => ({
-  id: String(i),
-  photo: `/placeholder-${i % 3 + 1}.jpg`,
-  title: `Artículo ${i + 1}`,
-  price: `${(10 + i) * 5} USD`,
-}));
-
-export default function MarketplaceGrid() {
-  const [items, setItems] = React.useState(SAMPLE_CARDS);
-
-  React.useEffect(() => {
-    // fetch
-  }, []);
+export function MarketplaceGrid({ items }: Props) {
+  const [selected, setSelected] = useState<Item | null>(null);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {items.map((item) => (
-        <MarketplaceCard key={item.id} item={item} />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.map((it) => (
+          <ProductCard
+            key={it.id}
+            item={it}
+            // onToggleFav={onToggleFav}
+            onViewDetails={() => setSelected(it)}
+          />
+        ))}
+      </div>
+      {selected && (
+        <ProductDetailsDialog
+          item={selected}
+          open={!!selected}
+          onClose={() => setSelected(null)}
+          // onToggleFav={onToggleFav}
+        />
+      )}
+    </>
   );
 }

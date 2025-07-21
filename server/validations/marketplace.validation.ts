@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ItemCategory, ItemCondition } from "@prisma/client";
+import { ItemCategory, ItemCondition, PetCategory } from "@prisma/client";
 
 export const createItemSchema = z.object({
   title: z
@@ -12,6 +12,10 @@ export const createItemSchema = z.object({
     .nativeEnum(ItemCategory, {
       errorMap: () => ({ message: "Categoría inválida." }),
     }),
+  pet_category: z
+    .nativeEnum(PetCategory, {
+      errorMap: () => ({ message: "Categoría de mascota inválida." }),
+    }),
   condition: z
     .nativeEnum(ItemCondition, {
       errorMap: () => ({ message: "Condición inválida." }),
@@ -20,8 +24,7 @@ export const createItemSchema = z.object({
     .number()
     .min(0, { message: "El precio no puede ser negativo." }),
   photo_urls: z
-    .array(z.string().url({ message: "Cada URL de imagen debe ser válida." }))
-    .min(1, { message: "Debes subir al menos una imagen." }),
+    .array(z.string().url({ message: "Cada URL de imagen debe ser válida." })),
   latitude: z
     .number()
     .min(-90, { message: "Latitud inválida." })
@@ -88,6 +91,11 @@ export const deleteItemSchema = z.object({
   id: z.string().regex(/^\d+$/, { message: "ID inválido." }),
 });
 
-export const markSoldSchema = deleteItemSchema;
+export const markSoldSchema = z.object({
+  id: z.string(),
+  sold_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Precio inválido"),
+  sold_at: z.string().refine((s) => !Number.isNaN(Date.parse(s)), "Fecha inválida"),
+  notes: z.string().optional(),
+});
 
 export type CreateItemInput = z.infer<typeof createItemSchema>;

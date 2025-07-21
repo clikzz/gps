@@ -7,6 +7,10 @@ import {
   fetchUserSoldMarketplaceItems,
   deleteMarketplaceItem,
   markMarketplaceItemAsSold,
+  fetchMarketplaceCities,
+  fetchMarketplacePetCategories,
+  fetchUserMarketplaceStats,
+  fetchMarketplaceItemById
 } from "@/server/controllers/marketplace.controller";
 
 
@@ -14,18 +18,33 @@ export async function GET(req: NextRequest) {
   const user = await authenticateUser(req);
   if (user instanceof Response) return new NextResponse(await user.text(), { status: user.status, headers: user.headers });
 
-  const mode = new URL(req.url).searchParams.get("mode") || "public";
+  const url = new URL(req.url);
+  const mode = url.searchParams.get("mode") || "public";
+  const id = url.searchParams.get("id");
+
+  const filters = {
+    category: url.searchParams.get("category") || undefined,
+    minPrice: url.searchParams.has("minPrice") ? Number(url.searchParams.get("minPrice")) : undefined,
+    maxPrice: url.searchParams.has("maxPrice") ? Number(url.searchParams.get("maxPrice")) : undefined,
+  }
 
   switch (mode) {
     case "public":
-      const raw = await req.json().catch(() => ({}));
-      return fetchPublicMarketplaceItems(raw);
+      return fetchPublicMarketplaceItems(filters);
     case "user":
       return fetchUserMarketplaceItems(user.id);
     case "sold":
       return fetchUserSoldMarketplaceItems(user.id);
+    case "cities":
+      return fetchMarketplaceCities();
+    case "pet-categories":
+      return fetchMarketplacePetCategories();
+    case "stats":
+      return fetchUserMarketplaceStats(user.id);
+    case "item":
+      return fetchMarketplaceItemById({ id: id ?? undefined });
     default:
-      return fetchPublicMarketplaceItems(await req.json().catch(() => ({})));
+      return fetchPublicMarketplaceItems(filters);
   }
 }
 
@@ -53,14 +72,31 @@ export async function PUT(req: NextRequest) {
   const url = new URL(req.url);
   const mode = url.searchParams.get("mode");
   const id = url.searchParams.get("id");
-  if (mode !== "sold" || !id) { 
-    return new NextResponse(
-      JSON.stringify({ error: "Parámetros inválidos" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
+  if (mode !== "sold" || !id) {
+    return NextResponse.json(
+      { error: "Parámetros inválidos" },
+      { status: 400 }
     );
   }
 
-  return markMarketplaceItemAsSold(user.id, { id });
+  let payload: any;
+  try {
+    payload = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "JSON inválido" },
+      { status: 400 }
+    );
+  }
+
+  const params = {
+    id,
+    sold_price: payload.sold_price,
+    sold_at: payload.sold_at,
+    notes: payload.notes,
+  };
+
+  return markMarketplaceItemAsSold(user.id, params);
 }
 
 export async function DELETE(req: NextRequest) {

@@ -1,7 +1,8 @@
 import prisma from "@/lib/db";
 import { reverseGeocode } from "@/utils/geocode";
-import type { MarketplaceItemInput, ListFilters, MarketplaceItem } from "@/types/marketplace";
-import { Prisma, ItemStatus, ItemCategory, ItemCondition } from "@prisma/client";
+import type { MarketplaceItemInput, ListFilters } from "@/types/marketplace";
+import { ItemStatus, PetCategory, Prisma } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
 /**
  * Crea un nuevo anuncio en el marketplace.
@@ -24,6 +25,7 @@ export const createMarketplaceItem = async (
         condition: data.condition,
         price: data.price,
         category: data.category,
+        pet_category: data.pet_category ?? "ALL",
         photo_urls: data.photo_urls,
         latitude: data.latitude,
         longitude: data.longitude,
@@ -36,6 +38,21 @@ export const createMarketplaceItem = async (
 
     return item;
   });
+}
+
+/**
+ * Obtener anuncio por ID.
+ */
+export const getMarketplaceItemById = async (itemId: bigint) => {
+  const item = await prisma.marketplaceItem.findUnique({
+    where: { id: itemId },
+  });
+
+  if (!item) {
+    throw new Error("Anuncio no encontrado.");
+  }
+
+  return item;
 }
 
 /**
@@ -67,7 +84,10 @@ export const softDeleteMarketplaceItem = async (
  */
 export const markItemAsSold = async (
   itemId: bigint,
-  userId: string
+  userId: string,
+  soldPrice: string,
+  soldAt: Date,
+  notes?: string
 ) => {
   const res = await prisma.marketplaceItem.updateMany({
     where: {
@@ -83,7 +103,18 @@ export const markItemAsSold = async (
   if (res.count === 0) {
     throw new Error("No tienes permiso o el anuncio ya no está activo.");
   }
-  return true;
+
+  const sale = await prisma.sale.create({
+    data: {
+      item_id: itemId,
+      user_id: userId,
+      price: new Prisma.Decimal(soldPrice),
+      sold_at: soldAt,
+      notes,
+    },
+  });
+
+  return sale;
 }
 
 /**
@@ -102,6 +133,7 @@ export const listUserItems = async (userId: string) => {
 export const listUserSoldItems = async (userId: string) => {
   return prisma.marketplaceItem.findMany({
     where: { user_id: userId, status: ItemStatus.SOLD },
+    include: { sales: true },
     orderBy: { created_at: "desc" },
   });
 }
@@ -111,95 +143,114 @@ export const listUserSoldItems = async (userId: string) => {
  */
 export const listMarketplaceItems = async (
   filters: ListFilters = {}
-): Promise<MarketplaceItem[]> => {
+) => {
   const {
-    category, minPrice, maxPrice,
-    lat, lng, radiusKm,
-    order = "recent", page = 0, pageSize = 20,
+    category,
+    pet_category,
+    minPrice,
+    maxPrice,
+    lat,
+    lng,
+    radiusKm,
+    order = "recent",
+    page = 0,
+    pageSize = 20,
   } = filters;
 
-  const clauses: Prisma.Sql[] = [
-    Prisma.sql`status = ${ItemStatus.ACTIVE}`
-  ];
-  if (category) clauses.push(Prisma.sql` AND category = ${category}`);
-  if (minPrice !== undefined) clauses.push(Prisma.sql` AND price >= ${minPrice}`);
-  if (maxPrice !== undefined) clauses.push(Prisma.sql` AND price <= ${maxPrice}`);
+  const where: any = { status: ItemStatus.ACTIVE };
+  if (category) where.category = category;
+  if (pet_category) where.pet_category = pet_category;
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    where.price = {};
+    if (minPrice !== undefined) where.price.gte = minPrice;
+    if (maxPrice !== undefined) where.price.lte = maxPrice;
+  }
   if (lat !== undefined && lng !== undefined && radiusKm !== undefined) {
-    clauses.push(
-      Prisma.sql` AND ST_DWithin(
-        geography(ST_MakePoint(longitude, latitude)),
-        geography(ST_MakePoint(${lng}, ${lat})),
-        ${radiusKm * 1000}
-      )`
-    );
+    where.AND = prisma.$queryRaw`ST_DWithin(
+      geography(ST_MakePoint(longitude, latitude)),
+      geography(ST_MakePoint(${lng}, ${lat})),
+      ${radiusKm * 1000}
+    )`;
   }
 
-  const orderSql =
-    order === "priceAsc" ? Prisma.sql`price ASC`
-    : order === "priceDesc" ? Prisma.sql`price DESC`
-    : Prisma.sql`created_at DESC`;
+  const orderBy =
+    order === "priceAsc"
+      ? { price: Prisma.SortOrder.asc }
+      : order === "priceDesc"
+      ? { price: Prisma.SortOrder.desc }
+      : { created_at: Prisma.SortOrder.desc };
 
-  const rawList = await prisma.$queryRaw<
-    Array<{
-      id: bigint;
-      user_id: string;
-      title: string;
-      description: string | null;
-      category: ItemCategory;
-      condition: ItemCondition;
-      price: number;
-      photo_urls: string[];
-      latitude: number;
-      longitude: number;
-      city: string | null;
-      region: string | null;
-      country: string | null;
-      status: ItemStatus;
-      created_at: Date;
-      updated_at: Date;
-    }>
-  >(
-    Prisma.sql`
-      SELECT
-        id,
-        user_id,
-        title,
-        description,
-        category,
-        condition,
-        price::FLOAT AS price,
-        photo_urls,
-        latitude,
-        longitude,
-        city,
-        region,
-        country,
-        status,
-        created_at,
-        updated_at
-      FROM "MarketplaceItem"
-      WHERE ${Prisma.join(clauses)}
-      ORDER BY ${orderSql}
-      LIMIT ${pageSize} OFFSET ${page * pageSize};
-    `
-  );
+  const items = await prisma.marketplaceItem.findMany({
+    where,
+    orderBy,
+    skip: page * pageSize,
+    take: pageSize,
+    include: {
+      seller: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar_url: true,
+        },
+      },
+    },
+  });
 
-  return rawList.map((raw) => ({
-    id: raw.id,
-    user_id: raw.user_id,
-    title: raw.title,
-    description: raw.description ?? undefined,
-    category: raw.category,
-    condition: raw.condition,
-    price: Number(raw.price),
-    photo_urls: raw.photo_urls,
-    latitude: raw.latitude,
-    longitude: raw.longitude,
-    city: raw.city ?? undefined,
-    region: raw.region ?? undefined,
-    country: raw.country ?? undefined,
-    status: raw.status,
-    created_at: new Date(raw.created_at),
-    updated_at: new Date(raw.updated_at),
-  }));
+  return items;
+};
+
+/**
+ * Listar ciudades existentes en el marketplace.
+ */
+export const listMarketplaceCities = async (): Promise<{ country: string; city: string }[]> => {
+  const raws = await prisma.marketplaceItem.findMany({
+    where: { status: ItemStatus.ACTIVE },
+    select: { city: true, country: true },
+    distinct: ["city", "country"],
+    orderBy: [
+      { city: "asc" },
+      { country: "asc" },
+    ],
+  });
+
+  return raws
+    .filter(r => r.country && r.city)
+    .map(r => ({ country: r.country!, city: r.city! }));
+};
+
+/**
+ * Listar los tipos de mascotas existentes en el marketplace.
+ */
+export const listMarketplacePetCategories = async (): Promise<string[]> => {
+  const raws = await prisma.marketplaceItem.findMany({
+    where: { status: ItemStatus.ACTIVE },
+    select: { pet_category: true },
+    distinct: ["pet_category"],
+    orderBy: { pet_category: "asc" },
+  });
+
+  return raws
+    .map((r) => r.pet_category)
+    .filter((c): c is PetCategory => Boolean(c));
+};
+
+/**
+ * Listar cantidad de articulos ha publicado un usuario, cuantos tiene 
+ * activos y cuantos vendidos.
+ */
+export async function countUserMarketplaceItems(userId: string) {
+  const [total, active, sold] = await Promise.all([
+    prisma.marketplaceItem.count({
+      where: { user_id: userId },
+    }),
+    prisma.marketplaceItem.count({
+      where: { user_id: userId, status: ItemStatus.ACTIVE },
+    }),
+    prisma.marketplaceItem.count({
+      where: { user_id: userId, status: ItemStatus.SOLD },
+    }),
+  ])
+
+  return { total, active, sold };
 };

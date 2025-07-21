@@ -1,167 +1,326 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useNewItemForm } from "@/hooks/useNewItemForm";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  TextField,
-  SelectField,
-  ImageUploadField,
-} from "@/components/marketplace/NewItemFormField";
-import { Controller } from "react-hook-form";
-import { ItemCategory, ItemCondition } from "@prisma/client";
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { DollarSign, MapPin, Plus } from "lucide-react";
+import { useNewItemForm } from "@/hooks/marketplace/useNewItemForm";
+import { useImageUpload } from "@/hooks/marketplace/useItemImageUpload";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker";
+import type { ItemCondition, ItemCategory, PetCategory } from "@prisma/client";
+import { CATEGORY_OPTIONS, CONDITION_OPTIONS, PET_OPTIONS } from "@/types/marketplace";
+import { CreateItemInput } from "@/server/validations/marketplace.validation";
 
-const CATEGORY_OPTIONS = [
-  { label: "Comida", value: ItemCategory.FOOD },
-  { label: "Juguetes", value: ItemCategory.TOYS },
-  { label: "Camas", value: ItemCategory.BEDDING },
-  { label: "Paseo", value: ItemCategory.WALK_WEAR },
-  { label: "Salud", value: ItemCategory.HEALTH_GROOM },
-  { label: "Viajes", value: ItemCategory.TRAVEL },
-  { label: "Otros", value: ItemCategory.OTHER },
-];
-const CONDITION_OPTIONS = [
-  { label: "Nuevo", value: ItemCondition.NEW },
-  { label: "Usado", value: ItemCondition.USED },
-];
+interface NewItemFormProps {
+  onSuccess?: () => void;
+  initialData?: CreateItemInput;
+}
 
-export default function NewItemForm() {
-  const { form, onSubmit, isSubmitting, imageUpload } = useNewItemForm();
+export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps) {
+  const {
+    form,
+    onSubmit,
+    isSubmitting,
+    imageUpload,
+    resetForm,
+  } = useNewItemForm(onSuccess);
+
+  const {
+    register,
+    setValue,
+    watch,
+    formState: { errors },
+  } = form;
+
   const [loc, setLoc] = useState<LatLng | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      resetForm(initialData);
+      setPreviewUrls(initialData.photo_urls);
+      setLoc({ lat: initialData.latitude, lng: initialData.longitude });
+      console.log("Initial data set:", initialData);
+    }
+  }, [initialData, resetForm]);
 
   useEffect(() => {
     if (loc) {
-      form.setValue("latitude", loc.lat);
-      form.setValue("longitude", loc.lng);
+      setValue("latitude", loc.lat, { shouldValidate: true });
+      setValue("longitude", loc.lng, { shouldValidate: true });
     }
-  }, [loc, form]);
+  }, [loc, setValue]);
+
+  const condition = watch("condition");
+  const category = watch("category");
+  const petCategory = watch("pet_category");
+
+  const handleFiles = (files: FileList) => {
+    imageUpload.handleFileChange({ target: { files } } as any);
+    const urls = Array.from(files).map((f) => URL.createObjectURL(f));
+    setPreviewUrls(urls);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
 
   return (
-    <>
-      <form onSubmit={onSubmit} className="space-y-4">
-        {/* Título */}
-        <Controller
-          name="title"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <TextField
-              label="Título"
-              required
-              placeholder="Título del artículo"
-              {...field}
-              error={fieldState.error?.message}
-            />
-          )}
-        />
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <h2 className="text-2xl font-bold">Vende tu producto</h2>
+        <p className="text-muted-foreground">
+          Completa la información de tu producto para publicarlo.
+        </p>
+      </CardHeader>
 
-        {/* Descripción */}
-        <Controller
-          name="description"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <TextField
-              label="Descripción"
-              placeholder="Detalles…"
-              {...field}
-              error={fieldState.error?.message}
+      <form onSubmit={onSubmit}>
+        <CardContent className="space-y-6">
+          {/* Título */}
+          <div className="space-y-1">
+            <Label htmlFor="title">Título *</Label>
+            <Input
+              id="title"
+              {...register("title")}
+              placeholder="Ej: Collar de cuero premium para perros"
             />
-          )}
-        />
+            {errors.title && (
+              <p className="text-sm text-destructive">
+                {errors.title.message}
+              </p>
+            )}
+          </div>
 
-        {/* Categoría */}
-        <Controller
-          name="category"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <SelectField
-              label="Categoría"
-              required
-              options={CATEGORY_OPTIONS}
-              value={field.value}
-              onChange={field.onChange}
-              error={fieldState.error?.message}
+          {/* Descripción */}
+          <div className="space-y-1">
+            <Label htmlFor="description">Descripción</Label>
+            <Textarea
+              id="description"
+              {...register("description")}
+              placeholder="Describe tu producto…"
+              rows={4}
             />
-          )}
-        />
+            {errors.description && (
+              <p className="text-sm text-destructive">
+                {errors.description.message}
+              </p>
+            )}
+          </div>
 
-        {/* Condición */}
-        <Controller
-          name="condition"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <SelectField
-              label="Condición"
-              required
-              options={CONDITION_OPTIONS}
-              value={field.value}
-              onChange={field.onChange}
-              error={fieldState.error?.message}
+          {/* Tipo de mascota y Categoría */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Tipo de mascota *</Label>
+              <Select
+                defaultValue={initialData?.pet_category}
+                onValueChange={(v: PetCategory) => setValue("pet_category", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PET_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.pet_category && (
+                <p className="text-sm text-destructive">{errors.pet_category.message}</p>
+              )}
+            </div>
+            <div>
+              <Label>Categoría *</Label>
+              <Select
+                defaultValue={initialData?.category}
+                onValueChange={(v: ItemCategory) => setValue("category", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.category && (
+                <p className="text-sm text-destructive">
+                  {errors.category.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Precio y Condición */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="price">Precio *</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="price"
+                  type="number"
+                  {...register("price", { valueAsNumber: true })}
+                  className="pl-10"
+                />
+              </div>
+              {errors.price && (
+                <p className="text-sm text-destructive">
+                  {errors.price.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label>Condición *</Label>
+              <Select
+                defaultValue={initialData?.condition}
+                onValueChange={(v: ItemCondition) => setValue("condition", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona condición" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONDITION_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.condition && (
+                <p className="text-sm text-destructive">
+                  {errors.condition.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Ubicación */}
+          <div className="space-y-1 flex flex-col">
+            <Label>Ubicación *</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPickerOpen(true)}
+            >
+              <MapPin className="mr-2" />
+              Marcar en el mapa
+            </Button>
+            {loc && (
+              <p className="text-sm text-muted-foreground">
+                Lat: {loc.lat.toFixed(4)}, Lng: {loc.lng.toFixed(4)}
+              </p>
+            )}
+            {(errors.latitude || errors.longitude) && (
+              <p className="text-sm text-destructive">
+                Por favor marca la ubicación en el mapa.
+              </p>
+            )}
+          </div>
+
+          {/* Imágenes */}
+          <div className="space-y-1">
+            <Label>Fotos *</Label>
+            <div 
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <Plus className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground mb-2">
+                Arrastra tus fotos aquí o haz clic para seleccionar
+              </p>
+              <Button
+                variant="outline"
+                onClick={imageUpload.handleFileChange as any}
+              >
+                Seleccionar fotos
+              </Button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {previewUrls.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    className="h-24 w-24 object-cover rounded"
+                  />
+                ))}
+              </div>
+            </div>
+            {errors.photo_urls && (
+              <p className="text-sm text-destructive">
+                {errors.photo_urls.message as string}
+              </p>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => e.target.files && handleFiles(e.target.files)}
             />
-          )}
-        />
+          </div>
+        </CardContent>
 
-        {/* Precio */}
-        <Controller
-          name="price"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <TextField
-              label="Precio"
-              type="number"
-              required
-              {...field}
-              error={fieldState.error?.message}
-            />
-          )}
-        />
+        <Separator />
 
-        {/* Ubicación */}
-        <div className="space-y-1">
-          <label className="block text-sm font-medium">Ubicación</label>
-          <Button size="sm" onClick={() => setPickerOpen(true)}>
-            Marcar en el mapa
+        <CardFooter>
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={isSubmitting || imageUpload.isUploading}
+          >
+            {imageUpload.isUploading
+              ? "Subiendo imagen..."
+              : isSubmitting
+              ? "Publicando..."
+              : "Publicar producto"}
           </Button>
-          {loc && (
-            <p className="mt-1 text-sm">
-              Lat: {loc.lat.toFixed(4)}, Lng: {loc.lng.toFixed(4)}
-            </p>
-          )}
-          {form.formState.errors.latitude && (
-            <p className="text-sm text-destructive">
-              {form.formState.errors.latitude.message}
-            </p>
-          )}
-        </div>
-
-        {/* Imágenes */}
-        <ImageUploadField
-          label="Fotos"
-          imagePreview={imageUpload.imagePreview}
-          onFileChange={imageUpload.handleFileChange}
-          error={form.formState.errors.photo_urls?.message}
-        />
-
-        <Button
-          type="submit"
-          className="w-full mt-6"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Publicando…" : "Publicar artículo"}
-        </Button>
+        </CardFooter>
       </form>
 
-      {/* Picker de mapa */}
+      {/* LocationPicker */}
       <LocationPicker
         open={pickerOpen}
-        initial={loc ?? { lat: 0, lng: 0 }}
+        initial={loc ?? { lat: -36.82699, lng: -73.04977 }}
         onSelect={(coords) => {
           setLoc(coords);
           setPickerOpen(false);
         }}
         onClose={() => setPickerOpen(false)}
       />
-    </>
+    </Card>
   );
 }

@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import {
   createMarketplaceItem as createItemService,
   listMarketplaceItems as listItemsService,
@@ -5,6 +6,10 @@ import {
   listUserSoldItems as listUserSoldItemsService,
   softDeleteMarketplaceItem as softDeleteService,
   markItemAsSold as markAsSoldService,
+  listMarketplaceCities as listCitiesService,
+  listMarketplacePetCategories as listPetCategoriesService,
+  countUserMarketplaceItems as countUserItemsService,
+  getMarketplaceItemById as getItemByIdService,
 } from "@/server/services/marketplace.service";
 import {
   createItemSchema,
@@ -12,7 +17,7 @@ import {
   deleteItemSchema,
   markSoldSchema,
 } from "@/server/validations/marketplace.validation";
-import type { MarketplaceItemInput, ListFilters, MarketplaceItem } from "@/types/marketplace";
+import type { MarketplaceItemInput, ListFilters } from "@/types/marketplace";
 
 /**
  * Crear un anuncio.
@@ -38,6 +43,7 @@ export const createMarketplaceItem = async (
       title: item.title,
       description: item.description,
       category: item.category,
+      pet_category: item.pet_category,
       condition: item.condition,
       price: item.price.toString(),
       photo_urls: item.photo_urls,
@@ -65,6 +71,40 @@ export const createMarketplaceItem = async (
 };
 
 /**
+ * Obtener un anuncio por ID.
+ */
+export const fetchMarketplaceItemById = async (params: { id?: string }) => {
+  const { id } = params;
+  if (!id) {
+    return NextResponse.json({ error: "Falta el parámetro id" }, { status: 400 });
+  }
+
+  try {
+    const item = await getItemByIdService(BigInt(id));
+    return NextResponse.json({
+      id: item.id.toString(),
+      title: item.title,
+      description: item.description,
+      price: item.price.toString(),
+      category: item.category,
+      pet_category: item.pet_category,
+      condition: item.condition,
+      photo_urls: item.photo_urls,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      city: item.city,
+      region: item.region,
+      country: item.country,
+      status: item.status,
+      created_at: item.created_at.toISOString(),
+      updated_at: item.updated_at.toISOString(),
+    }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: err.message === "Anuncio no encontrado." ? 404 : 500 });
+  }
+};
+
+/**
  * Listar anuncios públicos.
  */
 export const fetchPublicMarketplaceItems = async (
@@ -80,20 +120,26 @@ export const fetchPublicMarketplaceItems = async (
 
   const filters = parseResult.data as ListFilters;
   const list = await listItemsService(filters);
-  const output = list.map((item: MarketplaceItem) => ({
+  const output = list.map(item => ({
     id: item.id.toString(),
     user_id: item.user_id,
+    seller: {
+      name: item.seller.name,
+      email: item.seller.email,
+      avatar_url: item.seller.avatar_url,
+    },
     title: item.title,
-    description: item.description,
+    description: item.description ?? undefined,
     category: item.category,
+    pet_category: item.pet_category,
     condition: item.condition,
     price: item.price.toString(),
     photo_urls: item.photo_urls,
     latitude: item.latitude,
     longitude: item.longitude,
-    city: item.city,
-    region: item.region,
-    country: item.country,
+    city: item.city ?? undefined,
+    region: item.region ?? undefined,
+    country: item.country ?? undefined,
     status: item.status,
     created_at: item.created_at.toISOString(),
     updated_at: item.updated_at.toISOString(),
@@ -116,6 +162,14 @@ export const fetchUserMarketplaceItems = async (
     id: item.id.toString(),
     title: item.title,
     status: item.status,
+    price: item.price.toString(),
+    pet_category: item.pet_category,
+    category: item.category,
+    condition: item.condition,
+    photo_urls: item.photo_urls,
+    city: item.city ?? undefined,
+    region: item.region ?? undefined,
+    country: item.country ?? undefined,
     created_at: item.created_at.toISOString(),
   }));
 
@@ -135,7 +189,19 @@ export const fetchUserSoldMarketplaceItems = async (
   const output = list.map(item => ({
     id: item.id.toString(),
     title: item.title,
-    sold_at: item.updated_at.toISOString(),
+    status: item.status,
+    price: item.price.toString(),
+    photo_urls: item.photo_urls,
+    category: item.category,
+    condition: item.condition,
+    pet_category: item.pet_category,
+    city: item.city ?? undefined,
+    region: item.region ?? undefined,
+    country: item.country ?? undefined,
+    sold_price: item.sales?.price.toString(),
+    sold_at: item.sales?.sold_at.toISOString(),
+    notes: item.sales?.notes ?? undefined,
+    created_at: item.created_at.toISOString(),
   }));
 
   return new Response(JSON.stringify(output), {
@@ -177,7 +243,7 @@ export const deleteMarketplaceItem = async (
  */
 export const markMarketplaceItemAsSold = async (
   userId: string,
-  params: { id: string }
+  params: { id: string; sold_price: string; sold_at: string; notes?: string }
 ) => {
   const parseResult = markSoldSchema.safeParse(params);
   if (!parseResult.success) {
@@ -187,18 +253,76 @@ export const markMarketplaceItemAsSold = async (
     });
   }
 
-  const itemId = BigInt(params.id);
+  const { id, sold_price, sold_at, notes } = parseResult.data;
+
   try {
-    await markAsSoldService(itemId, userId);
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const sale = await markAsSoldService(
+      BigInt(id),
+      userId,
+      sold_price,
+      new Date(sold_at),
+      notes,
+    );
+    return NextResponse.json({
+      success: true,
+      sale: {
+        price: sale.price.toString(),
+        sold_at: sale.sold_at.toISOString(),
+        notes: sale.notes,
+      },
     });
   } catch (err: any) {
-    const msg = err.message || "No autorizado.";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 403,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ error: err.message }, { status: 403 });
   }
 };
+
+/**
+ * Listar ciudades existentes en el marketplace.
+ */
+export const fetchMarketplaceCities = async () => {
+  try {
+    const pairs = await listCitiesService();
+    const locations: Record<string, string[]> = {};
+    for (const { country, city } of pairs) {
+      if (!locations[country]) locations[country] = [];
+      locations[country]!.push(city);
+    }
+    return NextResponse.json({ locations }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
+  }
+};
+
+/**
+ * Listar tipos de mascotas disponibles en el marketplace.
+ */
+export const fetchMarketplacePetCategories = async () => {
+  try {
+    const categories = await listPetCategoriesService();
+    return NextResponse.json({ categories }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
+  }
+};
+
+/**
+ * Listar cantidad de articulos ha publicado un usuario, cuantos tiene 
+ * activos y cuantos vendidos.
+ */
+export const fetchUserMarketplaceStats = async (userId: string) => {
+  try {
+    const stats = await countUserItemsService(userId);
+    return NextResponse.json(stats, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
+  }
+}

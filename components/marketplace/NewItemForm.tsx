@@ -262,8 +262,12 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
                 Arrastra tus fotos aquí o haz clic para seleccionar
               </p>
               <Button
+                type="button"
                 variant="outline"
-                onClick={imageUpload.handleFileChange as any}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
               >
                 Seleccionar fotos
               </Button>

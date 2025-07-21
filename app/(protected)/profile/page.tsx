@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
-import { Upload, Save, Trash2, ArrowLeft, AlertCircle, RefreshCw } from "lucide-react"
+import { Upload, Save, Trash2, ArrowLeft, AlertCircle, RefreshCw, User, Award, Camera } from "lucide-react"
 import { useProfileImageUpload } from "@/hooks/useProfileImageUpload"
 import { toast } from "sonner"
 import { useUserProfile } from "@/stores/userProfile"
@@ -21,6 +20,7 @@ export default function ProfileConfigPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [selectedBadgeIds, setSelectedBadgeIds] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState("profile")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -36,6 +36,7 @@ export default function ProfileConfigPage() {
   useEffect(() => {
     fetchProfile()
   }, [])
+
   useEffect(() => {
     if (user) {
       setName(user.name || "")
@@ -104,7 +105,7 @@ export default function ProfileConfigPage() {
           url: user.avatar_url,
         }),
       })
-
+      
       if (!response.ok) {
         throw new Error("Error al eliminar la imagen del storage")
       }
@@ -122,7 +123,7 @@ export default function ProfileConfigPage() {
 
   const handleBadgeToggle = async (badgeId: string) => {
     const newSelectedBadgeIds = selectedBadgeIds.includes(badgeId)
-      ? selectedBadgeIds.filter(id => id !== badgeId)
+      ? selectedBadgeIds.filter((id) => id !== badgeId)
       : selectedBadgeIds.length < 3
         ? [...selectedBadgeIds, badgeId]
         : (() => {
@@ -132,7 +133,6 @@ export default function ProfileConfigPage() {
 
     if (newSelectedBadgeIds !== selectedBadgeIds) {
       setSelectedBadgeIds(newSelectedBadgeIds)
-
       try {
         const success = await updateProfile({
           selectedBadgeIds: newSelectedBadgeIds,
@@ -183,7 +183,7 @@ export default function ProfileConfigPage() {
         avatar_url: avatarUrl,
         selectedBadgeIds: selectedBadgeIds,
       })
-
+      
       if (success) {
         setSelectedBadges(selectedBadgeIds)
         toast.success("Perfil actualizado correctamente")
@@ -201,10 +201,10 @@ export default function ProfileConfigPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="w-5 h-5 animate-spin" />
-          <span className="text-lg">Cargando perfil...</span>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex items-center gap-3">
+          <RefreshCw className="w-6 h-6 animate-spin text-primary" />
+          <span className="text-lg font-medium">Cargando perfil...</span>
         </div>
       </div>
     )
@@ -212,12 +212,12 @@ export default function ProfileConfigPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <div className="text-lg text-red-600 mb-2">Error al cargar el perfil</div>
-          <div className="text-sm text-gray-600 mb-4 p-3 bg-gray-100 rounded">{error}</div>
-          <div className="flex gap-2 justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="p-8 max-w-md w-full text-center">
+          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-destructive mb-3">Error al cargar el perfil</h2>
+          <p className="text-sm text-muted-foreground mb-6 p-3 bg-muted rounded-md">{error}</p>
+          <div className="flex gap-3 justify-center">
             <Button onClick={fetchProfile} variant="outline">
               <RefreshCw className="w-4 h-4 mr-2" />
               Reintentar
@@ -226,212 +226,248 @@ export default function ProfileConfigPage() {
               Volver al inicio
             </Button>
           </div>
-        </div>
+        </Card>
       </div>
     )
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg text-red-600 mb-4">No se pudo cargar el perfil</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="p-8 text-center">
+          <h2 className="text-xl font-semibold text-destructive mb-4">No se pudo cargar el perfil</h2>
           <Button onClick={fetchProfile}>Reintentar</Button>
-        </div>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div>
-      <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold">Configuración del Perfil</h1>
-              <div className="flex items-center gap-3 ml-8">
-                <Button variant="outline" size="sm" onClick={fetchProfile}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Recargar
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => router.back()}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver
-                </Button>
-              </div>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex items-center gap-4 mb-8">
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          <div className="lg:w-64 flex-shrink-0">
+            <div className="lg:sticky lg:top-8">
+              <nav className="space-y-2">
+                <button
+                  onClick={() => setActiveTab("profile")}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                    activeTab === "profile"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <User className="w-5 h-5" />
+                  <span className="font-medium">Editar perfil</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("badges")}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                    activeTab === "badges"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <Award className="w-5 h-5" />
+                  <span className="font-medium">Insignias</span>
+                </button>
+              </nav>
             </div>
+          </div>
 
-            <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="profile">Perfil</TabsTrigger>
-                <TabsTrigger value="badges">Insignias</TabsTrigger>
-              </TabsList>
-
-              <div className="mt-6 min-h-[480px]">
-                <TabsContent value="profile" className="space-y-6 m-0 h-full">
-                  <div className="space-y-4">
-                    <Label className="text-base font-semibold">Foto de Perfil</Label>
-                    <div className="w-full flex justify-center">
-                      <div className="flex items-center gap-4">
-                        <div className="w-32 h-32 bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
-                          <img
-                            src={imagePreview || user.avatar_url || "/placeholder.svg"}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => fileInputRef.current?.click()}
-                              className="flex items-center gap-2"
-                              disabled={isUploadingAvatar}
-                            >
-                              <Upload className="w-4 h-4" />
-                              {isUploadingAvatar ? "Subiendo..." : "Subir Imagen"}
-                            </Button>
-                            {user.avatar_url && !user.avatar_url.includes("defaultpfp.png") && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={handleRemoveAvatar}
-                                disabled={isDeleting}
-                                className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                {isDeleting ? "Eliminando..." : "Eliminar"}
-                              </Button>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">JPG, PNG o GIF. Máximo 2MB.</p>
-                        </div>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          className="hidden"
+          {/* Contenido Principal */}
+          <div className="flex-1 max-w-2xl">
+            {activeTab === "profile" && (
+              <div className="space-y-8">
+                {/* Avatar */}
+                <div className="flex flex-col items-center text-center space-y-6">
+                  <div className="relative group">
+                    <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-2 border-primary/20 shadow-lg">
+                      <div className="w-full h-full rounded-full overflow-hidden bg-background">
+                        <img
+                          src={imagePreview || user.avatar_url || "/placeholder.svg"}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
                         />
                       </div>
                     </div>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingAvatar}
+                      className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                    >
+                      <Camera className="w-6 h-6" />
+                    </button>
                   </div>
 
+                  {user.avatar_url && !user.avatar_url.includes("defaultpfp.png") && (
+                    <Button
+                      variant="outline"
+                      onClick={handleRemoveAvatar}
+                      disabled={isDeleting}
+                      className="gap-2 bg-transparent"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {isDeleting ? "Eliminando..." : "Eliminar foto"}
+                    </Button>
+                  )}
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </div>
+
+                {/* Formulario */}
+                <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nombre a Mostrar</Label>
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      Nombre
+                    </Label>
                     <Input
                       id="name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Ingresa tu nombre o tu nickname a mostrar en la aplicación"
+                      placeholder="Tu nombre a mostrar"
                       maxLength={50}
+                      className="h-12 text-base"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" value={user.email} disabled className="bg-muted" />
+                    <Label htmlFor="email" className="text-sm font-medium">
+                      Email
+                    </Label>
+                    <Input id="email" value={user.email} disabled className="bg-muted h-12 text-base" />
                   </div>
+                </div>
 
-                  <Button onClick={handleSave} disabled={isLoading || isUploadingAvatar} className="w-full">
-                    <Save className="w-4 h-4 mr-2" />
-                    {isLoading ? "Guardando..." : "Guardar Cambios"}
+                {/* Acciones */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-6 justify-center items-center">
+                  <Button
+                  onClick={handleSave}
+                  disabled={isLoading || isUploadingAvatar}
+                  className="px-8 h-12 text-base font-medium"
+                  >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isLoading ? "Actualizando..." : "Actualizar Perfil"}
                   </Button>
-                </TabsContent>
-
-                <TabsContent value="badges" className="space-y-4">
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Selecciona tus insignias</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Puedes seleccionar hasta 3 insignias que se mostrarán en tu perfil público.
-                        Seleccionadas: {selectedBadgeIds.length}/3
-                      </p>
-
-                      {/* Insignias desbloqueadas */}
-                      <div className="mb-8">
-                        <h4 className="text-md font-semibold mb-3 text-secondary">🏆 Insignias Desbloqueadas</h4>
-                        {user.unlockedBadges?.length === 0 || !user.unlockedBadges ? (
-                          <p className="text-muted-foreground">No tienes insignias desbloqueadas aún.</p>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-4">
-                            {user.unlockedBadges.map((badge) => {
-                              const isSelected = selectedBadgeIds.includes(badge.id)
-                              return (
-                                <div
-                                  key={badge.id}
-                                  className={`
-                                    relative cursor-pointer transition-all duration-200
-                                    ${isSelected ? "scale-105" : "hover:scale-105"}
-                                  `}
-                                  onClick={() => handleBadgeToggle(badge.id)}
-                                >
-                                  <div className="text-center p-3 border rounded-lg bg-transparent hover:bg-green-50/20">
-                                    <img
-                                      src={badge.icon}
-                                      alt={badge.label}
-                                      title={badge.description || badge.label}
-                                      className="w-12 h-12 mx-auto"
-                                    />
-                                    <div className="text-sm mt-1 font-medium">{badge.label}</div>
-                                    {badge.description && (
-                                      <div className="text-xs text-muted-foreground mt-1">{badge.description}</div>
-                                    )}
-                                  </div>
-                                  {isSelected && (
-                                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                                      <span className="text-white text-xs font-bold">✓</span>
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Insignias por desbloquear */}
-                      <div>
-                        <h4 className="text-md font-semibold mb-3 text-muted-foreground">🔒 Insignias por Desbloquear</h4>
-                        {user.lockedBadges?.length === 0 || !user.lockedBadges ? (
-                          <p className="text-muted-foreground">¡Felicidades! Has desbloqueado todas las insignias disponibles.</p>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-4">
-                            {user.lockedBadges.map((badge) => (
-                              <div
-                                key={badge.id}
-                                className="text-center p-3 border rounded-lg bg-gray-50 opacity-75"
-                              >
-                                <div className="relative">
-                                  <img
-                                    src={badge.icon}
-                                    alt={badge.label}
-                                    title={badge.description || badge.label}
-                                    className="w-12 h-12 mx-auto grayscale"
-                                  />
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
-                                      <span className="text-white text-xs">🔒</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="text-sm mt-1 text-gray-500">{badge.label}</div>
-                                {badge.description && (
-                                  <div className="text-xs text-muted-foreground mt-1">{badge.description}</div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-
+                </div>
               </div>
-            </Tabs>
-          </Card>
+            )}
+
+            {activeTab === "badges" && (
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Selecciona tus insignias</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Puedes seleccionar hasta 3 insignias que se mostrarán en tu perfil público. Seleccionadas:{" "}
+                    <span className="font-medium">{selectedBadgeIds.length}/3</span>
+                  </p>
+                </div>
+
+                {/* Insignias Desbloqueadas */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    🏆 <span>Insignias Desbloqueadas</span>
+                  </h3>
+                  {user.unlockedBadges?.length === 0 || !user.unlockedBadges ? (
+                    <div className="text-center py-12 bg-muted/20 rounded-xl">
+                      <p className="text-muted-foreground">No tienes insignias desbloqueadas aún.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {user.unlockedBadges.map((badge: any) => {
+                        const isSelected = selectedBadgeIds.includes(badge.id)
+                        return (
+                          <div
+                            key={badge.id}
+                            className={`
+                              relative cursor-pointer transition-all duration-200 group
+                              ${isSelected ? "scale-105" : "hover:scale-105"}
+                            `}
+                            onClick={() => handleBadgeToggle(badge.id)}
+                          >
+                            <div
+                              className={`
+                              text-center p-4 border-2 rounded-xl transition-all
+                              ${
+                                isSelected
+                                  ? "border-primary bg-primary/5 shadow-lg"
+                                  : "border-border bg-background hover:border-primary/50 hover:bg-muted/30"
+                              }
+                            `}
+                            >
+                              <img
+                                src={badge.icon || "/placeholder.svg"}
+                                alt={badge.label}
+                                title={badge.description || badge.label}
+                                className="w-12 h-12 mx-auto mb-2"
+                              />
+                              <div className="text-sm font-medium mb-1">{badge.label}</div>
+                              {badge.description && (
+                                <div className="text-xs text-muted-foreground">{badge.description}</div>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                                <span className="text-primary-foreground text-xs font-bold">✓</span>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Insignias por Desbloquear */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    🔒 <span className="text-muted-foreground">Insignias por Desbloquear</span>
+                  </h3>
+                  {user.lockedBadges?.length === 0 || !user.lockedBadges ? (
+                    <div className="text-center py-12 bg-muted/20 rounded-xl">
+                      <p className="text-muted-foreground">
+                        ¡Felicidades! Has desbloqueado todas las insignias disponibles.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {user.lockedBadges.map((badge: any) => (
+                        <div key={badge.id} className="text-center p-4 border-2 border-muted rounded-xl bg-muted/20">
+                          <div className="relative mb-2">
+                            <img
+                              src={badge.icon || "/placeholder.svg"}
+                              alt={badge.label}
+                              title={badge.description || badge.label}
+                              className="w-12 h-12 mx-auto grayscale opacity-50"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-6 h-6 bg-muted-foreground rounded-full flex items-center justify-center">
+                                <span className="text-background text-xs">🔒</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-sm text-muted-foreground mb-1">{badge.label}</div>
+                          {badge.description && (
+                            <div className="text-xs text-muted-foreground/70">{badge.description}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

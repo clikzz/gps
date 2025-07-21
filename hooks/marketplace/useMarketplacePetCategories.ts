@@ -5,8 +5,8 @@ import type { PetCategory } from "@prisma/client";
 
 export function useMarketplacePetCategories() {
   const [categories, setCategories] = useState<PetCategory[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();

@@ -34,7 +34,7 @@ export function UserArticleCard({
   const conditionLabel = getItemConditionLabel(article.condition);
 
   return (
-    <Card>
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
         <Image
           src={article.photo_urls[0] || "/placeholder.svg"}

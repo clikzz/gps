@@ -21,6 +21,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { DollarSign, MapPin, Plus } from "lucide-react";
 import { useNewItemForm } from "@/hooks/marketplace/useNewItemForm";
+import { useImageUpload } from "@/hooks/marketplace/useItemImageUpload";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker";
 import type { ItemCondition, ItemCategory, PetCategory } from "@prisma/client";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS, PET_OPTIONS } from "@/types/marketplace";
@@ -42,7 +43,6 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
 
   const {
     register,
-    handleSubmit,
     setValue,
     watch,
     formState: { errors },
@@ -51,7 +51,6 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
   const [loc, setLoc] = useState<LatLng | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -59,6 +58,7 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
       resetForm(initialData);
       setPreviewUrls(initialData.photo_urls);
       setLoc({ lat: initialData.latitude, lng: initialData.longitude });
+      console.log("Initial data set:", initialData);
     }
   }, [initialData, resetForm]);
 
@@ -137,7 +137,7 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
             <div>
               <Label>Tipo de mascota *</Label>
               <Select
-                value={petCategory}
+                defaultValue={initialData?.pet_category}
                 onValueChange={(v: PetCategory) => setValue("pet_category", v)}
               >
                 <SelectTrigger>
@@ -158,7 +158,7 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
             <div>
               <Label>Categoría *</Label>
               <Select
-                value={category}
+                defaultValue={initialData?.category}
                 onValueChange={(v: ItemCategory) => setValue("category", v)}
               >
                 <SelectTrigger>
@@ -202,7 +202,7 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
             <div>
               <Label>Condición *</Label>
               <Select
-                value={condition}
+                defaultValue={initialData?.condition}
                 onValueChange={(v: ItemCondition) => setValue("condition", v)}
               >
                 <SelectTrigger>
@@ -314,7 +314,7 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
       {/* LocationPicker */}
       <LocationPicker
         open={pickerOpen}
-        initial={loc ?? { lat: 0, lng: 0 }}
+        initial={loc ?? { lat: -36.82699, lng: -73.04977 }}
         onSelect={(coords) => {
           setLoc(coords);
           setPickerOpen(false);

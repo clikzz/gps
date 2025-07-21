@@ -7,6 +7,8 @@ import { ShoppingBag, Package, Filter, Heart, Store, DollarSign } from "lucide-r
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMarketplace } from "@/hooks/marketplace/useMarketplace";
 import { useUserArticles } from "@/hooks/marketplace/useUserArticles";
+import { useRepostItem } from "@/hooks/marketplace/useRepostItem";
+import { useNewItemForm } from "@/hooks/marketplace/useNewItemForm";
 import { FilterSidebar } from "@/components/marketplace/FilterSidebar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import NewItemForm from "@/components/marketplace/NewItemForm";
@@ -18,13 +20,19 @@ import { Card, CardHeader } from "@/components/ui/card";
 export default function MarketplacePage() {
   const [tab, setTab] = useState("para-ti");
   const [toSell, setToSell] = useState<UserArticle | null>(null);
-  const [repostData, setRepostData] = useState<UserArticle | null>(null);
+  const [repostId, setRepostId] = useState<number | null>(null);
+  const { initialData, loading: loadingRepost } = useRepostItem(repostId);
+  const { articles: userArticles, loading: userLoading, error: userError, markAsSold } = useUserArticles();
   const {
     items, loading, error,
     filters, setters,
     toggleFav, clearFilters,
   } = useMarketplace();
-  const { articles: userArticles, loading: userLoading, error: userError, markAsSold } = useUserArticles();
+  const { form, onSubmit, isSubmitting, imageUpload } = useNewItemForm(
+    () => setTab("mis-articulos"), 
+    initialData,
+    repostId
+  );
 
   const handleOpenMark = (id: number) => {
     const art = userArticles.find((a) => a.id === id);
@@ -43,11 +51,8 @@ export default function MarketplacePage() {
   };
 
   const handleRepost = (id: number) => {
-    const art = userArticles.find(a => a.id === id);
-    if (art) {
-      setRepostData(art);
-      setTab("vender");
-    }
+    setRepostId(id);
+    setTab("vender");
   };
 
   return (
@@ -136,10 +141,14 @@ export default function MarketplacePage() {
 
           {/* — Vender — */}
           <TabsContent value="vender" className="mt-4">
-            <NewItemForm
-              onSuccess={() => setTab("mis-articulos")}
-              initialData={repostData ?? undefined}
-            />
+            {loadingRepost ? (
+              <p>Cargando datos…</p>
+            ) : (
+              <NewItemForm
+                onSuccess={() => setTab("mis-articulos")}
+                initialData={initialData}
+              />
+            )}
           </TabsContent>
 
           {/* “Mis artículos” */}

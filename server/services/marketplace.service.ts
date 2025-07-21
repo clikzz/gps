@@ -203,17 +203,20 @@ export const listMarketplaceItems = async (
 /**
  * Listar ciudades existentes en el marketplace.
  */
-export const listMarketplaceCities = async (): Promise<string[]> => {
+export const listMarketplaceCities = async (): Promise<{ country: string; city: string }[]> => {
   const raws = await prisma.marketplaceItem.findMany({
     where: { status: ItemStatus.ACTIVE },
-    select: { city: true },
-    distinct: ["city"],
-    orderBy: { city: "asc" },
+    select: { city: true, country: true },
+    distinct: ["city", "country"],
+    orderBy: [
+      { city: "asc" },
+      { country: "asc" },
+    ],
   });
 
   return raws
-    .map((r) => r.city)
-    .filter((c): c is string => Boolean(c));
+    .filter(r => r.country && r.city)
+    .map(r => ({ country: r.country!, city: r.city! }));
 };
 
 /**

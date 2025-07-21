@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 export function useMarketplaceCities() {
-  const [cities, setCities] = useState<string[]>([]);
+  const [locations, setLocations] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,15 +13,15 @@ export function useMarketplaceCities() {
         if (!res.ok) throw new Error(await res.text());
         return res.json();
       })
-      .then((data: { cities: string[] } | string[]) => {
-        setCities(Array.isArray(data) ? data : data.cities);
+      .then((data: { locations: Record<string, string[]> }) => {
+        setLocations(data.locations);
       })
       .catch((err) => {
         console.error(err);
-        setError("No se pudieron cargar las ciudades");
+        setError("No se pudieron cargar las ubicaciones.");
       })
       .finally(() => setLoading(false));
   }, []);
 
-  return { cities, loading, error };
+  return { locations, loading, error };
 }

@@ -281,8 +281,13 @@ export const markMarketplaceItemAsSold = async (
  */
 export const fetchMarketplaceCities = async () => {
   try {
-    const cities = await listCitiesService();
-    return NextResponse.json({ cities }, { status: 200 });
+    const pairs = await listCitiesService();
+    const locations: Record<string, string[]> = {};
+    for (const { country, city } of pairs) {
+      if (!locations[country]) locations[country] = [];
+      locations[country]!.push(city);
+    }
+    return NextResponse.json({ locations }, { status: 200 });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || "Error interno" },

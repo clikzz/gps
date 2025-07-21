@@ -4,7 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input }  from "@/components/ui/input";
 import { Label }  from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectGroup,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PET_OPTIONS, CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/types/marketplace";
 import { PetCategory } from "@prisma/client";
@@ -36,9 +45,11 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
   const { search, city, petCats, artCats, priceRange, condition } = filters;
   const { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition } = setters;
 
-  const { cities, loading: citiesLoading, error: citiesError } = useMarketplaceCities();
+  const { locations, loading: locationsLoading, error: locationsError } = useMarketplaceCities();
   const { categories, loading: petsLoading, error: petsError } = useMarketplacePetCategories();
   const petCatsAvailable = Array.isArray(categories) ? categories : [];
+
+  const countries = Object.keys(locations);
 
   const onConditionChange = (value: string, checked: boolean) => {
     if (checked) {
@@ -109,19 +120,29 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
       <div className="space-y-2">
         <Label>Ciudad</Label>
 
-        {citiesLoading ? (
+        {locationsLoading ? (
           <div className="flex items-center justify-center h-10">
             <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
           </div>
         ) : (
-          <Select value={city} onValueChange={setCity}>
+          <Select value={filters.city} onValueChange={setters.setCity}>
             <SelectTrigger>
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
-              {cities.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
+              <SelectSeparator className="my-1" />
+
+              {countries.map((country, idx) => (
+                <SelectGroup key={country}>
+                  {idx > 0 && <SelectSeparator className="my-2" />}
+                  <SelectLabel className="font-medium">{country}</SelectLabel>
+                  {locations[country].map(city => (
+                    <SelectItem key={city} value={city} className="pl-6">
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>

@@ -22,17 +22,12 @@ export default function MarketplacePage() {
   const [toSell, setToSell] = useState<UserArticle | null>(null);
   const [repostId, setRepostId] = useState<number | null>(null);
   const { initialData, loading: loadingRepost } = useRepostItem(repostId);
-  const { articles: userArticles, loading: userLoading, error: userError, markAsSold } = useUserArticles();
+  const { articles: userArticles, loading: userLoading, error: userError, markAsSold, fetchArticles } = useUserArticles();
   const {
     items, loading, error,
     filters, setters,
     toggleFav, clearFilters,
   } = useMarketplace();
-  const { form, onSubmit, isSubmitting, imageUpload } = useNewItemForm(
-    () => setTab("mis-articulos"), 
-    initialData,
-    repostId
-  );
 
   const handleOpenMark = (id: number) => {
     const art = userArticles.find((a) => a.id === id);
@@ -56,7 +51,7 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen container mx-auto">
+    <div className="min-h-screen container mx-auto pb-20">
       <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 lg:max-w-7xl md:max-w-5xl px-6">
         <header>
           <div className="container mx-auto px-4">
@@ -145,7 +140,10 @@ export default function MarketplacePage() {
               <p>Cargando datos…</p>
             ) : (
               <NewItemForm
-                onSuccess={() => setTab("mis-articulos")}
+                onSuccess={() => {
+                  fetchArticles();
+                  setTab("mis-articulos");
+                }}
                 initialData={initialData}
               />
             )}

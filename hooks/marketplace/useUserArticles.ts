@@ -8,18 +8,27 @@ export function useUserArticles() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchArticles = useCallback(async () => {
     setLoading(true);
-    Promise.all([
-      fetch("/api/marketplace?mode=user").then(r => r.json() as Promise<UserArticle[]>),
-      fetch("/api/marketplace?mode=sold").then(r => r.json() as Promise<UserArticle[]>),
-    ]).then(([act, sold]) => {
+    try {
+      const [actRes, soldRes] = await Promise.all([
+        fetch("/api/marketplace?mode=user"),
+        fetch("/api/marketplace?mode=sold"),
+      ]);
+      const act  = await actRes.json() as UserArticle[];
+      const sold = await soldRes.json() as UserArticle[];
       setArticles([...act, ...sold]);
+      setError(null);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
       setLoading(false);
-    })
-    .catch(e => setError((e as Error).message))
-    .finally(() => setLoading(false));
+    }
   }, []);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
 
   const markAsSold = useCallback(
     async (id: number, sold_price: number, sold_at: string, notes?: string) => {
@@ -42,5 +51,5 @@ export function useUserArticles() {
     []
   );
 
-  return { articles, loading, error, markAsSold };
+  return { articles, loading, error, markAsSold, fetchArticles };
 }

@@ -8,7 +8,6 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import { useMarketplace } from "@/hooks/marketplace/useMarketplace";
 import { useUserArticles } from "@/hooks/marketplace/useUserArticles";
 import { useRepostItem } from "@/hooks/marketplace/useRepostItem";
-import { useNewItemForm } from "@/hooks/marketplace/useNewItemForm";
 import { FilterSidebar } from "@/components/marketplace/FilterSidebar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import NewItemForm from "@/components/marketplace/NewItemForm";

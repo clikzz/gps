@@ -4,12 +4,13 @@ import { motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { PawPrint } from "lucide-react";
+import { PawPrint, Eye, EyeOff  } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/submit-button";
 import { FormMessage, type Message } from "@/components/form-message";
 import { signUpAction } from "@/app/actions";
+import { useState } from "react";
 
 const cardVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -34,6 +35,7 @@ const backgroundShapeVariants = {
 };
 
 export default function SignUpForm() {
+  const [showPassword, setShowPassword] = useState(false)
   const params = useSearchParams();
   const raw = params.get("message");
   let message: Message | undefined;
@@ -98,22 +100,6 @@ export default function SignUpForm() {
             </motion.p>
           </div>
           <form action={signUpAction} className="flex flex-col gap-4">
-            {/* 
-            para mas adelante solicitar el nombre al registrarse 
-            <motion.div initial="hidden" animate="visible" variants={formItemVariants} transition={{ delay: 0.2 }}>
-              <Label htmlFor="name" className="sr-only">
-              Nombre
-              </Label>
-              <Input
-              id="name"
-              name="name"
-              placeholder="Nombre"
-              maxLength={50}
-              required
-              aria-required="true"
-              />
-            </motion.div>
-            */}
             <motion.div
               initial="hidden"
               animate="visible"
@@ -140,14 +126,22 @@ export default function SignUpForm() {
               <Label htmlFor="password" className="sr-only">
                 Contraseña
               </Label>
-              <Input
-                type="password"
-                name="password"
-                placeholder="Contraseña"
-                minLength={6}
-                required
-                aria-required="true"
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Contraseña"
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </motion.div>
             <motion.div
               initial="hidden"

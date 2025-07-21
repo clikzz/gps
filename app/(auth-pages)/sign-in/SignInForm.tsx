@@ -4,12 +4,13 @@ import { motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { PawPrint } from "lucide-react";
+import { PawPrint, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/submit-button";
 import { FormMessage, type Message } from "@/components/form-message";
 import { signInAction } from "@/app/actions";
+import { useState } from "react";
 
 const cardVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -36,6 +37,7 @@ const backgroundShapeVariants = {
 };
 
 export default function SignInForm() {
+  const [showPassword, setShowPassword] = useState(false)
   const params = useSearchParams();
   const raw = params.get("message");
   let message: Message | undefined;
@@ -69,7 +71,7 @@ export default function SignInForm() {
         }}
         className="absolute bottom-0 right-0 w-64 h-32 bg-primary rounded-full opacity-20 translate-x-1/2 translate-y-1/2 skew-y-12"
       />
-
+      
       <motion.div
         initial="hidden"
         animate="visible"
@@ -87,7 +89,7 @@ export default function SignInForm() {
                 <PawPrint className="h-10 w-10 text-primary" />
                 <h1 className="text-3xl font-bold text-foreground">
                   Iniciar Sesión
-                </h1>
+                  </h1>
               </div>
             </motion.div>
             <motion.p
@@ -128,12 +130,22 @@ export default function SignInForm() {
               <Label htmlFor="password" className="sr-only">
                 Contraseña
               </Label>
-              <Input
-                type="password"
-                name="password"
-                placeholder="Contraseña"
-                required
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Contraseña"
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </motion.div>
 
             <motion.div

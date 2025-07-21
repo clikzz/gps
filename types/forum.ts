@@ -9,5 +9,22 @@ export interface ForumTopic {
     name: string
     tag: number
   }
-  locked: boolean       
+  locked: boolean 
+  featured: boolean      
 }
+
+export interface Reply {
+  id: number
+  content: string
+  createdAt: string
+  author: {
+    name: string
+    id: string
+    tag: number
+    menssageCount: number
+    avatar_url?: string
+    badges?: Badge[]
+  }
+}
+
+export interface Badge { id: number; label: string; icon?: string; }

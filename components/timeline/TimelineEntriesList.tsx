@@ -1,12 +1,12 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useDeleteTimelineEntry } from "@/hooks/timeline/useDeleteTimeline"
 import { useTimelineData } from "@/hooks/timeline/useTimelineData"
 import TimelineMemoryCard from "@/components/timeline/TimelineMemoryCard"
-import { useActivePet } from "@/stores/activePet"                           
-import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer" 
-
+import { useActivePet } from "@/stores/activePet"
+import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer"
 
 interface TimelineEntriesListProps {
   startDate?: string
@@ -24,7 +24,6 @@ function parseEventDateLocal(input: string | Date): Date {
   }
   return new Date(input)
 }
-
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -81,23 +80,31 @@ export default function TimelineEntriesList({
   milestoneId,
   reloadSignal,
 }: TimelineEntriesListProps) {
-  const activePet = useActivePet((state) => state.activePet)              
-  const petId = activePet?.id ?? ""                                       
-  if (!petId) {                              
-    return null
-  }
+  const activePet = useActivePet((state) => state.activePet)
+  const petId = activePet?.id ?? ""
 
-  const [page, setPage] = useState(0)                           
+  const [page, setPage] = useState(0)
   const skip = page * TAKE
 
-  const { entries, total, isLoading, error, mutateEntries } = useTimelineData(
-    petId,
-    { startDate, endDate, milestoneId, skip, take: TAKE }
-  )
-  const { isDeleting, deleteEntry } = useDeleteTimelineEntry(petId)      
+  const { entries, total, isLoading, error, mutateEntries } = useTimelineData(petId, {
+    startDate,
+    endDate,
+    milestoneId,
+    skip,
+    take: TAKE,
+  })
 
-  const handleDelete = async (entryId: string) => {                    
+  const { isDeleting, deleteEntry } = useDeleteTimelineEntry(petId)
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null)
+
+  const handleEntryUpdate = async () => {
+    await mutateEntries()
+  }
+
+  const handleDelete = async (entryId: string) => {
+    setDeletingEntryId(entryId)
     await deleteEntry(entryId)
+    setDeletingEntryId(null)
     mutateEntries()
   }
 
@@ -111,16 +118,17 @@ export default function TimelineEntriesList({
 
   const totalPages = Math.ceil(total / TAKE)
 
+  if (!petId) {
+    return null
+  }
+
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible">
       <div className="flex items-center justify-between mt-6 mb-4">
         <motion.h3 className="text-xl font-semibold" variants={titleVariants}>
           Recuerdos
         </motion.h3>
-        <NewTimelineDrawer
-          petId={petId}
-          onSuccess={() => mutateEntries()}           
-        />
+        <NewTimelineDrawer petId={petId} onSuccess={handleEntryUpdate} />
       </div>
 
       <AnimatePresence mode="wait">
@@ -179,19 +187,15 @@ export default function TimelineEntriesList({
           </motion.div>
         ) : (
           <motion.div key="content">
-            <motion.div
-              className="grid grid-cols-1 gap-6"
-              variants={gridVariants}
-              initial="hidden"
-              animate="visible"
-            >
+            <motion.div className="grid grid-cols-1 gap-6" variants={gridVariants} initial="hidden" animate="visible">
               <AnimatePresence>
                 {entries.map((entry, index) => (
                   <TimelineMemoryCard
                     key={entry.id}
                     entry={entry}
                     onDelete={() => handleDelete(entry.id)}
-                    isDeleting={isDeleting}
+                    isDeleting={isDeleting && deletingEntryId === entry.id}
+                    onEntryUpdate={handleEntryUpdate}
                     index={index}
                   />
                 ))}

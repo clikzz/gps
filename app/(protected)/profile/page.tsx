@@ -10,6 +10,7 @@ import { Upload, Save, Trash2, ArrowLeft, AlertCircle, RefreshCw, User, Award, C
 import { useProfileImageUpload } from "@/hooks/useProfileImageUpload"
 import { toast } from "sonner"
 import { useUserProfile } from "@/stores/userProfile"
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function ProfileConfigPage() {
   const router = useRouter()
@@ -105,7 +106,7 @@ export default function ProfileConfigPage() {
           url: user.avatar_url,
         }),
       })
-      
+
       if (!response.ok) {
         throw new Error("Error al eliminar la imagen del storage")
       }
@@ -127,9 +128,9 @@ export default function ProfileConfigPage() {
       : selectedBadgeIds.length < 3
         ? [...selectedBadgeIds, badgeId]
         : (() => {
-            toast.warning("Solo puedes seleccionar máximo 3 insignias")
-            return selectedBadgeIds
-          })()
+          toast.warning("Solo puedes seleccionar máximo 3 insignias")
+          return selectedBadgeIds
+        })()
 
     if (newSelectedBadgeIds !== selectedBadgeIds) {
       setSelectedBadgeIds(newSelectedBadgeIds)
@@ -183,7 +184,7 @@ export default function ProfileConfigPage() {
         avatar_url: avatarUrl,
         selectedBadgeIds: selectedBadgeIds,
       })
-      
+
       if (success) {
         setSelectedBadges(selectedBadgeIds)
         toast.success("Perfil actualizado correctamente")
@@ -201,13 +202,12 @@ export default function ProfileConfigPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex items-center gap-3">
-          <RefreshCw className="w-6 h-6 animate-spin text-primary" />
-          <span className="text-lg font-medium">Cargando perfil...</span>
-        </div>
-      </div>
-    )
+      <LoadingScreen
+        title="Cargando perfil"
+        subtext="Preparando tu información"
+        icon={User}          
+      />
+    );
   }
 
   if (error) {
@@ -259,7 +259,7 @@ export default function ProfileConfigPage() {
                     activeTab === "profile"
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted text-muted-foreground"
-                  }`}
+                    }`}
                 >
                   <User className="w-5 h-5" />
                   <span className="font-medium">Editar perfil</span>
@@ -270,7 +270,7 @@ export default function ProfileConfigPage() {
                     activeTab === "badges"
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted text-muted-foreground"
-                  }`}
+                    }`}
                 >
                   <Award className="w-5 h-5" />
                   <span className="font-medium">Insignias</span>
@@ -352,12 +352,12 @@ export default function ProfileConfigPage() {
                 {/* Acciones */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-6 justify-center items-center">
                   <Button
-                  onClick={handleSave}
-                  disabled={isLoading || isUploadingAvatar}
-                  className="px-8 h-12 text-base font-medium"
+                    onClick={handleSave}
+                    disabled={isLoading || isUploadingAvatar}
+                    className="px-8 h-12 text-base font-medium"
                   >
-                  <Save className="w-4 h-4 mr-2" />
-                  {isLoading ? "Actualizando..." : "Actualizar Perfil"}
+                    <Save className="w-4 h-4 mr-2" />
+                    {isLoading ? "Actualizando..." : "Actualizar Perfil"}
                   </Button>
                 </div>
               </div>
@@ -402,7 +402,7 @@ export default function ProfileConfigPage() {
                                 isSelected
                                   ? "border-primary bg-primary/5 shadow-lg"
                                   : "border-border bg-background hover:border-primary/50 hover:bg-muted/30"
-                              }
+                                }
                             `}
                             >
                               <img

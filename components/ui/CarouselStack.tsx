@@ -20,10 +20,8 @@ export default function CarouselStack({ images }: CarouselStackProps) {
   const handleImageClick = (i: number) => {
     const d = dist(i)
     if (d === 0) {
-      // Si es la imagen principal, abrir modal
       setIsModalOpen(true)
     } else {
-      // Si es una imagen lateral, cambiar índice
       setIndex(i)
     }
   }
@@ -192,7 +190,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
         )}
       </motion.div>
 
-      {/* Modal para mostrar imagen completa */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
@@ -203,7 +200,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
             transition={{ duration: 0.3 }}
             onClick={() => setIsModalOpen(false)}
           >
-            {/* Fondo oscuro */}
             <motion.div
               className="absolute inset-0 backdrop-blur-md bg-white/10"
               initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
@@ -212,7 +208,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
               transition={{ duration: 0.8 , ease: "easeOut" }}
             />
 
-            {/* Contenedor de la imagen */}
             <motion.div
               className="relative max-w-[90vw] max-h-[90vh] w-auto h-auto"
               initial={{ scale: 0.8, opacity: 0 }}
@@ -221,7 +216,6 @@ export default function CarouselStack({ images }: CarouselStackProps) {
               transition={{ duration: 0.3, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Botón cerrar */}
               <motion.button
                 onClick={() => setIsModalOpen(false)}
                 className="absolute -top-4 -right-4 z-10 bg-white/90 hover:bg-white text-black rounded-full p-2 shadow-lg transition-colors"
@@ -232,7 +226,7 @@ export default function CarouselStack({ images }: CarouselStackProps) {
                 <X className="w-5 h-5" />
               </motion.button>
 
-              {/* Imagen completa */}
+
               <motion.img
                 src={images[index]}
                 alt={`Memory ${index + 1} - Vista completa`}

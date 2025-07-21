@@ -64,7 +64,6 @@ export default function RangeCalendar({
   const [rightCalendarDate, setRightCalendarDate] = useState<Date>(currentMonth)
   const [leftCalendarDate, setLeftCalendarDate] = useState<Date>(new Date(today.getFullYear(), today.getMonth() - 1))
 
-  // Estado para controlar qué calendario mostrar en móvil
   const [mobileActiveCalendar, setMobileActiveCalendar] = useState<"left" | "right">("right")
 
   const daysInMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
@@ -126,7 +125,6 @@ export default function RangeCalendar({
     })
   }
 
-  // Navegación para móvil
   const navigateMobileCalendar = (dir: "prev" | "next") => {
     if (mobileActiveCalendar === "left") {
       navigateLeftMonth(dir)
@@ -359,9 +357,7 @@ export default function RangeCalendar({
       </CardHeader>
 
       <CardContent className="p-0">
-        {/* Vista móvil - Un solo calendario */}
         <div className="sm:hidden border-t">
-          {/* Selector de calendario en móvil */}
           <div className="flex border-b bg-muted/20">
             <button
               onClick={() => setMobileActiveCalendar("left")}
@@ -387,17 +383,14 @@ export default function RangeCalendar({
           {renderCalendar(currentMobileDate, mobileActiveCalendar === "right", true)}
         </div>
 
-        {/* Vista desktop - Dos calendarios */}
         <div className="hidden sm:flex border-t">
           {renderCalendar(leftCalendarDate, false)}
           <div className="w-px bg-border"></div>
           {renderCalendar(rightCalendarDate, true)}
         </div>
 
-        {/* Footer con opciones rápidas y botones */}
         <div className="border-t bg-muted/30 p-3 sm:p-6">
           <div className="flex flex-col gap-3 sm:gap-4">
-            {/* Opciones rápidas */}
             <div className="flex flex-wrap gap-1 sm:gap-2">
               {quickRangeOptions.map((option) => (
                 <Badge
@@ -411,7 +404,6 @@ export default function RangeCalendar({
               ))}
             </div>
 
-            {/* Botones de acción */}
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"

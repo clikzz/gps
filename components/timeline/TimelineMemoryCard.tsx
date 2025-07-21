@@ -10,6 +10,8 @@ import type { TimelineEntryWithPhotos } from "@/types/timeline"
 import { useState } from "react"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import type { Milestones as Milestone } from "@prisma/client"
+import { useActivePet } from "@/stores/activePet"
+import NewTimelineDrawer from "@/components/timeline/NewTimelineDrawer"
 
 function parseEventDateLocal(input: string | Date): Date {
   if (typeof input === "string") {
@@ -23,6 +25,7 @@ export interface TimelineMemoryCardProps {
   entry: TimelineEntryWithPhotos
   onDelete: () => void
   isDeleting: boolean
+  onEntryUpdate?: () => Promise<void>
   index?: number
 }
 
@@ -97,7 +100,13 @@ const expandButtonVariants = {
   },
 }
 
-export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index = 0 }: TimelineMemoryCardProps) {
+export default function TimelineMemoryCard({
+  entry,
+  onDelete,
+  isDeleting,
+  onEntryUpdate,
+  index = 0,
+}: TimelineMemoryCardProps) {
   const localDate = parseEventDateLocal(entry.event_date)
   const date = localDate.toLocaleDateString("es-CL", {
     year: "numeric",
@@ -110,13 +119,15 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
   const isTablet = useMediaQuery("(min-width: 640px) and (max-width: 767px)")
   const isDesktop = useMediaQuery("(min-width: 768px)")
 
+  const activePet = useActivePet((state) => state.activePet)
+  const petId = activePet?.id ?? ""
+
   const milestones: Milestone[] = entry.Milestones ?? []
 
-  // Mejorar la lógica de cuántos mostrar
   const getInitialVisibleCount = () => {
-    if (isDesktop) return Math.min(milestones.length, 6) // Máximo 6 en desktop
-    if (isTablet) return Math.min(milestones.length, 3) // Máximo 3 en tablet
-    return Math.min(milestones.length, 2) // Máximo 2 en móvil
+    if (isDesktop) return Math.min(milestones.length, 4)
+    if (isTablet) return Math.min(milestones.length, 3)
+    return Math.min(milestones.length, 2)
   }
 
   const initialVisibleCount = getInitialVisibleCount()
@@ -128,6 +139,12 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
     setExpanded(!expanded)
   }
 
+  const handleEditSuccess = async () => {
+    if (onEntryUpdate) {
+      await onEntryUpdate()
+    }
+  }
+
   return (
     <motion.div
       variants={cardVariants}
@@ -135,20 +152,14 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
       animate="visible"
       exit="exit"
       custom={index}
-      layout // Añadido para animar cambios de layout
+      layout
       whileHover={{
         y: -4,
         transition: { duration: 0.2, ease: "easeOut" },
       }}
     >
       <Card className="bg-card rounded-xl shadow-lg overflow-hidden mb-6 border-0 shadow-md hover:shadow-xl transition-shadow duration-300">
-        <motion.div
-          className="p-6 border-b"
-          variants={contentVariants}
-          initial="hidden"
-          animate="visible"
-          layout // Añadido para animar cambios de layout
-        >
+        <motion.div className="p-6 border-b" variants={contentVariants} initial="hidden" animate="visible" layout>
           <div className="flex items-start justify-between gap-x-4">
             <motion.div variants={itemVariants} layout>
               {entry.title && (
@@ -168,15 +179,10 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
               </motion.div>
             </motion.div>
 
-            {/* Sección de hitos mejorada */}
-            <motion.div
-              className="flex flex-col items-end gap-2 max-w-[60%]"
-              variants={contentVariants}
-              layout // Añadido para animar cambios de layout
-            >
+            <motion.div className="flex flex-col items-end gap-2 max-w-[60%]" variants={contentVariants} layout>
               <motion.div
                 className="flex flex-wrap items-center justify-end gap-2"
-                layout // Añadido para animar cambios de layout
+                layout
                 transition={{
                   layout: {
                     duration: 0.4,
@@ -184,10 +190,9 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
                   },
                 }}
               >
-                {/* Hitos siempre visibles */}
                 {milestones.slice(0, initialVisibleCount).map((milestone, idx) => (
                   <motion.span
-                    key={`${entry.id}-${milestone.id}`} // Hacer la key única por tarjeta
+                    key={`${entry.id}-${milestone.id}`}
                     className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] whitespace-normal break-words"
                     variants={badgeVariants}
                     initial={{ opacity: 1, scale: 1 }}
@@ -197,19 +202,18 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
                     }}
                     transition={{ duration: 0.2 }}
                     layout
-                    layoutId={`milestone-visible-${entry.id}-${milestone.id}`} // ID único para hitos visibles
+                    layoutId={`milestone-visible-${entry.id}-${milestone.id}`}
                   >
                     <Tag className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-foreground" />
                     <span className="text-foreground text-xs">{milestone.name}</span>
                   </motion.span>
                 ))}
 
-                {/* Hitos adicionales con animación */}
                 <AnimatePresence mode="popLayout" key={`milestones-${entry.id}`}>
                   {expanded &&
                     milestones.slice(initialVisibleCount).map((milestone, idx) => (
                       <motion.span
-                        key={`${entry.id}-${milestone.id}`} // Hacer la key única por tarjeta
+                        key={`${entry.id}-${milestone.id}`}
                         className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] whitespace-normal break-words"
                         initial={{ opacity: 0, scale: 0.8, y: -10 }}
                         animate={{
@@ -236,7 +240,7 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
                           backgroundColor: "hsl(var(--muted) / 0.8)",
                         }}
                         layout
-                        layoutId={`milestone-${entry.id}-${milestone.id}`} // ID único por tarjeta
+                        layoutId={`milestone-${entry.id}-${milestone.id}`}
                       >
                         <Tag className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-foreground" />
                         <span className="text-foreground text-xs">{milestone.name}</span>
@@ -245,7 +249,6 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
                 </AnimatePresence>
               </motion.div>
 
-              {/* Botón de expansión mejorado */}
               {hasMore && (
                 <motion.div
                   variants={expandButtonVariants}
@@ -253,7 +256,7 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
                   animate="visible"
                   whileHover="hover"
                   whileTap="tap"
-                  layout // Añadido para animar cambios de layout
+                  layout
                 >
                   <Button
                     variant="ghost"
@@ -285,7 +288,7 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
             variants={contentVariants}
             initial="hidden"
             animate="visible"
-            layout // Añadido para animar cambios de layout
+            layout
             transition={{
               layout: {
                 duration: 0.4,
@@ -297,26 +300,24 @@ export default function TimelineMemoryCard({ entry, onDelete, isDeleting, index 
               <motion.p
                 className="text-sm sm:text-base text-foreground mb-6 break-words leading-relaxed"
                 variants={itemVariants}
-                layout // Añadido para animar cambios de layout
+                layout
               >
                 {entry.description}
               </motion.p>
             )}
-            <motion.div
-              variants={itemVariants}
-              layout // Añadido para animar cambios de layout
-            >
+            <motion.div variants={itemVariants} layout>
               <CarouselStack images={entry.TimelineEntryPhotos?.map((p) => p.photo_url) ?? []} />
             </motion.div>
           </motion.div>
         </CardContent>
 
-        <CardFooter className="justify-end">
+        <CardFooter className="justify-end space-x-2">
+          <NewTimelineDrawer petId={petId} mode="edit" entryToEdit={entry} onSuccess={handleEditSuccess} />
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            layout // Añadido para animar cambios de layout
+            layout
           >
             <ConfirmationButton
               onConfirm={async () => onDelete()}

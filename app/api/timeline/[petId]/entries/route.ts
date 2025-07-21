@@ -1,6 +1,7 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser } from '@/server/middlewares/auth.middleware';
 import * as timelineController from '@/server/controllers/timeline.controller';
+import { updateEntry } from '@/server/controllers/timeline.controller';
 
 export async function GET(
   request: NextRequest,
@@ -67,4 +68,22 @@ export async function DELETE(
   }
 
   return timelineController.deleteEntry(user.id, petId, entryId);
+}
+
+
+export async function PUT(request: NextRequest, { params }: { params: any }) {
+  const user = await authenticateUser(request)
+  if (user instanceof Response) return user
+
+  const { petId } = await params
+  const url = new URL(request.url)
+  const entryId = url.searchParams.get("id")
+
+  if (!entryId) {
+    return NextResponse.json({ error: "Falta el parámetro `id` en la query." }, { status: 400 })
+  }
+
+  const payload = await request.json()
+  const updated = await updateEntry(user.id, petId, entryId, payload)
+  return NextResponse.json(updated, { status: 200 })
 }

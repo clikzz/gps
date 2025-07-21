@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import type { CreateItemInput } from "@/server/validations/marketplace.validation";
 

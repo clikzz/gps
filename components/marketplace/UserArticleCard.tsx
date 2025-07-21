@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import { MapPin, Clock } from "lucide-react";
 import type { UserArticle } from "@/types/marketplace";
-import { formatTimeAgo } from "@/utils/timeAgo";
+import { formatTimeAgo } from "@/utils/formatTime";
 
 interface Props {
   article: UserArticle;
@@ -16,6 +16,7 @@ interface Props {
   onDelete?: (id: number) => void;
   onMarkAsSold?: (id: number) => void;
   onRepost?: (id: number) => void;
+  onViewDetails?: (article: UserArticle) => void;
 }
 
 export function UserArticleCard({
@@ -25,6 +26,7 @@ export function UserArticleCard({
   onDelete,
   onMarkAsSold,
   onRepost,
+  onViewDetails,
 }: Props) {
   const isSold = article.status === "SOLD";
   const isActive = article.status === "ACTIVE";
@@ -87,13 +89,22 @@ export function UserArticleCard({
       </CardContent>
       <CardFooter className="flex gap-2 justify-center">
         {isSold ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onRepost?.(article.id)}
-          >
-            Volver a publicar
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onViewDetails?.(article)}
+            >
+              Ver detalles
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onRepost?.(article.id)}
+            >
+              Volver a publicar
+            </Button>
+          </>
         ) : (
           <>
             <Button

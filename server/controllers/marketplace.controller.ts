@@ -196,6 +196,8 @@ export const fetchUserSoldMarketplaceItems = async (
     condition: item.condition,
     pet_category: item.pet_category,
     city: item.city ?? undefined,
+    region: item.region ?? undefined,
+    country: item.country ?? undefined,
     sold_price: item.sales?.price.toString(),
     sold_at: item.sales?.sold_at.toISOString(),
     notes: item.sales?.notes ?? undefined,

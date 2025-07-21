@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserArticleCard } from "@/components/marketplace/UserArticleCard";
 import type { UserArticle } from "@/types/marketplace";
+import { SoldArticleDetails } from "@/components/marketplace/SoldArticleDetails";
 
 interface Props {
   articles: UserArticle[];
@@ -17,6 +18,7 @@ interface Props {
 
 export function MyArticles({ articles, onSwitchToSell, onMarkAsSold, onRepost }: Props) {
   const [activeTab, setActiveTab] = useState<"activos" | "vendidos">("activos");
+  const [selectedArticle, setSelectedArticle] = useState<UserArticle | null>(null);
 
   const active = articles.filter((a) => a.status === "ACTIVE");
   const sold = articles.filter((a) => a.status === "SOLD");
@@ -79,6 +81,7 @@ export function MyArticles({ articles, onSwitchToSell, onMarkAsSold, onRepost }:
                 article={a}
                 onMarkAsSold={onMarkAsSold}
                 onRepost={onRepost && (() => onRepost(a.id))}
+                onViewDetails={(article) => setSelectedArticle(article)}
               />
             ))}
           </div>
@@ -91,6 +94,15 @@ export function MyArticles({ articles, onSwitchToSell, onMarkAsSold, onRepost }:
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Detalles del artículo vendido */}
+      {selectedArticle && (
+        <SoldArticleDetails
+          article={selectedArticle}
+          onClose={() => setSelectedArticle(null)}
+          onRepost={onRepost}
+        />
+      )}
     </div>
   );
 }

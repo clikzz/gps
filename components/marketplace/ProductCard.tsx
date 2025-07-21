@@ -7,7 +7,7 @@ import { Badge }  from "@/components/ui/badge";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import { MapPin, Heart, Clock } from "lucide-react";
 import type { Item } from "@/types/marketplace";
-import { formatTimeAgo } from "@/utils/timeAgo";
+import { formatTimeAgo } from "@/utils/formatTime";
 
 interface Props {
   item: Item;

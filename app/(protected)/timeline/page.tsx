@@ -23,9 +23,13 @@ export default function PetTimelinePage() {
   const [selectedMilestone, setSelectedMilestone] = useState<string>("")
   const [reloadSignal, setReloadSignal] = useState(0)
 
+  useEffect(() => {
+  setReloadSignal((prev) => prev + 1)
+}, [startDate, endDate, selectedMilestone])
+
   if (!activePet?.id) {
-    return <PetSelector />
-  }
+  return <PetSelector opened={true} />
+}
 
   const isLoading = isLoadingData || isLoadingMilestones
   const error = dataError || milestonesError

@@ -134,9 +134,9 @@ model MarketplaceItem {
   updated_at     DateTime      @updatedAt
 
   favorites      Favorite[]
-  sales          Sale[]
 
   seller         users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sales          Sale?
 
   @@index([status, category, created_at])
 }

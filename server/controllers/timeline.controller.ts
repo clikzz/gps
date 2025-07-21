@@ -148,3 +148,55 @@ export async function deleteEntry(
     );
   }
 }
+
+
+
+export async function updateEntry(
+  userId: string,
+  petIdStr: string,
+  entryId: string,
+  payload: any
+) {
+  try {
+    const petId = BigInt(petIdStr);
+
+
+    const ownerId = await timelineService.getPetOwnerId(petId);
+    if (!ownerId) {
+      return NextResponse.json(
+        { error: 'Mascota no encontrada.' },
+        { status: 404 }
+      );
+    }
+    if (ownerId !== userId) {
+      return NextResponse.json(
+        { error: 'No autorizado para editar esta entrada.' },
+        { status: 403 }
+      );
+    }
+
+
+    const validation = NewTimelineEntrySchema.safeParse(payload);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.format() },
+        { status: 400 }
+      );
+    }
+
+
+    const updated = await timelineService.updateTimelineEntry(
+      entryId,
+      validation.data
+    );
+
+    const serialized = serializeEntry(updated);              
+    return NextResponse.json(serialized, { status: 200 });
+  } catch (error) {
+    console.error(`[TimelineController] Error en updateEntry:`, error);
+    return NextResponse.json(
+      { error: 'Error interno al actualizar la entrada.' },
+      { status: 500 }
+    );
+  }
+}

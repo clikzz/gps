@@ -123,7 +123,7 @@ export default async function TopicPage({
           <span className="truncate">{topic.title}</span>
         </div>
         <TopicHeader
-          topic={{ id: topic.id, title: topic.title, isLocked: topic.locked, isPinned: topic.isPinned ?? false }}
+          topic={{ id: topic.id, title: topic.title, isLocked: topic.locked }}
         />
         {mainPost && (
           <TopicDetail

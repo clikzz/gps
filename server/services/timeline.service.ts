@@ -1,5 +1,5 @@
 import prisma from '@/lib/db';
-import { NewTimelineEntryPayload } from '@/types/timeline';
+import { NewTimelineEntryPayload, TimelineEntryWithPhotos } from '@/types/timeline';
 
 
 export async function getTimelineEntriesByPetId(
@@ -110,5 +110,62 @@ export async function deleteTimelineEntry(entryId: string): Promise<string[]> {
     });
 
     return photoUrls;
+  });
+}
+
+
+
+export async function updateTimelineEntry(
+  entryId: string,
+  data: NewTimelineEntryPayload
+): Promise<TimelineEntryWithPhotos> {
+  return await prisma.$transaction(async (tx) => {
+
+    const existing = await tx.timelineEntries.findUnique({
+      where: { id: entryId },
+      include: { TimelineEntryPhotos: true, Milestones: true },
+    });
+    if (!existing) {
+      throw new Error('Entrada de timeline no encontrada');
+    }
+
+    await tx.timelineEntries.update({
+      where: { id: entryId },
+      data: {
+        title: data.title,
+        description: data.description,
+        event_date: new Date(data.eventDate),
+      },
+    });
+
+    await tx.timelineEntries.update({
+      where: { id: entryId },
+      data: {
+        Milestones: {
+          set: data.milestoneIds?.length
+            ? data.milestoneIds.map(id => ({ id }))
+            : [],
+        },
+      },
+    });
+
+    if (data.photoUrls && data.photoUrls.length > 0) {
+      await tx.timelineEntryPhotos.deleteMany({
+        where: { timeline_entry_id: entryId },
+      });
+      
+      await tx.timelineEntryPhotos.createMany({
+        data: data.photoUrls.map((url, idx) => ({
+          timeline_entry_id: entryId,
+          photo_url: url,
+          order: idx + 1,
+        })),
+      });
+    }
+
+    return tx.timelineEntries.findUniqueOrThrow({
+      where: { id: entryId },
+      include: { TimelineEntryPhotos: true, Milestones: true },
+    });
   });
 }

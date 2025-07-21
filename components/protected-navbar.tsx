@@ -17,21 +17,23 @@ import {
   BookCopy,
   Search,
   Hospital,
-  Store
+  HeartPulse,
+  MessageSquare,
 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetTrigger, 
   SheetTitle,
 } from "@/components/ui/sheet";
 import { ProfileDropdown } from "./profile/ProfileDropdown";
@@ -55,8 +57,8 @@ interface ProtectedNavbarProps {
   userProfile: UserProfile | null;
 }
 
-export default function ProtectedNavbar({
-  user,
+export default function ProtectedNavbar({ 
+  user, 
   userProfile,
 }: ProtectedNavbarProps) {
   const [activeTab, setActiveTab] = useState("home");
@@ -69,11 +71,10 @@ export default function ProtectedNavbar({
   ];
 
   const moreNavItems = [
-    { id: "forum", label: "Foro", icon: BookCopy, href: "/forum" },
+    { id: "forum", label: "Foro", icon: MessageSquare, href: "/forum" },
     { id: "find", label: "Encontrar", icon: Search, href: "/find" },
     { id: "services", label: "Servicios", icon: HelpCircle, href: "/services" },
-    { id: "health", label: "Salud", icon: Hospital, href: "/health" },
-    { id: "marketplace", label: "Marketplace", icon: Store, href: "/marketplace" },
+    { id: "health", label: "Salud", icon: HeartPulse, href: "/health" },
   ];
 
   const handleSignOut = async () => {
@@ -102,10 +103,10 @@ export default function ProtectedNavbar({
     return (
       <div className="flex items-center gap-2">
         <ThemeSwitcher />
-        <ProfileDropdown
-          user={user}
-          userProfile={userProfile}
-          onSignOut={handleSignOut}
+        <ProfileDropdown 
+          user={user} 
+          userProfile={userProfile} 
+          onSignOut={handleSignOut} 
         />
       </div>
     );
@@ -119,12 +120,12 @@ export default function ProtectedNavbar({
             <span className="text-sm font-medium">Tema</span>
             <ThemeSwitcher />
           </div>
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
+          <Button 
+            asChild 
+            size="sm" 
+            variant="outline" 
             className="w-full bg-transparent"
-          >
+            >
             <Link href="/sign-in">Iniciar sesión</Link>
           </Button>
           <Button asChild size="sm" variant="default" className="w-full">
@@ -133,32 +134,37 @@ export default function ProtectedNavbar({
         </div>
       );
     }
-
+    
     return (
       <div className="pt-4 border-t space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Tema</span>
           <ThemeSwitcher />
         </div>
-        <div className="flex items-center gap-3 p-2">
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
-            {userProfile?.name?.charAt(0) || user.email?.charAt(0) || "U"}
+        <Link href="/profile" className="block">
+          <div className="flex items-center gap-3 p-2 hover:bg-muted rounded-md transition-colors cursor-pointer">
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={userProfile?.avatar_url || ""} alt={userProfile?.name || "Usuario"} />
+              <AvatarFallback>
+                {userProfile?.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {userProfile?.name || "Usuario"}
+                </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user.email}
+                </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
-              {userProfile?.name || "Usuario"}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {user.email}
-            </p>
-          </div>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="w-full bg-transparent"
+        </Link>
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="w-full bg-transparent" 
           onClick={handleSignOut}
-        >
+          >
           Cerrar sesión
         </Button>
       </div>
@@ -193,11 +199,11 @@ export default function ProtectedNavbar({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
                   className="flex items-center gap-2"
-                >
+                  >
                   <MoreHorizontal className="h-4 w-4" />
                   Más
                 </Button>
@@ -205,10 +211,10 @@ export default function ProtectedNavbar({
               <DropdownMenuContent align="end" className="w-48">
                 {moreNavItems.map((item) => (
                   <DropdownMenuItem key={item.id} asChild>
-                    <Link
-                      href={item.href}
+                    <Link 
+                      href={item.href} 
                       className="flex items-center gap-2 cursor-pointer"
-                    >
+                      >
                       <item.icon className="h-4 w-4" />
                       {item.label}
                     </Link>
@@ -244,11 +250,11 @@ export default function ProtectedNavbar({
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
+              <Button 
+                variant="ghost" 
+                size="sm" 
                 className="flex flex-col gap-1 h-auto py-2 px-3"
-              >
+                >
                 <Menu className="h-5 w-5" />
                 <span className="text-xs">Más</span>
               </Button>
@@ -258,12 +264,12 @@ export default function ProtectedNavbar({
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   {moreNavItems.map((item) => (
-                    <Button
-                      key={item.id}
-                      variant="ghost"
-                      asChild
+                    <Button 
+                      key={item.id} 
+                      variant="ghost" 
+                      asChild 
                       className="justify-start gap-3 h-12"
-                    >
+                      >
                       <Link href={item.href}>
                         <item.icon className="h-5 w-5" />
                         {item.label}

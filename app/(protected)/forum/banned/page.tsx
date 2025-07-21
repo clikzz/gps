@@ -133,7 +133,7 @@ export default async function BannedPage() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="outline" asChild>
-              <Link href="/forum/rules">Leer las normas del foro</Link>
+              <Link href="/forumrules">Leer las normas del foro</Link>
             </Button>
 
             <Button variant="outline" asChild>

@@ -19,6 +19,7 @@ import {
   Hospital,
   HeartPulse,
   MessageSquare,
+  Store
 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -75,6 +76,7 @@ export default function ProtectedNavbar({
     { id: "find", label: "Encontrar", icon: Search, href: "/find" },
     { id: "services", label: "Servicios", icon: HelpCircle, href: "/services" },
     { id: "health", label: "Salud", icon: HeartPulse, href: "/health" },
+    { id: "marketplace", label: "Marketplace", icon: Store, href: "/marketplace" },
   ];
 
   const handleSignOut = async () => {

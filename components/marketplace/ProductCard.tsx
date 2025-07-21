@@ -11,11 +11,11 @@ import { formatTimeAgo } from "@/utils/formatTime";
 
 interface Props {
   item: Item;
-  onToggleFav: (id: string) => void;
+  // onToggleFav: (id: string) => void;
   onViewDetails: () => void;
 }
 
-export function ProductCard({ item, onToggleFav, onViewDetails }: Props) {
+export function ProductCard({ item, onViewDetails }: Props) {
   const petLabel = getPetCategoryLabel(item.pet_category);
   const categoryLabel = getItemCategoryLabel(item.category);
   const conditionLabel = getItemConditionLabel(item.condition);
@@ -32,7 +32,7 @@ export function ProductCard({ item, onToggleFav, onViewDetails }: Props) {
         <Button
           variant="ghost" size="icon"
           className="absolute top-2 right-2 bg-white/80 hover:bg-white"
-          onClick={() => onToggleFav(item.id)}
+          // onClick={() => onToggleFav(item.id)}
         >
           <Heart className="h-4 w-4" />
         </Button>

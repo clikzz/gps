@@ -6,10 +6,10 @@ import { useState } from "react"
 
 interface Props {
   items: Item[];
-  onToggleFav: (id: string) => void;
+  // onToggleFav: (id: string) => void;
 }
 
-export function MarketplaceGrid({ items, onToggleFav }: Props) {
+export function MarketplaceGrid({ items }: Props) {
   const [selected, setSelected] = useState<Item | null>(null);
 
   return (
@@ -19,7 +19,7 @@ export function MarketplaceGrid({ items, onToggleFav }: Props) {
           <ProductCard
             key={it.id}
             item={it}
-            onToggleFav={onToggleFav}
+            // onToggleFav={onToggleFav}
             onViewDetails={() => setSelected(it)}
           />
         ))}
@@ -29,7 +29,7 @@ export function MarketplaceGrid({ items, onToggleFav }: Props) {
           item={selected}
           open={!!selected}
           onClose={() => setSelected(null)}
-          onToggleFav={onToggleFav}
+          // onToggleFav={onToggleFav}
         />
       )}
     </>

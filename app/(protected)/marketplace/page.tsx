@@ -25,8 +25,7 @@ export default function MarketplacePage() {
   const { articles: userArticles, loading: userLoading, error: userError, markAsSold, fetchArticles } = useUserArticles();
   const {
     items, loading, error,
-    filters, setters,
-    toggleFav, clearFilters,
+    filters, setters, clearFilters,
   } = useMarketplace();
 
   const handleOpenMark = (id: number) => {
@@ -129,7 +128,7 @@ export default function MarketplacePage() {
                 {error && <p className="text-red-600">Error: {error}</p>}
                 {!loading && !error && items.length === 0 && <p>No hay productos.</p>}
 
-                <MarketplaceGrid items={items} onToggleFav={toggleFav}/>
+                <MarketplaceGrid items={items} />
               </main>
             </div>
           </TabsContent>

@@ -15,10 +15,10 @@ interface Props {
   item: Item;
   open: boolean;
   onClose: () => void;
-  onToggleFav: (id: string) => void;
+  // onToggleFav: (id: string) => void;
 }
 
-export function ProductDetailsDialog({ item, open, onClose, onToggleFav }: Props) {
+export function ProductDetailsDialog({ item, open, onClose }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const petLabel = getPetCategoryLabel(item.pet_category);
@@ -118,7 +118,7 @@ export function ProductDetailsDialog({ item, open, onClose, onToggleFav }: Props
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => onToggleFav(item.id)}
+                  // onClick={() => onToggleFav(item.id)}
                 >
                   <Heart className={`h-4 w-4 ${/* fav para despues */ ""}`} />
                 </Button>

@@ -25,11 +25,11 @@ export function useMarketplace() {
       .finally(() => setLoading(false));
   }, []);
 
-  const toggleFav = (id: string) => {
-    setItems((prev) =>
-      prev.map((it) => it.id === id ? { ...it, isFavorite: !it.isFavorite } : it)
-    );
-  };
+  // const toggleFav = (id: string) => {
+  //   setItems((prev) =>
+  //     prev.map((it) => it.id === id ? { ...it, isFavorite: !it.isFavorite } : it)
+  //   );
+  // };
 
   const filtered = useMemo(() => {
     return items.filter((p) => {
@@ -54,7 +54,7 @@ export function useMarketplace() {
     error,
     filters: { search, city, petCats, artCats, priceRange, condition },
     setters: { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition },
-    toggleFav,
+    // toggleFav,
     clearFilters,
   };
 }

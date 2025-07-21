@@ -77,11 +77,10 @@ export function ProfilePreview({ onClose }: ProfilePreviewProps) {
                       title={badge.label}
                       className="w-12 h-12 mx-auto"
                     />
-                    <div className="text-sm mt-1">{badge.label}</div>
                   </div>
                 ))}
               </div>
-            ) : (
+            )  : (
               <div className="grid grid-cols-3 gap-3 opacity-50">
                 <div className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
                   <span className="text-gray-400 text-xs">Sin insignias</span>

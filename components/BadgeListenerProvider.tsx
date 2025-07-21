@@ -15,7 +15,6 @@ interface Badge {
 export function BadgeListenerProvider({ children }: { children: ReactNode }) {
   const [queue, setQueue] = useState<Badge[]>([]);
   const [current, setCurrent] = useState<Badge | null>(null);
-
   const lastCheck = useRef<string>(new Date(0).toISOString());
   const firstRun = useRef(true);
 
@@ -29,6 +28,8 @@ export function BadgeListenerProvider({ children }: { children: ReactNode }) {
   }, [queue, current]);
 
   useEffect(() => {
+    let iv: NodeJS.Timeout;
+
     const poll = async () => {
       try {
         const url = new URL("/api/badges/new", window.location.origin);
@@ -50,9 +51,16 @@ export function BadgeListenerProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    poll();                        
-    const iv = setInterval(poll, 30_000);
-    return () => clearInterval(iv);
+    const timeoutId = setTimeout(() => {
+      firstRun.current = true;  
+      poll();
+      iv = setInterval(poll, 10_000);
+    }, 10_000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (iv) clearInterval(iv);
+    };
   }, []);
 
   return (

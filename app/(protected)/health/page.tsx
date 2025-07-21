@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useActivePet } from "@/stores/activePet";
-import { Hospital, Heart } from "lucide-react";
+import { Hospital, Heart, HeartPulse } from "lucide-react";
 import { TabSelector } from "@/components/health/tab-selector";
 import { useHealth } from "@/stores/health";
 import { handleGetHealth } from "@/hooks/health/useHealth";
@@ -46,7 +46,7 @@ function HealthPage() {
       <LoadingScreen
         title="Cargando"
         subtext="Obteniendo información de salud"
-        icon={Heart}
+        icon={HeartPulse}
         accentIcon={Heart}
       />
     );
@@ -58,7 +58,7 @@ function HealthPage() {
       {pet && (
         <div className="max-w-7xl mx-auto p-6">
           <div className="flex items-center gap-2 mb-6">
-            <Hospital className="h-6 w-6 text-primary" />
+            <HeartPulse className="h-6 w-6 text-primary" />
             <h1 className="font-bold text-2xl md:text-3xl">
               Salud de {pet.name}
             </h1>

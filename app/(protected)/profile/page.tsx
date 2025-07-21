@@ -324,10 +324,9 @@ export default function ProfileConfigPage() {
                       id="name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Ingresa tu nombre a mostrar en el foro"
+                      placeholder="Ingresa tu nombre o tu nickname a mostrar en la aplicación"
                       maxLength={50}
                     />
-                    <p className="text-xs text-muted-foreground">Este será tu nombre visible en el foro</p>
                   </div>
 
                   <div className="space-y-2">

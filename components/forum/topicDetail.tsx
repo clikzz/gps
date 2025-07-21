@@ -3,7 +3,7 @@ import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { useUserProfile, useSelectedBadges } from "@/stores/userProfile"
+import { useUserProfile } from "@/stores/userProfile"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,6 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
+import { set } from "date-fns"
+import { Badge } from "@/types/forum" 
 
 interface TopicDetailProps {
   topic: {
@@ -28,6 +30,8 @@ interface TopicDetailProps {
       tag: number
       menssageCount: number
       avatar_url?: string
+      role: string
+      badges?: Badge[]
     }
     locked: boolean
   }
@@ -41,6 +45,8 @@ interface TopicDetailProps {
       tag: number
       menssageCount: number
       avatar_url?: string
+      role: string
+      badges?: Badge[]
     }
   } | null
 }
@@ -61,17 +67,27 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
   const isAuthor = currentUserId === topic.author.id
   const canEdit = isAuthor || currentUserRole === "MODERATOR" || currentUserRole === "ADMIN"
   const canDelete = isAuthor || currentUserRole === "ADMIN"
-  const selectedBadges = useSelectedBadges()
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(mainPost?.content ?? "")
   const [displayContent, setDisplayContent] = useState(mainPost?.content ?? "")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [authorBadges, setAuthorBadges] = useState<Badge[]>([])
+  const [badges, setBadges] = useState<Badge[]>([]);
   const router = useRouter()
 
   useEffect(() => {
     setDisplayContent(mainPost?.content ?? "")
     setEditContent(mainPost?.content ?? "")
   }, [mainPost])
+
+
+  useEffect(() => {
+    fetch(`/api/forum/users/${topic.author.id}/badges`, { credentials: "include" })
+      .then((res) => res.ok ? res.json() : [])
+      .then((data: Badge[]) => setBadges(data))
+      .catch(console.error);
+  }, [topic.author.id]);
+
 
   const handleSaveContent = async () => {
     if (!mainPost) return
@@ -160,10 +176,10 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
               />
             )}
           </div>
-            {selectedBadges.length > 0 ? (
+            {badges.length > 0 ? (
               <div className="flex flex-wrap justify-center gap-1">
-                {selectedBadges.map((badge) => (
-                  <div key={badge.id} className="text-center">
+                {badges.map((badge) => (
+                  <div className="text-center " key={badge.id}>
                     <img
                       src={badge.icon}
                       alt={badge.label}

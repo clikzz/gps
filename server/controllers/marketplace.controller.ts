@@ -10,12 +10,14 @@ import {
   listMarketplacePetCategories as listPetCategoriesService,
   countUserMarketplaceItems as countUserItemsService,
   getMarketplaceItemById as getItemByIdService,
+  updateMarketplaceItem as updateItemService,
 } from "@/server/services/marketplace.service";
 import {
   createItemSchema,
   listFiltersSchema,
   deleteItemSchema,
   markSoldSchema,
+  updateItemSchema,
 } from "@/server/validations/marketplace.validation";
 import type { MarketplaceItemInput, ListFilters } from "@/types/marketplace";
 
@@ -65,6 +67,40 @@ export const createMarketplaceItem = async (
     const status = msg.includes("imagen") ? 400 : 500;
     return new Response(JSON.stringify({ error: msg }), {
       status,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
+/**
+ * Actualizar un anuncio.
+ */
+export const updateMarketplaceItem = async (
+  itemId: string,
+  userId: string,
+  body: any
+) => {
+  const parseResult = updateItemSchema.safeParse({ id: itemId, ...body })
+  if (!parseResult.success) {
+    return new Response(JSON.stringify({ error: parseResult.error.format() }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    const updatedItem = await updateItemService(
+      BigInt(itemId),
+      userId,
+      parseResult.data
+    );
+    return new Response(JSON.stringify(updatedItem), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
       headers: { "Content-Type": "application/json" },
     });
   }

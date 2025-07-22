@@ -99,3 +99,9 @@ export const markSoldSchema = z.object({
 });
 
 export type CreateItemInput = z.infer<typeof createItemSchema>;
+
+export const updateItemSchema = createItemSchema.partial().extend({
+  id: z.string().regex(/^\d+$/, "ID inválido"),
+})
+
+export type UpdateItem = z.infer<typeof updateItemSchema>

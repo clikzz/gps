@@ -2,7 +2,6 @@ import prisma from "@/lib/db";
 import { reverseGeocode } from "@/utils/geocode";
 import type { MarketplaceItemInput, ListFilters } from "@/types/marketplace";
 import { ItemStatus, PetCategory, Prisma } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
 
 /**
  * Crea un nuevo anuncio en el marketplace.
@@ -37,6 +36,37 @@ export const createMarketplaceItem = async (
     });
 
     return item;
+  });
+}
+
+/** Editar un anuncio existente en el marketplace.
+ */
+export const updateMarketplaceItem = async (
+  itemId: bigint,
+  userId: string,
+  data: Partial<MarketplaceItemInput>
+) => {
+  return prisma.$transaction(async (tx) => {
+    const item = await tx.marketplaceItem.findUnique({
+      where: { id: itemId },
+    });
+
+    if (!item) {
+      throw new Error("Anuncio no encontrado.");
+    }
+
+    if (item.user_id !== userId) {
+      throw new Error("No tienes permiso para editar este anuncio.");
+    }
+
+    const updatedItem = await tx.marketplaceItem.update({
+      where: { id: itemId },
+      data: {
+        ...data,
+      },
+    });
+
+    return updatedItem;
   });
 }
 

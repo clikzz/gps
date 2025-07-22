@@ -10,7 +10,8 @@ import {
   fetchMarketplaceCities,
   fetchMarketplacePetCategories,
   fetchUserMarketplaceStats,
-  fetchMarketplaceItemById
+  fetchMarketplaceItemById,
+  updateMarketplaceItem
 } from "@/server/controllers/marketplace.controller";
 
 
@@ -114,4 +115,37 @@ export async function DELETE(req: NextRequest) {
   }
 
   return deleteMarketplaceItem(user.id, { id });
+}
+
+export async function PATCH(req: NextRequest) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) {
+    return new NextResponse(await user.text(), {
+      status:  user.status,
+      headers: user.headers,
+    });
+  }
+
+  const url = new URL(req.url);
+  const mode = url.searchParams.get("mode");
+  const id = url.searchParams.get("id");
+
+  if (mode !== "update" || !id) {
+    return NextResponse.json(
+      { message: "Parámetros inválidos para actualización." },
+      { status: 400 }
+    );
+  }
+
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { message: "JSON inválido." },
+      { status: 400 }
+    );
+  }
+
+  return updateMarketplaceItem(id, user.id, body);
 }

@@ -47,6 +47,14 @@ export interface MarketplaceItemInput {
   longitude: number;
 }
 
+export interface EditableItem extends MarketplaceItemInput {
+  id: string;
+  status: ItemStatus;
+  city?: string;
+  region?: string;
+  country?: string;
+}
+
 export interface ListFilters {
   category?: ItemCategory;
   pet_category?: PetCategory;

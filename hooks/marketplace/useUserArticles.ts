@@ -51,5 +51,5 @@ export function useUserArticles() {
     []
   );
 
-  return { articles, loading, error, markAsSold, fetchArticles };
+  return { articles, setArticles, loading, error, markAsSold, fetchArticles };
 }

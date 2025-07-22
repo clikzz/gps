@@ -24,7 +24,7 @@ export default function MarketplacePage() {
   const [repostId, setRepostId] = useState<number | null>(null);
   const [editingArticle, setEditingArticle] = useState<UserArticle | null>(null)
   const { initialData, loading: loadingRepost } = useRepostItem(repostId);
-  const { articles: userArticles, loading: userLoading, error: userError, markAsSold, fetchArticles } = useUserArticles();
+  const { articles: userArticles, setArticles, loading: userLoading, error: userError, markAsSold, fetchArticles } = useUserArticles();
   const {
     items, loading, error,
     filters, setters, clearFilters,
@@ -182,6 +182,9 @@ export default function MarketplacePage() {
             article={editingArticle}
             onClose={() => setEditingArticle(null)}
             onSaved={(updated: UserArticle) => {
+              setArticles(prev =>
+                prev.map(a => (a.id === updated.id ? updated : a))
+              );
               setEditingArticle(null);
             }}
           />

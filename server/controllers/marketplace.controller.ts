@@ -89,12 +89,31 @@ export const updateMarketplaceItem = async (
   }
 
   try {
-    const updatedItem = await updateItemService(
+    const updated = await updateItemService(
       BigInt(itemId),
       userId,
       parseResult.data
     );
-    return new Response(JSON.stringify(updatedItem), {
+
+    const output = {
+      id: updated.id.toString(),
+      title: updated.title,
+      description: updated.description,
+      category: updated.category,
+      pet_category: updated.pet_category,
+      condition: updated.condition,
+      price: updated.price.toString(),
+      photo_urls: updated.photo_urls,
+      latitude: updated.latitude,
+      longitude: updated.longitude,
+      city: updated.city,
+      region: updated.region,
+      country: updated.country,
+      status: updated.status,
+      created_at: updated.created_at.toISOString(),
+      updated_at: updated.updated_at.toISOString(),
+    };
+    return new Response(JSON.stringify(output), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

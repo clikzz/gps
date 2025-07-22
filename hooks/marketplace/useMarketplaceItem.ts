@@ -8,7 +8,10 @@ export function useMarketplaceItem(id: string | null) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setItem(null);
+      return;
+    }
     setLoading(true);
     fetch(`/api/marketplace?mode=item&id=${id}`)
       .then(async (r) => {

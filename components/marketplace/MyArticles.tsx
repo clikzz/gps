@@ -81,7 +81,7 @@ export function MyArticles({ articles, onSwitchToSell, onMarkAsSold, onRepost, o
               <UserArticleCard
                 key={a.id}
                 article={a}
-                onEdit={onEdit}
+                onEdit={(id) => onEdit?.(id)}
                 onMarkAsSold={onMarkAsSold}
                 onRepost={onRepost && (() => onRepost(a.id))}
                 onViewDetails={(article) => setSelectedArticle(article)}

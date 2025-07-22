@@ -35,6 +35,8 @@ export function UserArticleCard({
   const categoryLabel = getItemCategoryLabel(article.category);
   const conditionLabel = getItemConditionLabel(article.condition);
 
+  console.log(`Rendering UserArticleCard for article: ${article.title}, article: ${JSON.stringify(article)}`);
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">

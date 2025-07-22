@@ -13,39 +13,42 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useUpdateItem } from "@/hooks/marketplace/useUpdateItem"
-import type { EditableItem } from "@/types/marketplace"
+import type { UserArticle } from "@/types/marketplace"
 import { CATEGORY_OPTIONS, PET_OPTIONS, CONDITION_OPTIONS } from "@/types/marketplace"
+import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel, getItemStatusLabel } from "@/types/translateLabels";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker"
 
 interface EditArticleModalProps {
-  article: EditableItem | null
+  article: UserArticle | null
   onClose: () => void
-  onSaved: (updated: EditableItem) => void
+  onSaved: (updated: UserArticle) => void
 }
 
 export function EditArticleModal({ article, onClose, onSaved }: EditArticleModalProps) {
   const { updateItem, isUpdating } = useUpdateItem()
-  const [form, setForm] = useState<Partial<EditableItem>>({})
+  const [form, setForm] = useState<UserArticle | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   useEffect(() => {
     if (article) {
-      setForm({ ...article })
+      setForm(article)
     }
   }, [article])
 
-  if (!article) return null
+  if (!article || !form) return null;
 
-  const handleChange = (key: keyof EditableItem, value: any) => {
-    setForm(prev => ({ ...prev, [key]: value }))
-  }
+  const itemStatusLabel = getItemStatusLabel(article.status);
+
+  const handleChange = <K extends keyof UserArticle>(key: K, value: UserArticle[K]) => {
+    setForm(prev => prev ? ({ ...prev, [key]: value }) : null);
+  };
 
   const handleSave = async () => {
-    if (!article) return
-    const { id, ...data } = form as EditableItem
-    const updated = await updateItem(id, data)
-    onSaved(updated)
-    onClose()
-  }
+    const { id, ...payload } = form!;
+    const updated = await updateItem((id as string | number).toString(), payload);
+    onSaved(updated as UserArticle);
+    onClose();
+  };
 
   return (
     <Dialog open={!!article} onOpenChange={onClose}>
@@ -53,8 +56,7 @@ export function EditArticleModal({ article, onClose, onSaved }: EditArticleModal
         <DialogHeader>
           <DialogTitle>Editar artículo</DialogTitle>
           <div className="flex gap-2 mt-2">
-            <Badge variant="outline">ID: #{article.id}</Badge>
-            <Badge>{article.status}</Badge>
+            <Badge>{itemStatusLabel}</Badge>
           </div>
         </DialogHeader>
 
@@ -133,13 +135,14 @@ export function EditArticleModal({ article, onClose, onSaved }: EditArticleModal
           <div>
             <Label>Ubicación</Label>
             <LocationPicker
-              open={!!form.latitude}
-              initial={{ lat: form.latitude!, lng: form.longitude! }}
+              open={pickerOpen}
+              initial={{ lat: form.latitude ?? 0, lng: form.longitude ?? 0 }}
               onSelect={coords => {
                 handleChange('latitude', coords.lat)
                 handleChange('longitude', coords.lng)
+                setPickerOpen(false)
               }}
-              onClose={() => {}}
+              onClose={() => setPickerOpen(false)}
             />
           </div>
 

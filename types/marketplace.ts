@@ -70,7 +70,7 @@ export interface ListFilters {
 
 export type UserArticle = Omit<
   MarketplaceItem, 
-  "user_id" | "seller" | "latitude" | "longitude"
+  "user_id" | "seller"
 > & {
   id: number;
   created_at: string;

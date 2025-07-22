@@ -16,17 +16,15 @@ import { MarkAsSoldModal }  from "@/components/marketplace/MarkAsSold";
 import { EditArticleModal } from "@/components/marketplace/EditArticle";
 import { useMarketplaceItem } from "@/hooks/marketplace/useMarketplaceItem"
 import { UserArticle } from "@/types/marketplace";
-import type { EditableItem } from "@/types/marketplace";
 import { Card, CardHeader } from "@/components/ui/card";
 
 export default function MarketplacePage() {
   const [tab, setTab] = useState("para-ti");
   const [toSell, setToSell] = useState<UserArticle | null>(null);
   const [repostId, setRepostId] = useState<number | null>(null);
-  const [editingId, setEditingId] = useState<string| null>(null)
+  const [editingArticle, setEditingArticle] = useState<UserArticle | null>(null)
   const { initialData, loading: loadingRepost } = useRepostItem(repostId);
   const { articles: userArticles, loading: userLoading, error: userError, markAsSold, fetchArticles } = useUserArticles();
-  const { item: editArticle, loading: editLoading } = useMarketplaceItem(editingId);
   const {
     items, loading, error,
     filters, setters, clearFilters,
@@ -54,8 +52,9 @@ export default function MarketplacePage() {
   };
 
   const handleEdit = (id: number) => {
-    setEditingId(id.toString())
-  }
+    const art = userArticles.find(a => a.id === id)
+    if (art) setEditingArticle(art)
+  };
 
   return (
     <div className="min-h-screen container mx-auto pb-20">
@@ -166,7 +165,7 @@ export default function MarketplacePage() {
                 onSwitchToSell={() => setTab("vender")}
                 onMarkAsSold={handleOpenMark}
                 onRepost={handleRepost}
-                onEdit={id => handleEdit(id)}
+                onEdit={handleEdit}
               />
             )}
           </TabsContent>
@@ -180,11 +179,10 @@ export default function MarketplacePage() {
 
           {/* Modal para editar artículo */}
           <EditArticleModal
-            article={editArticle}
-            onClose={() => setEditingId(null)}
-            onSaved={(updated: EditableItem) => {
-              fetchArticles();
-              setEditingId(null);
+            article={editingArticle}
+            onClose={() => setEditingArticle(null)}
+            onSaved={(updated: UserArticle) => {
+              setEditingArticle(null);
             }}
           />
         </Tabs>

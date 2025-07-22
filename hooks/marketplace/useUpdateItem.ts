@@ -3,14 +3,14 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { updateItemSchema } from "@/server/validations/marketplace.validation"
-import type { EditableItem, MarketplaceItemInput } from "@/types/marketplace";
+import type { EditableItem } from "@/types/marketplace";
 
 export function useUpdateItem() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const updateItem = useCallback(
-    async (id: string, data: Partial<MarketplaceItemInput>): Promise<EditableItem> => {
+    async (id: string, data: Partial<EditableItem>): Promise<EditableItem> => { 
       setIsUpdating(true);
       setError(null);
 

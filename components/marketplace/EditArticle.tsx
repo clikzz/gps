@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import Image from "next/image"
-import { Plus, DollarSign, X } from "lucide-react"
+import { MapPin, DollarSign, X } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -71,69 +71,79 @@ export function EditArticleModal({ article, onClose, onSaved }: EditArticleModal
             />
           </div>
 
-          {/* Price */}
-          <div>
-            <Label htmlFor="price">Precio</Label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-3 h-4 w-4" />
-              <Input
-                id="price"
-                type="number"
-                value={form.price ?? 0}
-                onChange={e => handleChange('price', Number(e.target.value))}
-                className="pl-10"
-              />
+          {/* Tipo de mascota y Categoria */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Pet Category */}
+            <div>
+              <Label>Tipo de mascota</Label>
+              <Select
+                value={form.pet_category!}
+                onValueChange={v => handleChange('pet_category', v as any)}>
+                <SelectTrigger><SelectValue/></SelectTrigger>
+                <SelectContent>
+                  {PET_OPTIONS.map(o => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Categoría</Label>
+              <Select
+                value={form.category!}
+                onValueChange={v => handleChange('category', v as any)}>
+                <SelectTrigger><SelectValue/></SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map(o => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Pet Category */}
-          <div>
-            <Label>Tipo de mascota</Label>
-            <Select
-              value={form.pet_category!}
-              onValueChange={v => handleChange('pet_category', v as any)}>
-              <SelectTrigger><SelectValue/></SelectTrigger>
-              <SelectContent>
-                {PET_OPTIONS.map(o => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Article Category */}
-          <div>
-            <Label>Categoría</Label>
-            <Select
-              value={form.category!}
-              onValueChange={v => handleChange('category', v as any)}>
-              <SelectTrigger><SelectValue/></SelectTrigger>
-              <SelectContent>
-                {CATEGORY_OPTIONS.map(o => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Condition */}
-          <div>
-            <Label>Condición</Label>
-            <Select
-              value={form.condition!}
-              onValueChange={v => handleChange('condition', v as any)}>
-              <SelectTrigger><SelectValue/></SelectTrigger>
-              <SelectContent>
-                {CONDITION_OPTIONS.map(o => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Precio y Condicion*/}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="price">Precio</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-3 h-4 w-4" />
+                <Input
+                  id="price"
+                  type="number"
+                  value={form.price ?? 0}
+                  onChange={e => handleChange('price', Number(e.target.value))}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label>Condición</Label>
+              <Select
+                value={form.condition!}
+                onValueChange={v => handleChange('condition', v as any)}>
+                <SelectTrigger><SelectValue/></SelectTrigger>
+                <SelectContent>
+                  {CONDITION_OPTIONS.map(o => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Location Picker */}
-          <div>
+          <div className="space-y-1 flex flex-col">
             <Label>Ubicación</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPickerOpen(true)}
+            >
+              <MapPin className="mr-2" />
+              Marcar en el mapa
+            </Button>
             <LocationPicker
               open={pickerOpen}
               initial={{ lat: form.latitude ?? 0, lng: form.longitude ?? 0 }}

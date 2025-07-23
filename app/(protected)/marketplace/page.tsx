@@ -36,9 +36,10 @@ export default function MarketplacePage() {
     favorites,
     loading: favLoading,
     error: favError,
-    addFavorite,
-    removeFavorite,
-    clearFavorites,
+    addFavorite, removeFavorite, clearFavorites,
+    filters: favFilters,
+    setters: favSetters,
+    clearFilters: favClearFilters,
   } = useFavorites();
 
   const handleOpenMark = (id: number) => {
@@ -158,19 +159,55 @@ export default function MarketplacePage() {
           </TabsContent>
 
           <TabsContent value="favoritos" className="mt-4">
-            {favLoading && <LoadingScreen title="Cargando favoritos" subtext="Por favor, espera mientras cargamos tus artículos favoritos." icon={Heart} accentIcon={Heart} />}
-            {favError && <p className="text-red-600">{favError}</p>}
-            {!favLoading && !favError && (
-              <FavoritesSection
-                favorites={favorites}
-                onToggleFavorite={(id) => {
-                  favorites.some(p => p.id === id.toString())
-                    ? removeFavorite(id)
-                    : addFavorite(id);
-                }}
-                onClearAll={clearFavorites}
-              />
-            )}
+            <div className="flex gap-6">
+              {/* Sidebar desktop */}
+              <aside className="hidden lg:block w-80 shrink-0">
+                <Card className="sticky top-24">
+                  <CardHeader>
+                    <FilterSidebar
+                      filters={favFilters}
+                      setters={favSetters}
+                      clear={favClearFilters}
+                    />
+                  </CardHeader>
+                </Card>
+              </aside>
+              {/* Contenido principal */}
+              <main className="flex-1">
+                {/* Sidebar móvil */}
+                <div className="lg:hidden mb-4">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Filter className="h-4 w-4 mr-2"/> Filtros
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-80">
+                      <SheetHeader>
+                        <SheetTitle>Filtros</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-6">
+                        <FilterSidebar
+                          filters={filters}
+                          setters={setters}
+                          clear={clearFilters}
+                        />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+
+                {loading && <p>Cargando favoritos…</p>}
+                {error   && <p className="text-red-600">{error}</p>}
+                {!loading && !error && (
+                  <FavoritesSection
+                    favorites={favorites}
+                    onToggleFavorite={handleToggleFav}
+                    onClearAll={clearFavorites}
+                  />
+                )}
+              </main>
+            </div>
           </TabsContent>
 
           {/* — Vender — */}

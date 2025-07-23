@@ -1,17 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Heart, Trash2, ShoppingBag, Filter } from "lucide-react";
+import { Heart, Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { ProductCard } from "./ProductCard";
 import { ProductDetailsDialog } from "@/components/marketplace/ProductDetails";
 import type { Item } from "@/types/marketplace";
@@ -50,7 +43,7 @@ export function FavoritesSection({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Heart className="h-6 w-6 text-red-500" /> Mis Favoritos
+            <Heart className="h-6 w-6 text-secondary" /> Mis Favoritos
           </h2>
           <p className="text-muted-foreground">
             {favorites.length}{" "}
@@ -61,7 +54,7 @@ export function FavoritesSection({
           <Button
             variant="outline"
             onClick={onClearAll}
-            className="text-red-600 hover:text-red-700 bg-transparent"
+            className="text-secondary bg-transparent"
           >
             <Trash2 className="h-4 w-4 mr-2" /> Limpiar todo
           </Button>
@@ -85,51 +78,6 @@ export function FavoritesSection({
         </Card>
       ) : (
         <>
-          {/* Filtros y orden */}
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">
-                    Filtros y ordenamiento
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                  <Select value={filterCat} onValueChange={setFilterCat}>
-                    <SelectTrigger className="w-full sm:w-48">
-                      <SelectValue placeholder="Filtrar por mascota" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {cats.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full sm:w-48">
-                      <SelectValue placeholder="Ordenar por" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="recent">Más recientes</SelectItem>
-                      <SelectItem value="price-low">
-                        Precio: menor a mayor
-                      </SelectItem>
-                      <SelectItem value="price-high">
-                        Precio: mayor a menor
-                      </SelectItem>
-                      <SelectItem value="name">Nombre A–Z</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-
           {filtered.length === 0 ? (
             <Card className="text-center py-8">
               <CardContent>
@@ -146,7 +94,7 @@ export function FavoritesSection({
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {filtered.map((item) => (
                 <ProductCard
                   key={item.id}

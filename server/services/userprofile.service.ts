@@ -1,4 +1,5 @@
 import prisma from "@/lib/db";
+import { UpdateUserProfileInput } from "@/server/validations/userprofile.validations"
 
 export const getUserProfile = async (userId: string) => {
   return await prisma.users.findUnique({
@@ -24,25 +25,27 @@ export const getAllBadges = async () => {
 
 export const updateUserProfile = async (
   userId: string,
-  {
+  data: UpdateUserProfileInput
+) => {
+  const {
     name,
     email,
     avatar_url,
     selectedBadgeIds,
-  }: { 
-    name: string; 
-    email: string; 
-    avatar_url: string | null;
-    selectedBadgeIds?: string[];
-  }
-) => {
+    instagram,
+    phone,
+  } = data;
+  
   const defaultAvatarUrl = "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/images/profile/defaultpfp.png";
   const finalAvatarUrl = avatar_url === null ? defaultAvatarUrl : avatar_url;
 
-  const updateData: any = { 
-    name, 
-    email, 
-    avatar_url: finalAvatarUrl 
+  const updateData: any = {
+    ...(name !== undefined && { name }),
+    ...(email !== undefined && { email }),
+    avatar_url: finalAvatarUrl,
+    ...(selectedBadgeIds && { selectedBadgeIds }),
+    ...(instagram !== undefined && { instagram }),
+    ...(phone !== undefined && { phone }),
   };
 
   if (selectedBadgeIds !== undefined) {

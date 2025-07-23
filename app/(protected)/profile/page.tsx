@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
-import { Upload, Save, Trash2, ArrowLeft, AlertCircle, RefreshCw, User, Award, Camera } from "lucide-react"
+import { Save, Trash2, AlertCircle, RefreshCw, User, Award, Camera, Phone } from "lucide-react" 
 import { useProfileImageUpload } from "@/hooks/useProfileImageUpload"
 import { toast } from "sonner"
 import { useUserProfile } from "@/stores/userProfile"
@@ -18,12 +18,13 @@ export default function ProfileConfigPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState("")
+  const [phone, setPhone] = useState("") 
+  const [instagram, setInstagram] = useState("") 
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [selectedBadgeIds, setSelectedBadgeIds] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState("profile")
   const fileInputRef = useRef<HTMLInputElement>(null)
-
   const {
     selectedFile,
     isUploading: isUploadingAvatar,
@@ -41,6 +42,11 @@ export default function ProfileConfigPage() {
   useEffect(() => {
     if (user) {
       setName(user.name || "")
+      const initialPhone = user.phone ? user.phone : "+569"
+      setPhone(initialPhone)
+      const initialInstagram = user.instagram ? user.instagram : "@"
+      setInstagram(initialInstagram)
+
       setSelectedBadgeIds(user.selectedBadgeIds || [])
       if (!selectedFile) {
         setImagePreview(null)
@@ -74,8 +80,9 @@ export default function ProfileConfigPage() {
         email: user?.email || "",
         avatar_url: updatedData?.avatar_url !== undefined ? updatedData?.avatar_url : user?.avatar_url,
         selectedBadgeIds: updatedData?.selectedBadgeIds !== undefined ? updatedData?.selectedBadgeIds : user?.selectedBadgeIds,
+        phone: updatedData?.phone !== undefined ? updatedData?.phone : user?.phone, 
+        instagram: updatedData?.instagram !== undefined ? updatedData?.instagram : user?.instagram, 
       }
-
       const response = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -128,9 +135,9 @@ export default function ProfileConfigPage() {
       : selectedBadgeIds.length < 3
         ? [...selectedBadgeIds, badgeId]
         : (() => {
-          toast.warning("Solo puedes seleccionar máximo 3 insignias")
-          return selectedBadgeIds
-        })()
+            toast.warning("Solo puedes seleccionar máximo 3 insignias")
+            return selectedBadgeIds
+          })()
 
     if (newSelectedBadgeIds !== selectedBadgeIds) {
       setSelectedBadgeIds(newSelectedBadgeIds)
@@ -172,7 +179,7 @@ export default function ProfileConfigPage() {
                   url: user.avatar_url,
                 }),
               })
-            } catch { }
+            } catch {}
           }
         } else {
           throw new Error(uploadResult.error || "Error al subir la imagen")
@@ -183,6 +190,8 @@ export default function ProfileConfigPage() {
         name: name.trim() || undefined,
         avatar_url: avatarUrl,
         selectedBadgeIds: selectedBadgeIds,
+        phone: phone.trim() || undefined, 
+        instagram: instagram.trim() || undefined, 
       })
 
       if (success) {
@@ -202,10 +211,10 @@ export default function ProfileConfigPage() {
 
   if (loading) {
     return (
-      <LoadingScreen
-        title="Cargando perfil"
-        subtext="Preparando tu información"
-        icon={User}          
+      <LoadingScreen 
+        title="Cargando perfil" 
+        subtext="Preparando tu información" 
+        icon={User} 
       />
     );
   }
@@ -246,6 +255,7 @@ export default function ProfileConfigPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="flex items-center gap-4 mb-8">
+
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -259,7 +269,7 @@ export default function ProfileConfigPage() {
                     activeTab === "profile"
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted text-muted-foreground"
-                    }`}
+                  }`}
                 >
                   <User className="w-5 h-5" />
                   <span className="font-medium">Editar perfil</span>
@@ -270,20 +280,30 @@ export default function ProfileConfigPage() {
                     activeTab === "badges"
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted text-muted-foreground"
-                    }`}
+                  }`}
                 >
                   <Award className="w-5 h-5" />
                   <span className="font-medium">Insignias</span>
                 </button>
+                <button
+                  onClick={() => setActiveTab("social")}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                    activeTab === "social"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted text-muted-foreground"
+                  }`}
+                >
+                  <Phone className="w-5 h-5" /> 
+                  <span className="font-medium">Social</span>
+                </button>
               </nav>
             </div>
           </div>
-
-          {/* Contenido Principal */}
+          
           <div className="flex-1 max-w-2xl">
             {activeTab === "profile" && (
               <div className="space-y-8">
-                {/* Avatar */}
+                 {/* Avatar */}
                 <div className="flex flex-col items-center text-center space-y-6">
                   <div className="relative group">
                     <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-2 border-primary/20 shadow-lg">
@@ -303,7 +323,7 @@ export default function ProfileConfigPage() {
                       <Camera className="w-6 h-6" />
                     </button>
                   </div>
-
+                  
                   {user.avatar_url && !user.avatar_url.includes("defaultpfp.png") && (
                     <Button
                       variant="outline"
@@ -315,7 +335,7 @@ export default function ProfileConfigPage() {
                       {isDeleting ? "Eliminando..." : "Eliminar foto"}
                     </Button>
                   )}
-
+                  
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -325,7 +345,7 @@ export default function ProfileConfigPage() {
                   />
                 </div>
 
-                {/* Formulario */}
+                 {/* Formulario */}
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-medium">
@@ -349,7 +369,7 @@ export default function ProfileConfigPage() {
                   </div>
                 </div>
 
-                {/* Acciones */}
+                 {/* Acciones */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-6 justify-center items-center">
                   <Button
                     onClick={handleSave}
@@ -397,13 +417,13 @@ export default function ProfileConfigPage() {
                           >
                             <div
                               className={`
-                              text-center p-4 border-2 rounded-xl transition-all
-                              ${
-                                isSelected
-                                  ? "border-primary bg-primary/5 shadow-lg"
-                                  : "border-border bg-background hover:border-primary/50 hover:bg-muted/30"
+                                text-center p-4 border-2 rounded-xl transition-all
+                                ${
+                                  isSelected
+                                    ? "border-primary bg-primary/5 shadow-lg"
+                                    : "border-border bg-background hover:border-primary/50 hover:bg-muted/30"
                                 }
-                            `}
+                              `}
                             >
                               <img
                                 src={badge.icon || "/placeholder.svg"}
@@ -464,6 +484,71 @@ export default function ProfileConfigPage() {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+            {activeTab === "social" && (
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Información Social</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Añade tu número de teléfono y tu usuario de Instagram para que otros puedan contactarte.
+                  </p>
+                </div>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium">
+                      Número de Teléfono
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => {
+                        let value = e.target.value
+                        if (!value.startsWith("+569")) {
+                          value = "+569" + value.replace(/[^0-9]/g, "").substring(4)
+                        } else {
+                          const prefix = "+569"
+                          const digits = value.substring(prefix.length).replace(/[^0-9]/g, "")
+                          value = prefix + digits
+                        }
+                        if (value.length > 12) {
+                          value = value.substring(0, 12)
+                        }
+                        setPhone(value)
+                      }}
+                      placeholder="Ej: +569 1234 5678"
+                      maxLength={12} 
+                      className="h-12 text-base"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram" className="text-sm font-medium">
+                      Usuario de Instagram
+                    </Label>
+                    <Input
+                      id="instagram"
+                      type="text"
+                      value={instagram}
+                      onChange={(e) => {
+                        let value = e.target.value
+                        if (!value.startsWith("@")) {
+                          value = "@" + value.replace(/^@/, "")
+                        }
+                        setInstagram(value)
+                      }}
+                      placeholder="Ej: @tu_usuario"
+                      maxLength={30} 
+                      className="h-12 text-base"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 pt-6 justify-center items-center">
+                  <Button onClick={handleSave} disabled={isLoading} className="px-8 h-12 text-base font-medium">
+                    <Save className="w-4 h-4 mr-2" />
+                    {isLoading ? "Guardando..." : "Guardar Cambios"}
+                  </Button>
                 </div>
               </div>
             )}

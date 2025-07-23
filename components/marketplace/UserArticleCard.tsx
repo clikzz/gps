@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import { MapPin, Clock } from "lucide-react";
 import type { UserArticle } from "@/types/marketplace";
-import { formatTimeAgo } from "@/utils/formatTime";
+import { formatTimeAgo, formatPrice } from "@/utils/format";
 
 interface Props {
   article: UserArticle;
@@ -35,7 +35,7 @@ export function UserArticleCard({
   const categoryLabel = getItemCategoryLabel(article.category);
   const conditionLabel = getItemConditionLabel(article.condition);
 
-  console.log(`Rendering UserArticleCard for article: ${article.title}, article: ${JSON.stringify(article)}`);
+  console.log(`Rendering UserArticleCard for article: ${article.title}, price: ${article.price}, typeof price: ${typeof article.price}`);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -63,13 +63,13 @@ export function UserArticleCard({
               <div>
                 <p className="text-sm text-muted-foreground">Precio original</p>
                 <p className="line-through">
-                  ${article.price != null ? article.price.toLocaleString() : "-"}
+                  ${article.price != null ? formatPrice(article.price) : "-"}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Precio venta</p>
                 <p className={`font-bold ${article.sold_price ? (article.sold_price >= article.price ? "text-primary" : "text-secondary") : "text-muted-foreground"}`}>
-                  ${article.sold_price?.toLocaleString()}
+                  ${formatPrice(article.sold_price ?? article.price)}
                 </p>
               </div>
             </div>
@@ -77,7 +77,7 @@ export function UserArticleCard({
         ) : (
           <div className="flex items-baseline justify-between">
             <span className="text-2xl font-bold text-primary">
-              ${article.price?.toLocaleString()}
+              ${formatPrice(article.price)}
             </span>
             <Badge variant="outline" className="ml-2">
               {categoryLabel}

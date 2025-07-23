@@ -50,3 +50,10 @@ export function formatTimeOnSale(createdAt: string, soldAt?: string): string {
   }
   return `${minutes} ${minutes === 1 ? "minuto" : "minutos"}`;
 }
+
+export function formatPrice(value: number) {
+  return new Intl.NumberFormat("es-CL", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}

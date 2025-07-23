@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel, getItemStatusLabel } from "@/types/translateLabels";
-import { formatTimeAgo, formatTimeOnSale } from "@/utils/formatTime";
+import { formatTimeAgo, formatTimeOnSale } from "@/utils/format";
 import type { UserArticle } from "@/types/marketplace"
 
 interface SoldArticleDetailsProps {

@@ -7,7 +7,7 @@ import { Badge }  from "@/components/ui/badge";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import { MapPin, Heart, Clock } from "lucide-react";
 import type { Item } from "@/types/marketplace";
-import { formatTimeAgo } from "@/utils/formatTime";
+import { formatTimeAgo, formatPrice } from "@/utils/format";
 
 interface Props {
   item: Item;
@@ -19,6 +19,8 @@ export function ProductCard({ item, onViewDetails }: Props) {
   const petLabel = getPetCategoryLabel(item.pet_category);
   const categoryLabel = getItemCategoryLabel(item.category);
   const conditionLabel = getItemConditionLabel(item.condition);
+
+  console.log(`Rendering ProductCard for item: ${item.title}, price: ${item.price}, typeof price: ${typeof item.price}`);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -50,7 +52,7 @@ export function ProductCard({ item, onViewDetails }: Props) {
       <CardContent className="pt-0">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xl font-bold text-primary">${item.price.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-primary">${formatPrice(item.price)}</p>
             <p className="text-sm text-muted-foreground">por {item.seller.name}</p>
           </div>
           <Badge variant="outline">{categoryLabel}</Badge>

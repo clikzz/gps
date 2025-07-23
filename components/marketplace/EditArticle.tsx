@@ -17,6 +17,7 @@ import type { UserArticle } from "@/types/marketplace"
 import { CATEGORY_OPTIONS, PET_OPTIONS, CONDITION_OPTIONS } from "@/types/marketplace"
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel, getItemStatusLabel } from "@/types/translateLabels";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker"
+import { Minimap } from "@/components/marketplace/Minimap"
 
 interface EditArticleModalProps {
   article: UserArticle | null
@@ -45,7 +46,11 @@ export function EditArticleModal({ article, onClose, onSaved }: EditArticleModal
 
   const handleSave = async () => {
     const { id, ...payload } = form!;
-    const updated = await updateItem((id as string | number).toString(), payload);
+    const cleanPayload = {
+      ...payload,
+      price: typeof payload.price === 'string' ? Number(payload.price) : payload.price
+    };
+    const updated = await updateItem((id as string | number).toString(), cleanPayload);
     onSaved(updated as UserArticle);
     onClose();
   };
@@ -142,8 +147,16 @@ export function EditArticleModal({ article, onClose, onSaved }: EditArticleModal
               onClick={() => setPickerOpen(true)}
             >
               <MapPin className="mr-2" />
-              Marcar en el mapa
+              Editar ubicación
             </Button>
+            {form.latitude != null && form.longitude != null && (
+              <div className="">
+                <Minimap
+                  location={{ lat: form.latitude, lng: form.longitude }}
+                  height="200px"
+                />
+              </div>
+            )}
             <LocationPicker
               open={pickerOpen}
               initial={{ lat: form.latitude ?? 0, lng: form.longitude ?? 0 }}

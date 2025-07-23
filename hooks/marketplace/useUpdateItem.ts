@@ -2,50 +2,64 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { updateItemSchema } from "@/server/validations/marketplace.validation"
-import type { EditableItem } from "@/types/marketplace";
+import { reverseGeocode } from "@/utils/geocode";
+import { updateItemSchema } from "@/server/validations/marketplace.validation";
+import type { EditableItem, UpdateItemPayload } from "@/types/marketplace";
 
 export function useUpdateItem() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const updateItem = useCallback(
-    async (id: string, data: Partial<EditableItem>): Promise<EditableItem> => { 
+    async (
+      id: string | number,
+      data: UpdateItemPayload
+    ): Promise<EditableItem> => {
       setIsUpdating(true);
       setError(null);
 
-      try {
-        const res = await fetch(
-          `/api/marketplace?mode=update&id=${encodeURIComponent(id)}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-          }
+      let payload = { ...data };
+      if (payload.latitude != null && payload.longitude != null) {
+        const { city, region, country } = await reverseGeocode(
+          payload.latitude,
+          payload.longitude
         );
-        const body = await res.json().catch(() => null);
-
-        if (!res.ok) {
-          const msg = body?.message || `Error ${res.status}`;
-          throw new Error(msg);
-        }
-
-        const updated: EditableItem = {
-          ...body,
-          created_at: body.created_at,
-          updated_at: body.updated_at,
-        };
-
-        toast.success("Artículo actualizado correctamente");
-        return updated;
-      } catch (e: any) {
-        const msg = e.message || "Error actualizando el artículo";
-        setError(msg);
-        toast.error(msg);
-        throw e;
-      } finally {
-        setIsUpdating(false);
+        payload = { ...payload, city, region, country };
       }
+
+      console.log("Updating item:", id, payload);
+      const parsed = updateItemSchema.safeParse({
+        id: String(id),
+        ...payload,
+      });
+      if (!parsed.success) {
+        const msg = parsed.error.errors.map((e) => e.message).join(", ");
+        toast.error(msg);
+        throw new Error(msg);
+      }
+
+      const res = await fetch(
+        `/api/marketplace?mode=update&id=${encodeURIComponent(String(id))}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(body?.error || `Error ${res.status}`);
+      }
+
+      const updated: EditableItem = {
+        id: String(id),
+        status: body.status,
+        ...payload,
+        updated_at: new Date(body.updated_at),
+      };
+
+      toast.success("Artículo actualizado correctamente");
+      return updated;
     },
     []
   );

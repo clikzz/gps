@@ -115,7 +115,7 @@ export const softDeleteMarketplaceItem = async (
 export const markItemAsSold = async (
   itemId: bigint,
   userId: string,
-  soldPrice: string,
+  soldPrice: number,
   soldAt: Date,
   notes?: string
 ) => {
@@ -138,7 +138,7 @@ export const markItemAsSold = async (
     data: {
       item_id: itemId,
       user_id: userId,
-      price: new Prisma.Decimal(soldPrice),
+      price: soldPrice,
       sold_at: soldAt,
       notes,
     },

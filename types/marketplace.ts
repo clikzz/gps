@@ -30,7 +30,7 @@ export type Item = Omit<
   "id" | "price" | "created_at" | "updated_at"
 > & {
   id: string;
-  price: string;
+  price: number;
   created_at: string;
   updated_at: string;
 };
@@ -53,7 +53,24 @@ export interface EditableItem extends MarketplaceItemInput {
   city?: string;
   region?: string;
   country?: string;
+  updated_at: Date;
 }
+
+export type UpdateItemPayload = Pick<
+  MarketplaceItem,
+  | "title"
+  | "description"
+  | "pet_category"
+  | "category"
+  | "condition"
+  | "price"
+  | "photo_urls"
+  | "latitude"
+  | "longitude"
+  | "city"
+  | "region"
+  | "country"
+>;
 
 export interface ListFilters {
   category?: ItemCategory;
@@ -73,6 +90,7 @@ export type UserArticle = Omit<
   "user_id" | "seller"
 > & {
   id: number;
+  price: number;
   created_at: string;
   sold_price?: number;
   sold_at?: string;

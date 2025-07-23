@@ -14,7 +14,6 @@ import NewItemForm from "@/components/marketplace/NewItemForm";
 import { MyArticles } from "@/components/marketplace/MyArticles";
 import { MarkAsSoldModal }  from "@/components/marketplace/MarkAsSold";
 import { EditArticleModal } from "@/components/marketplace/EditArticle";
-import { useMarketplaceItem } from "@/hooks/marketplace/useMarketplaceItem"
 import { UserArticle } from "@/types/marketplace";
 import { Card, CardHeader } from "@/components/ui/card";
 

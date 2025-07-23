@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import type { Item } from "@/types/marketplace";
-import { formatTimeAgo } from "@/utils/formatTime";
+import { formatTimeAgo } from "@/utils/format";
 
 interface Props {
   item: Item;

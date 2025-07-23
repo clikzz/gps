@@ -35,7 +35,7 @@ export function useUserArticles() {
       const res = await fetch(`/api/marketplace?mode=sold&id=${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sold_price: sold_price.toString(), sold_at: sold_at, notes }),
+        body: JSON.stringify({ sold_price: sold_price, sold_at: sold_at, notes }),
       });
       if (!res.ok) {
         throw new Error(`Error ${res.status}`);

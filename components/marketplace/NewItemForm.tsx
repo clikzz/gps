@@ -21,7 +21,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { DollarSign, MapPin, Plus } from "lucide-react";
 import { useNewItemForm } from "@/hooks/marketplace/useNewItemForm";
-import { useImageUpload } from "@/hooks/marketplace/useItemImageUpload";
+import { Minimap } from "@/components/marketplace/Minimap";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker";
 import type { ItemCondition, ItemCategory, PetCategory } from "@prisma/client";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS, PET_OPTIONS } from "@/types/marketplace";
@@ -227,6 +227,11 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
           {/* Ubicación */}
           <div className="space-y-1 flex flex-col">
             <Label>Ubicación *</Label>
+            {loc && (
+              <>
+                <Minimap location={loc} height="200px" />
+              </>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -236,11 +241,6 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
               <MapPin className="mr-2" />
               Marcar en el mapa
             </Button>
-            {loc && (
-              <p className="text-sm text-muted-foreground">
-                Lat: {loc.lat.toFixed(4)}, Lng: {loc.lng.toFixed(4)}
-              </p>
-            )}
             {(errors.latitude || errors.longitude) && (
               <p className="text-sm text-destructive">
                 Por favor marca la ubicación en el mapa.

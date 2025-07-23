@@ -30,7 +30,7 @@ export function useMarketplace() {
     const filtered = items.filter((p) => {
       if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
       if (city !== "all" && p.city !== city) return false;
-      if (petCats.length && !petCats.includes(p.category)) return false;
+      if (petCats.length && !petCats.includes("ALL") && !petCats.includes(p.pet_category)) return false;
       if (artCats.length && !artCats.includes(p.category)) return false;
       const price = Number(p.price);
       if (price < priceRange[0] || price > priceRange[1]) return false;

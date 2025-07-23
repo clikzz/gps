@@ -66,7 +66,6 @@ export function useFavorites() {
     }
   }, []);
 
-  // — Filtros existentes —
   const [search, setSearch] = useState("");
   const [city, setCity] = useState("all");
   const [petCats, setPetCats] = useState<string[]>([]);
@@ -79,7 +78,7 @@ export function useFavorites() {
       .filter(p => {
         if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
         if (city !== "all" && p.city !== city) return false;
-        if (petCats.length && !petCats.includes(p.pet_category)) return false;
+        if (petCats.length && !petCats.includes("ALL") && !petCats.includes(p.pet_category)) return false;
         if (artCats.length && !artCats.includes(p.category)) return false;
         const price = Number(p.price);
         if (price < priceRange[0] || price > priceRange[1]) return false;
@@ -88,9 +87,9 @@ export function useFavorites() {
       })
       .sort((a, b) => {
         switch (sortBy) {
-          case "price-low":  return a.price - b.price;
+          case "price-low": return a.price - b.price;
           case "price-high": return b.price - a.price;
-          case "name":       return a.title.localeCompare(b.title);
+          case "name": return a.title.localeCompare(b.title);
           case "recent":
           default:
             return 0;

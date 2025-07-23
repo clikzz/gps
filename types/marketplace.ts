@@ -7,6 +7,8 @@ export interface MarketplaceItem {
     name: string;
     email: string;
     avatar_url: string;
+    instagram?: string;
+    phone?: string;
   }
   title: string;
   description?: string;

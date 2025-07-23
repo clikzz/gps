@@ -222,6 +222,8 @@ export const listMarketplaceItems = async (
           name: true,
           email: true,
           avatar_url: true,
+          instagram: true,
+          phone: true,
         },
       },
     },

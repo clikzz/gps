@@ -9,15 +9,48 @@ export const getVaccinations = async (userId: string) => {
 };
 
 export const createVaccination = async (petId: number, data: Vaccination) => {
-  return prisma.vaccinations.create({
-    data: {
-      pet_id: petId,
-      name: data.name,
-      type: data.type ?? null,
-      application_date: data.application_date,
-      next_dose_date: data.next_dose_date ?? null,
-      notes: data.notes ?? null,
-    },
+  return prisma.$transaction(async (tx) => {
+    const vaccination = await tx.vaccinations.create({
+      data: {
+        pet_id: petId,
+        name: data.name,
+        type: data.type ?? null,
+        application_date: data.application_date,
+        next_dose_date: data.next_dose_date ?? null,
+        notes: data.notes ?? null,
+      },
+    });
+
+    const pet = await tx.pets.findUnique({
+      where: { id: petId },
+      select: { user_id: true },
+    });
+
+    if (!pet) throw new Error("Mascota no encontrada");
+
+    const existing = await tx.userBadge.findFirst({
+      where: {
+        userId: pet.user_id,
+        badge: { key: "FIRST_VACCINE" },
+      },
+    });
+
+    if (!existing) {
+      const badge = await tx.badge.findUnique({
+        where: { key: "FIRST_VACCINE" },
+      });
+
+      if (badge) {
+        await tx.userBadge.create({
+          data: {
+            userId: pet.user_id,
+            badgeId: badge.id,
+          },
+        });
+      }
+    }
+
+    return vaccination;
   });
 };
 

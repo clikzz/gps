@@ -7,7 +7,7 @@ export const createReview = async (data: CreateReviewInput & { user_id: string }
       service_id: BigInt(data.service_id),
       user_id: data.user_id,
     },
-  })
+  });
 
   if (existingReview) {
     throw new Error("Ya has dejado una reseña para este servicio")
@@ -15,13 +15,13 @@ export const createReview = async (data: CreateReviewInput & { user_id: string }
 
   const service = await prisma.services.findUnique({
     where: { id: BigInt(data.service_id) },
-  })
+  });
 
   if (!service) {
     throw new Error("El servicio no existe")
   }
 
-  return await prisma.reviews.create({
+  const review = await prisma.reviews.create({
     data: {
       service_id: BigInt(data.service_id),
       user_id: data.user_id,
@@ -38,8 +38,33 @@ export const createReview = async (data: CreateReviewInput & { user_id: string }
         },
       },
     },
-  })
-}
+  });
+
+  const hasBadge = await prisma.userBadge.findFirst({
+    where: {
+      userId: data.user_id,
+      badge: { key: "FIRST_REVIEW" },
+    },
+  });
+
+  if (!hasBadge) {
+    const badge = await prisma.badge.findUnique({
+      where: { key: "FIRST_REVIEW" },
+    });
+
+    if (badge) {
+      await prisma.userBadge.create({
+        data: {
+          userId: data.user_id,
+          badgeId: badge.id,
+        },
+      });
+    }
+  }
+
+  return review;
+};
+
 
 export const getReviewsByServiceId = async (filters: GetReviewsInput) => {
   const reviews = await prisma.reviews.findMany({

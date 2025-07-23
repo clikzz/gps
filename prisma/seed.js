@@ -106,7 +106,25 @@ async function main() {
       name: "Vendedor",
       description: "Por vender un artículo en el Marketplace",
       icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//marketplace_sale.png",
-    }
+    },
+    {
+      key: "FIRST_MEDICATION",
+      name: "Primer Tratamiento",
+      description: "Por registrar la primera medicación para una mascota",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//first_medication.png",
+    },
+    {
+      key: "FIRST_VACCINE",
+      name: "Primera Vacuna",
+      description: "Por registrar la primera vacuna para una mascota",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//first_vaccine.png",
+    },
+    {
+      key: "FIRST_REVIEW",
+      name: "Primera Reseña",
+      description: "Por dejar tu primera reseña de un servicio",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//first_review.png",
+    },
   ];
 
   for (const b of badges) {

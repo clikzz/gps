@@ -8,12 +8,16 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import { useMarketplace } from "@/hooks/marketplace/useMarketplace";
 import { useUserArticles } from "@/hooks/marketplace/useUserArticles";
 import { useRepostItem } from "@/hooks/marketplace/useRepostItem";
+import { useFavorites } from "@/hooks/marketplace/useFavorites";
 import { FilterSidebar } from "@/components/marketplace/FilterSidebar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import NewItemForm from "@/components/marketplace/NewItemForm";
 import { MyArticles } from "@/components/marketplace/MyArticles";
 import { MarkAsSoldModal }  from "@/components/marketplace/MarkAsSold";
 import { EditArticleModal } from "@/components/marketplace/EditArticle";
+import { FavoritesSection } from "@/components/marketplace/Favorites";
+import LoadingScreen from "@/components/LoadingScreen";
+import NoArticles from "@/components/marketplace/NoArticles";
 import { UserArticle } from "@/types/marketplace";
 import { Card, CardHeader } from "@/components/ui/card";
 
@@ -28,6 +32,14 @@ export default function MarketplacePage() {
     items, loading, error,
     filters, setters, clearFilters,
   } = useMarketplace();
+  const {
+    favorites,
+    loading: favLoading,
+    error: favError,
+    addFavorite,
+    removeFavorite,
+    clearFavorites,
+  } = useFavorites();
 
   const handleOpenMark = (id: number) => {
     const art = userArticles.find((a) => a.id === id);
@@ -55,6 +67,12 @@ export default function MarketplacePage() {
     if (art) setEditingArticle(art)
   };
 
+  const handleToggleFav = (id: string) => {
+    favorites.some(f => f.id === id)
+      ? removeFavorite(id)
+      : addFavorite(id);
+  };
+
   return (
     <div className="min-h-screen container mx-auto pb-20">
       <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 lg:max-w-7xl md:max-w-5xl px-6">
@@ -67,9 +85,12 @@ export default function MarketplacePage() {
               </div>
 
               <Tabs value={tab} onValueChange={setTab} className="flex-1 max-w-md">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="para-ti">
                     <ShoppingBag className="mr-1 h-4 w-4"/> Para ti
+                  </TabsTrigger>
+                  <TabsTrigger value="favoritos">
+                    <Heart className="mr-1 h-4 w-4"/> Favoritos
                   </TabsTrigger>
                   <TabsTrigger value="vender">
                     <DollarSign className="mr-1 h-4 w-4"/> Vender
@@ -79,12 +100,6 @@ export default function MarketplacePage() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="icon">
-                  <Heart className="h-5 w-5" />
-                </Button>
-              </div>
             </div>
           </div>
         </header>
@@ -130,19 +145,38 @@ export default function MarketplacePage() {
                   </Sheet>
                 </div>
 
-                {loading && <p>Cargando…</p>}
+                {loading && <LoadingScreen title="Cargando productos" subtext="Por favor, espera mientras cargamos los artículos." icon={Store} accentIcon={Store} />}
                 {error && <p className="text-red-600">Error: {error}</p>}
-                {!loading && !error && items.length === 0 && <p>No hay productos.</p>}
-
-                <MarketplaceGrid items={items} />
+                {items.length === 0 && <NoArticles title="No hay productos" subtext="No se encontraron artículos en esta categoría." icon={Store} accentIcon={Store} />}
+                <MarketplaceGrid
+                  items={items}
+                  onToggleFavorite={handleToggleFav}
+                  favorites={favorites}
+                />
               </main>
             </div>
+          </TabsContent>
+
+          <TabsContent value="favoritos" className="mt-4">
+            {favLoading && <LoadingScreen title="Cargando favoritos" subtext="Por favor, espera mientras cargamos tus artículos favoritos." icon={Heart} accentIcon={Heart} />}
+            {favError && <p className="text-red-600">{favError}</p>}
+            {!favLoading && !favError && (
+              <FavoritesSection
+                favorites={favorites}
+                onToggleFavorite={(id) => {
+                  favorites.some(p => p.id === id.toString())
+                    ? removeFavorite(id)
+                    : addFavorite(id);
+                }}
+                onClearAll={clearFavorites}
+              />
+            )}
           </TabsContent>
 
           {/* — Vender — */}
           <TabsContent value="vender" className="mt-4">
             {loadingRepost ? (
-              <p>Cargando datos…</p>
+              <LoadingScreen title="Obteniendo datos" subtext="Por favor, espera mientras rellenamos el formulario por ti." icon={Store} accentIcon={Store} />
             ) : (
               <NewItemForm
                 onSuccess={() => {

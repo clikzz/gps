@@ -284,3 +284,31 @@ export async function countUserMarketplaceItems(userId: string) {
 
   return { total, active, sold };
 };
+
+export async function listFavorites(userId: string) {
+  return prisma.favorite.findMany({
+    where: { userId },
+    include: {
+      item: {
+        include: { seller: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function addFavorite(userId: string, itemId: bigint) {
+  return prisma.favorite.create({
+    data: { userId, itemId },
+  });
+}
+
+export async function removeFavorite(userId: string, itemId: bigint) {
+  return prisma.favorite.deleteMany({
+    where: { userId, itemId },
+  });
+}
+
+export async function clearFavorites(userId: string) {
+  return prisma.favorite.deleteMany({ where: { userId } });
+}

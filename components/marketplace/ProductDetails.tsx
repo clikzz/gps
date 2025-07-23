@@ -14,11 +14,12 @@ import { formatTimeAgo, formatPrice } from "@/utils/format";
 interface Props {
   item: Item;
   open: boolean;
+  isFavorite: boolean;
   onClose: () => void;
-  // onToggleFav: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
 }
 
-export function ProductDetailsDialog({ item, open, onClose }: Props) {
+export function ProductDetailsDialog({ item, open, onClose, onToggleFavorite, isFavorite }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const petLabel = getPetCategoryLabel(item.pet_category);
@@ -118,9 +119,16 @@ export function ProductDetailsDialog({ item, open, onClose }: Props) {
                 <Button
                   variant="outline"
                   size="icon"
-                  // onClick={() => onToggleFav(item.id)}
+                  onClick={() => onToggleFavorite(item.id)}
+                  className="bg-background hover:bg-foreground/5"
                 >
-                  <Heart className={`h-4 w-4 ${/* fav para despues */ ""}`} />
+                <Heart
+                  className={`h-4 w-4 transition-colors
+                    ${isFavorite 
+                      ? "text-secondary fill-secondary"
+                      : "text-primary hover:text-secondary"
+                    }`}
+                />
                 </Button>
               </div>
             </div>

@@ -11,6 +11,10 @@ import {
   countUserMarketplaceItems as countUserItemsService,
   getMarketplaceItemById as getItemByIdService,
   updateMarketplaceItem as updateItemService,
+  addFavorite,
+  removeFavorite,
+  clearFavorites,
+  listFavorites,
 } from "@/server/services/marketplace.service";
 import {
   createItemSchema,
@@ -386,4 +390,42 @@ export const fetchUserMarketplaceStats = async (userId: string) => {
       { status: 500 }
     );
   }
+}
+
+export async function fetchFavorites(userId: string) {
+  const favs = await listFavorites(userId);
+  const output = favs.map(f => ({
+    ...f.item,
+    id: f.item.id.toString(),
+    price: f.item.price,
+    seller: {
+      name: f.item.seller.name,
+      email: f.item.seller.email,
+      avatar_url: f.item.seller.avatar_url,
+    },
+    created_at: f.item.created_at.toISOString(),
+    updated_at: f.item.updated_at.toISOString(),
+  }));
+  return NextResponse.json(output);
+}
+
+export async function createFavorite(userId: string, params: { itemId?: string }) {
+  if (!params.itemId) {
+    return NextResponse.json({ error: "Falta itemId" }, { status: 400 });
+  }
+  await addFavorite(userId, BigInt(params.itemId));
+  return NextResponse.json({ success: true });
+}
+
+export async function deleteFavorite(userId: string, params: { itemId?: string }) {
+  if (!params.itemId) {
+    return NextResponse.json({ error: "Falta itemId" }, { status: 400 });
+  }
+  await removeFavorite(userId, BigInt(params.itemId));
+  return NextResponse.json({ success: true });
+}
+
+export async function deleteAllFavorites(userId: string) {
+  await clearFavorites(userId);
+  return NextResponse.json({ success: true });
 }

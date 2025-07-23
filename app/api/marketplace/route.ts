@@ -11,7 +11,11 @@ import {
   fetchMarketplacePetCategories,
   fetchUserMarketplaceStats,
   fetchMarketplaceItemById,
-  updateMarketplaceItem
+  updateMarketplaceItem,
+  fetchFavorites,
+  createFavorite,
+  deleteFavorite,
+  deleteAllFavorites
 } from "@/server/controllers/marketplace.controller";
 
 
@@ -44,6 +48,8 @@ export async function GET(req: NextRequest) {
       return fetchUserMarketplaceStats(user.id);
     case "item":
       return fetchMarketplaceItemById({ id: id ?? undefined });
+    case "favorites":
+      return fetchFavorites(user.id);
     default:
       return fetchPublicMarketplaceItems(filters);
   }
@@ -51,7 +57,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const user = await authenticateUser(req);
-  if (user instanceof Response) return new NextResponse(await user.text(), { status: user.status, headers: user.headers });
+  if (user instanceof Response) {
+    return new NextResponse(await user.text(), { status: user.status, headers: user.headers });
+  }
+
+  const url = new URL(req.url);
+  const mode = url.searchParams.get("mode");
 
   let payload: any;
   try {
@@ -61,6 +72,10 @@ export async function POST(req: NextRequest) {
       JSON.stringify({ error: "JSON inválido" }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
+  }
+
+  if (mode === "favorite") {
+    return createFavorite(user.id, { itemId: payload.itemId });
   }
 
   return createMarketplaceItem(user.id, payload);
@@ -102,19 +117,30 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const user = await authenticateUser(req);
-  if (user instanceof Response) return new NextResponse(await user.text(), { status: user.status, headers: user.headers });
+  if (user instanceof Response) {
+    return new NextResponse(await user.text(), {
+      status: user.status,
+      headers: user.headers,
+    });
+  }
 
   const url = new URL(req.url);
   const mode = url.searchParams.get("mode");
   const id = url.searchParams.get("id");
-  if (mode !== "delete" || !id) {
-    return new NextResponse(
-      JSON.stringify({ error: "Parámetros inválidos" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+
+  if (mode === "favorites") {
+    return deleteAllFavorites(user.id);
   }
 
-  return deleteMarketplaceItem(user.id, { id });
+  if (mode === "favorite" && id) {
+    return deleteFavorite(user.id, { itemId: id });
+  }
+
+  if (mode === "delete" && id) {
+    return deleteMarketplaceItem(user.id, { id });
+  }
+
+  return NextResponse.json({ error: "Parámetros inválidos" }, { status: 400 });
 }
 
 export async function PATCH(req: NextRequest) {

@@ -11,16 +11,15 @@ import { formatTimeAgo, formatPrice } from "@/utils/format";
 
 interface Props {
   item: Item;
-  // onToggleFav: (id: string) => void;
+  isFavorite: boolean;
+  onToggleFavorite: (id: string) => void;
   onViewDetails: () => void;
 }
 
-export function ProductCard({ item, onViewDetails }: Props) {
+export function ProductCard({ item, onViewDetails, onToggleFavorite, isFavorite }: Props) {
   const petLabel = getPetCategoryLabel(item.pet_category);
   const categoryLabel = getItemCategoryLabel(item.category);
   const conditionLabel = getItemConditionLabel(item.condition);
-
-  console.log(`Rendering ProductCard for item: ${item.title}, price: ${item.price}, typeof price: ${typeof item.price}`);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -33,10 +32,16 @@ export function ProductCard({ item, onViewDetails }: Props) {
         />
         <Button
           variant="ghost" size="icon"
-          className="absolute top-2 right-2 bg-white/80 hover:bg-white"
-          // onClick={() => onToggleFav(item.id)}
+          className="absolute top-2 right-2 bg-background hover:bg-background/60"
+          onClick={() => onToggleFavorite(item.id)}
         >
-          <Heart className="h-4 w-4" />
+          <Heart
+            className={`h-4 w-4 transition-colors
+              ${isFavorite 
+                ? "text-secondary fill-secondary"
+                : "text-primary hover:text-secondary"
+              }`}
+          />
         </Button>
         <Badge variant="secondary" className="absolute top-2 left-2">{petLabel}</Badge>
       </div>

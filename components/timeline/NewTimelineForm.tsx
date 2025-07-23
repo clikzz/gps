@@ -12,6 +12,7 @@ import { FormFieldWrapper, TextField, DateField, TextAreaField } from "@/compone
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core"
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { MapPin, Heart, Calendar, Users, Gift } from "lucide-react"
 
 function FileField({
   label,
@@ -46,11 +47,8 @@ function FileField({
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-
     if (isOpening) return
-
     setIsOpening(true)
-
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.click()
@@ -144,6 +142,59 @@ const SortablePhoto = React.memo(function SortablePhoto({
   )
 })
 
+function MilestoneSection({
+  title,
+  icon: Icon,
+  milestones,
+  selectedMilestones,
+  onToggleMilestone,
+  maxSelections,
+}: {
+  title: string
+  icon: React.ComponentType<{ className?: string }>
+  milestones: Array<{ id: string; name: string }>
+  selectedMilestones: string[]
+  onToggleMilestone: (id: string) => void
+  maxSelections: number
+}) {
+  if (milestones.length === 0) return null
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Icon className="w-4 h-4 text-muted-foreground" />
+        <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {milestones.map((milestone) => {
+          const isSelected = selectedMilestones.includes(milestone.id)
+          const canSelect = isSelected || selectedMilestones.length < maxSelections
+
+          return (
+            <button
+              key={milestone.id}
+              type="button"
+              onClick={() => canSelect && onToggleMilestone(milestone.id)}
+              disabled={!canSelect}
+              className={cn(
+                "px-3 py-2 text-sm border rounded-lg transition-all duration-200",
+                "hover:shadow-sm focus:ring-2 focus:ring-ring focus:ring-offset-1",
+                isSelected
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : canSelect
+                    ? "bg-background border-input hover:bg-accent hover:text-accent-foreground"
+                    : "bg-muted text-muted-foreground border-muted cursor-not-allowed opacity-60",
+              )}
+            >
+              {milestone.name}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 interface NewTimelineFormProps {
   petId: string
   onSuccess?: () => void
@@ -208,11 +259,52 @@ export default function NewTimelineForm({
   const TITLE_MAX = 50
   const DESC_MAX = 200
   const PHOTOS_MAX = 5
+  const MAX_MILESTONES = 4
 
   const sensors = useSensors(useSensor(PointerSensor))
   const isSubmitting = isCreating || isUpdating
-
   const photoIds = useMemo(() => selectedPhotos.map((f) => `${f.name}-${f.lastModified}`), [selectedPhotos])
+
+  const milestonesSections = useMemo(() => {
+    if (!milestones || milestones.length === 0) return []
+
+
+    const sections = [
+      {
+        title: "Lugares",
+        icon: MapPin,
+        milestoneIds: ["1", "2", "3", "4", "5"],
+      },
+      {
+        title: "Cuidado y Salud",
+        icon: Heart,
+        milestoneIds: ["6", "7", "8", "9"],
+      },
+      {
+        title: "Celebraciones y Fechas",
+        icon: Calendar,
+        milestoneIds: ["10", "11", "12", "13", "14", "15"], 
+      },
+      {
+        title: "Personas y Relaciones",
+        icon: Users,
+        milestoneIds: ["16", "17"], 
+      },
+      {
+        title: "Objetos, Logros y Novedades",
+        icon: Gift,
+        milestoneIds: ["18", "19", "20"], 
+      },
+    ]
+
+    return sections.map((section) => ({
+      ...section,
+      milestones: section.milestoneIds
+        .map((id) => milestones.find((m) => m.id === id))
+        .filter((milestone) => milestone !== undefined) 
+        .map((milestone) => milestone!), 
+    }))
+  }, [milestones])
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -228,7 +320,7 @@ export default function NewTimelineForm({
 
   const toggleMilestone = (id: string) =>
     setSelectedMilestones((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 4 ? [...prev, id] : prev,
+      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < MAX_MILESTONES ? [...prev, id] : prev,
     )
 
   const handleFileChange = (files: FileList | null) => {
@@ -286,7 +378,6 @@ export default function NewTimelineForm({
       }
 
       onSuccess?.()
-
       if (!isEditMode) {
         setTitle("")
         setDescription("")
@@ -304,17 +395,15 @@ export default function NewTimelineForm({
     if (isEditMode && initialValues) {
       setTitle(initialValues.title ?? "")
       setDescription(initialValues.description ?? "")
-
       const localDateString = parseEventDateToLocal(initialValues.event_date)
       setEventDate(localDateString)
       setSelectedMilestones(initialValues.Milestones?.map((m) => m.id) ?? [])
-
       setSelectedPhotos([])
     }
   }, [isEditMode, initialValues])
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       <div className="relative">
         <TextField
           label="Título"
@@ -363,6 +452,7 @@ export default function NewTimelineForm({
               {selectedPhotos.length}/{PHOTOS_MAX}
             </p>
           </div>
+
           {selectedPhotos.length > 0 && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={photoIds} strategy={rectSortingStrategy}>
@@ -383,25 +473,51 @@ export default function NewTimelineForm({
         </>
       )}
 
-      <FormFieldWrapper label="Hitos (máx. 4)">
-        <div className="flex flex-wrap gap-2 mt-1">
-          {milestones.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => toggleMilestone(m.id)}
-              className={cn(
-                "px-3 py-1 border rounded",
-                selectedMilestones.includes(m.id) ? "bg-primary text-primary-foreground" : "",
-              )}
-            >
-              {m.name}
-            </button>
+      <FormFieldWrapper label={`Hitos (máx. ${MAX_MILESTONES})`}>
+        <div className="space-y-4 mt-2">
+          {selectedMilestones.length > 0 && (
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-2">
+                Seleccionados ({selectedMilestones.length}/{MAX_MILESTONES}):
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {selectedMilestones.map((id) => {
+                  const milestone = milestones.find((m) => m.id === id)
+                  return milestone ? (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-primary text-primary-foreground text-xs rounded-md"
+                    >
+                      {milestone.name}
+                      <button
+                        type="button"
+                        onClick={() => toggleMilestone(id)}
+                        className="hover:bg-primary-foreground/20 rounded-full p-0.5"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ) : null
+                })}
+              </div>
+            </div>
+          )}
+
+          {milestonesSections.map((section) => (
+            <MilestoneSection
+              key={section.title}
+              title={section.title}
+              icon={section.icon}
+              milestones={section.milestones}
+              selectedMilestones={selectedMilestones}
+              onToggleMilestone={toggleMilestone}
+              maxSelections={MAX_MILESTONES}
+            />
           ))}
         </div>
       </FormFieldWrapper>
 
-      <Button type="submit" className="w-full mt-4" disabled={isSubmitting || isUploading}>
+      <Button type="submit" className="w-full mt-6" disabled={isSubmitting || isUploading}>
         {isUploading
           ? "Subiendo fotos..."
           : isSubmitting

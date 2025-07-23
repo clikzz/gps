@@ -20,10 +20,10 @@ async function assignPetBadges(userId: string) {
 
   const speciesSet = new Set(pets.map((p) => p.species.toLowerCase()));
 
-  const toEarn: Array<"DOG_LOVER" | "CAT_LOVER" | "PET_LOVER"> = [];
+  const toEarn: Array<"DOG_LOVER" | "CAT_LOVER" | "PET_LOVER2"> = [];
   if (speciesSet.has("dog")) toEarn.push("DOG_LOVER");
   if (speciesSet.has("cat")) toEarn.push("CAT_LOVER");
-  if (speciesSet.size > 1) toEarn.push("PET_LOVER");
+  if (speciesSet.size > 1) toEarn.push("PET_LOVER2");
 
   if (toEarn.length === 0) return;
 

@@ -2,20 +2,71 @@ import prisma from "@/lib/db";
 import { UpdateUserProfileInput } from "@/server/validations/userprofile.validations"
 
 export const getUserProfile = async (userId: string) => {
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    include: {
+      Pets: {
+        where: { deleted: false },
+      },
+      userBadges: {
+        include: { badge: true },
+      },
+    },
+  });
+
+  if (!user) return null;
+
+  const badgeKeysByRole: Record<string, string> = {
+    ADMIN: "ADMIN_ROLE",
+    MODERATOR: "MODERATOR_ROLE",
+  };
+
+  const roleKeys = Object.keys(badgeKeysByRole); 
+  const currentRoleKey = badgeKeysByRole[user.role]; 
+  const badgeAssignments = user.userBadges.map((ub) => ub.badge.key); 
+
+  if (currentRoleKey && !badgeAssignments.includes(currentRoleKey)) {
+    const badge = await prisma.badge.findUnique({ where: { key: currentRoleKey } });
+    if (badge) {
+      await prisma.userBadge.create({
+        data: {
+          userId: user.id,
+          badgeId: badge.id,
+        },
+      });
+    }
+  }
+
+  for (const role of roleKeys) {
+    const key = badgeKeysByRole[role];
+    if (key !== currentRoleKey && badgeAssignments.includes(key)) {
+      const badge = await prisma.badge.findUnique({ where: { key } });
+      if (badge) {
+        await prisma.userBadge.deleteMany({
+          where: {
+            userId: user.id,
+            badgeId: badge.id,
+          },
+        });
+      }
+    }
+  }
+
   return await prisma.users.findUnique({
     where: { id: userId },
     include: {
       Pets: {
-        where: {
-          deleted: false,
+        where: { 
+          deleted: false, 
         },
       },
       userBadges: {
-        include: { badge: true }
-      }
+        include: { badge: true },
+      },
     },
   });
 };
+
 
 export const getAllBadges = async () => {
   return await prisma.badge.findMany({

@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import type { Item } from "@/types/marketplace";
-import { formatTimeAgo } from "@/utils/format";
+import { formatTimeAgo, formatPrice } from "@/utils/format";
 
 interface Props {
   item: Item;
@@ -41,7 +41,7 @@ export function ProductDetailsDialog({ item, open, onClose }: Props) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Imagen */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="relative">
               <Image
                 src={item.photo_urls[currentIndex] || "/placeholder.svg"}
@@ -105,10 +105,10 @@ export function ProductDetailsDialog({ item, open, onClose }: Props) {
           </div>
 
           {/* Detalles */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-3xl font-bold text-primary">${item.price.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-primary">${formatPrice(item.price)}</p>
                 <div className="flex gap-2 my-2">
                   <Badge variant="secondary">{petLabel}</Badge>
                   <Badge variant="outline">{categoryLabel}</Badge>

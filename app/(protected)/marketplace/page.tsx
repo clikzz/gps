@@ -23,7 +23,7 @@ export default function MarketplacePage() {
   const [repostId, setRepostId] = useState<number | null>(null);
   const [editingArticle, setEditingArticle] = useState<UserArticle | null>(null)
   const { initialData, loading: loadingRepost } = useRepostItem(repostId);
-  const { articles: userArticles, setArticles, loading: userLoading, error: userError, markAsSold, fetchArticles } = useUserArticles();
+  const { articles: userArticles, setArticles, loading: userLoading, error: userError, markAsSold, fetchArticles, removeArticle } = useUserArticles();
   const {
     items, loading, error,
     filters, setters, clearFilters,
@@ -165,6 +165,7 @@ export default function MarketplacePage() {
                 onMarkAsSold={handleOpenMark}
                 onRepost={handleRepost}
                 onEdit={handleEdit}
+                onDelete={removeArticle}
               />
             )}
           </TabsContent>

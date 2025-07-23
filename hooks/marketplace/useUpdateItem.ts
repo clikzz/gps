@@ -27,7 +27,6 @@ export function useUpdateItem() {
         payload = { ...payload, city, region, country };
       }
 
-      console.log("Updating item:", id, payload);
       const parsed = updateItemSchema.safeParse({
         id: String(id),
         ...payload,

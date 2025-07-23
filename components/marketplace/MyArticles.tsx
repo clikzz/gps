@@ -15,9 +15,10 @@ interface Props {
   onMarkAsSold?: (id: number) => void;
   onRepost?: (id: number) => void;
   onEdit?: (id: number) => void;
+  onDelete?: (id: number) => void;
 }
 
-export function MyArticles({ articles, onSwitchToSell, onMarkAsSold, onRepost, onEdit }: Props) {
+export function MyArticles({ articles, onSwitchToSell, onMarkAsSold, onRepost, onEdit, onDelete }: Props) {
   const [activeTab, setActiveTab] = useState<"activos" | "vendidos">("activos");
   const [selectedArticle, setSelectedArticle] = useState<UserArticle | null>(null);
 
@@ -63,6 +64,7 @@ export function MyArticles({ articles, onSwitchToSell, onMarkAsSold, onRepost, o
                 article={a}
                 onEdit={onEdit}
                 onMarkAsSold={onMarkAsSold}
+                onDelete={onDelete}
               />
             ))}
           </div>
@@ -85,6 +87,7 @@ export function MyArticles({ articles, onSwitchToSell, onMarkAsSold, onRepost, o
                 onMarkAsSold={onMarkAsSold}
                 onRepost={onRepost && (() => onRepost(a.id))}
                 onViewDetails={(article) => setSelectedArticle(article)}
+                onDelete={onDelete}
               />
             ))}
           </div>

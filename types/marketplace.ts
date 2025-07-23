@@ -9,6 +9,7 @@ export interface MarketplaceItem {
     avatar_url: string;
     instagram?: string;
     phone?: string;
+    created_at: Date;
   }
   title: string;
   description?: string;

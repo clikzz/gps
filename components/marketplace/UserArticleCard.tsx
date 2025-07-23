@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import { MapPin, Clock } from "lucide-react";
 import type { UserArticle } from "@/types/marketplace";
-import { formatTimeAgo, formatPrice } from "@/utils/format";
+import { formatTimeAgo, formatPrice, getPriceColor } from "@/utils/format";
 
 interface Props {
   article: UserArticle;
@@ -34,6 +34,7 @@ export function UserArticleCard({
   const petLabel = getPetCategoryLabel(article.pet_category);
   const categoryLabel = getItemCategoryLabel(article.category);
   const conditionLabel = getItemConditionLabel(article.condition);
+  const priceClass = getPriceColor(article.price, article.sold_price, isSold);
 
   console.log(`Rendering UserArticleCard for article: ${article.title}, price: ${article.price}, typeof price: ${typeof article.price}`);
 
@@ -68,7 +69,7 @@ export function UserArticleCard({
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Precio venta</p>
-                <p className={`font-bold ${article.sold_price ? (article.sold_price >= article.price ? "text-primary" : "text-secondary") : "text-muted-foreground"}`}>
+                <p className={`font-bold ${priceClass}`}>
                   ${formatPrice(article.sold_price ?? article.price)}
                 </p>
               </div>

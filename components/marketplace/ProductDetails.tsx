@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Heart, ChevronLeft, ChevronRight, Instagram, Phone, Mail } from "lucide-react";
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel } from "@/types/translateLabels";
 import type { Item } from "@/types/marketplace";
-import { formatTimeAgo, formatPrice } from "@/utils/format";
+import { formatTimeAgo, formatPrice, extractYear } from "@/utils/format";
 
 interface Props {
   item: Item;
@@ -152,29 +152,58 @@ export function ProductDetailsDialog({ item, open, onClose, onToggleFavorite, is
 
             <section className="border rounded-lg p-4">
               <h3 className="font-semibold mb-2">Vendedor</h3>
-              <div className="flex gap-3">
-                <Avatar>
-                  <AvatarImage src={item.seller.avatar_url} alt={item.seller.name} />
-                  <AvatarFallback>{item.seller.name.charAt(0)}</AvatarFallback>
+
+              {/* Header del vendedor */}
+              <div className="flex items-start gap-4 mb-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={item.seller.avatar_url || "/placeholder.svg"} />
+                  <AvatarFallback className="text-lg">{item.seller.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col justify-center space-y-1">
-                  <p className="font-medium">{item.seller.name}</p>
-                  <span className="flex items-center text-sm text-muted-foreground">
-                    <Mail className="inline h-4 w-4 mr-1" />
-                    {item.seller.email}
-                  </span>
-                  {item.seller.instagram && (
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Instagram className="w-4 h-4 mr-1" />
-                      <a href={`https://instagram.com/${item.seller.instagram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer">
-                        {item.seller.instagram.replace(/^@/, "")}
-                      </a>
+
+                <div className="flex-1">
+                  <h4 className="font-semibold text-lg">{item.seller.name}</h4>
+                  <p className="text-sm text-muted-foreground">Miembro desde {extractYear(item.seller.created_at)}</p>
+                </div>
+              </div>
+
+              {/* Información de contacto */}
+              <div className="mb-4">
+                <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Contacto</h5>
+
+                <div className="grid grid-cols-1 mt-2">
+                  {/* Email */}
+                  <div className="flex items-center gap-3 rounded-lg">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full">
+                      <Mail className="w-4 h-4 text-foreground" />
                     </div>
-                  )}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{item.seller.email}</p>
+                    </div>
+                  </div>
+
+                  {/* Teléfono */}
                   {item.seller.phone && (
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Phone className="w-4 h-4 mr-1" />
-                      <p className="text-sm text-muted-foreground">{item.seller.phone}</p>
+                    <div className="flex items-center gap-3 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full">
+                        <Phone className="w-4 h-4 text-foreground" />
+                      </div>
+                      <div className="flex-1">
+                      <p className="text-sm font-medium">{item.seller.phone}</p>
+                    </div>
+                  </div>
+                  )}
+
+                  {/* Instagram */}
+                  {item.seller.instagram && (
+                    <div className="flex items-center gap-3 rounded-lg">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full">
+                        <Instagram className="w-4 h-4 text-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <a href={`https://instagram.com/${item.seller.instagram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium">
+                          {item.seller.instagram.replace(/^@/, "")}
+                        </a>
+                      </div>
                     </div>
                   )}
                 </div>

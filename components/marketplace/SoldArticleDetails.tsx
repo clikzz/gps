@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel, getItemStatusLabel } from "@/types/translateLabels";
-import { formatTimeAgo, formatTimeOnSale } from "@/utils/format";
+import { formatTimeAgo, formatTimeOnSale, getPriceColor } from "@/utils/format";
 import type { UserArticle } from "@/types/marketplace"
 
 interface SoldArticleDetailsProps {
@@ -32,6 +32,7 @@ export function SoldArticleDetails({
   const categoryLabel = getItemCategoryLabel(article.category)
   const conditionLabel = getItemConditionLabel(article.condition)
   const itemStatusLabel = getItemStatusLabel(article.status)
+  const priceClass = getPriceColor(article.price, article.sold_price, article.status === "SOLD")
 
   const originalPrice = article.price
   const soldPrice = article.sold_price ?? 0
@@ -152,7 +153,7 @@ export function SoldArticleDetails({
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Precio de venta</p>
-                    <p className={`text-xl font-bold ${isProfit ? "text-primary" : "text-secondary"}`}>
+                    <p className={`text-xl font-bold ${priceClass}`}>
                       ${soldPrice.toLocaleString()}
                     </p>
                   </div>
@@ -170,10 +171,10 @@ export function SoldArticleDetails({
                     <span className="font-medium">{isProfit ? "Ganancia" : "Pérdida"}</span>
                   </div>
                   <div className="text-right">
-                    <p className={`text-lg font-bold ${isProfit ? "text-primary" : "text-secondary"}`}>
+                    <p className={`text-lg font-bold ${priceClass}`}>
                       {isProfit ? "+" : ""}${profit.toLocaleString()}
                     </p>
-                    <p className={`text-sm ${isProfit ? "text-primary" : "text-secondary"}`}>
+                    <p className={`text-sm ${priceClass}`}>
                       ({isProfit ? "+" : ""}
                       {profitPercentage}%)
                     </p>
@@ -210,7 +211,7 @@ export function SoldArticleDetails({
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Información del producto</CardTitle>
+                <CardTitle className="text-lg">Información del artículo</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex justify-between">

@@ -50,3 +50,25 @@ export function formatTimeOnSale(createdAt: string, soldAt?: string): string {
   }
   return `${minutes} ${minutes === 1 ? "minuto" : "minutos"}`;
 }
+
+export function formatPrice(value: number) {
+  return new Intl.NumberFormat("es-CL", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+export function extractYear(date: Date): number {
+  return new Date(date).getFullYear();
+}
+
+export function getPriceColor(
+  original: number,
+  sold: number | null | undefined,
+  isSold: boolean
+): string {
+  if (!isSold || sold == null) return "";
+  if (sold > original) return "text-primary";
+  if (sold < original) return "text-secondary";
+  return "text-muted-foreground";
+}

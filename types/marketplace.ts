@@ -7,6 +7,9 @@ export interface MarketplaceItem {
     name: string;
     email: string;
     avatar_url: string;
+    instagram?: string;
+    phone?: string;
+    created_at: Date;
   }
   title: string;
   description?: string;
@@ -30,7 +33,7 @@ export type Item = Omit<
   "id" | "price" | "created_at" | "updated_at"
 > & {
   id: string;
-  price: string;
+  price: number;
   created_at: string;
   updated_at: string;
 };
@@ -47,6 +50,31 @@ export interface MarketplaceItemInput {
   longitude: number;
 }
 
+export interface EditableItem extends MarketplaceItemInput {
+  id: string;
+  status: ItemStatus;
+  city?: string;
+  region?: string;
+  country?: string;
+  updated_at: Date;
+}
+
+export type UpdateItemPayload = Pick<
+  MarketplaceItem,
+  | "title"
+  | "description"
+  | "pet_category"
+  | "category"
+  | "condition"
+  | "price"
+  | "photo_urls"
+  | "latitude"
+  | "longitude"
+  | "city"
+  | "region"
+  | "country"
+>;
+
 export interface ListFilters {
   category?: ItemCategory;
   pet_category?: PetCategory;
@@ -62,9 +90,10 @@ export interface ListFilters {
 
 export type UserArticle = Omit<
   MarketplaceItem, 
-  "user_id" | "seller" | "latitude" | "longitude"
+  "user_id" | "seller"
 > & {
   id: number;
+  price: number;
   created_at: string;
   sold_price?: number;
   sold_at?: string;

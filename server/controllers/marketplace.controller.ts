@@ -10,12 +10,18 @@ import {
   listMarketplacePetCategories as listPetCategoriesService,
   countUserMarketplaceItems as countUserItemsService,
   getMarketplaceItemById as getItemByIdService,
+  updateMarketplaceItem as updateItemService,
+  addFavorite,
+  removeFavorite,
+  clearFavorites,
+  listFavorites,
 } from "@/server/services/marketplace.service";
 import {
   createItemSchema,
   listFiltersSchema,
   deleteItemSchema,
   markSoldSchema,
+  updateItemSchema,
 } from "@/server/validations/marketplace.validation";
 import type { MarketplaceItemInput, ListFilters } from "@/types/marketplace";
 
@@ -45,7 +51,7 @@ export const createMarketplaceItem = async (
       category: item.category,
       pet_category: item.pet_category,
       condition: item.condition,
-      price: item.price.toString(),
+      price: Number(item.price),
       photo_urls: item.photo_urls,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -71,6 +77,59 @@ export const createMarketplaceItem = async (
 };
 
 /**
+ * Actualizar un anuncio.
+ */
+export const updateMarketplaceItem = async (
+  itemId: string,
+  userId: string,
+  body: any
+) => {
+  const parseResult = updateItemSchema.safeParse({ id: itemId, ...body })
+  if (!parseResult.success) {
+    return new Response(JSON.stringify({ error: parseResult.error.format() }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    const updated = await updateItemService(
+      BigInt(itemId),
+      userId,
+      parseResult.data
+    );
+
+    const output = {
+      id: updated.id.toString(),
+      title: updated.title,
+      description: updated.description,
+      category: updated.category,
+      pet_category: updated.pet_category,
+      condition: updated.condition,
+      price: updated.price,
+      photo_urls: updated.photo_urls,
+      latitude: updated.latitude,
+      longitude: updated.longitude,
+      city: updated.city,
+      region: updated.region,
+      country: updated.country,
+      status: updated.status,
+      created_at: updated.created_at.toISOString(),
+      updated_at: updated.updated_at.toISOString(),
+    };
+    return new Response(JSON.stringify(output), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
+/**
  * Obtener un anuncio por ID.
  */
 export const fetchMarketplaceItemById = async (params: { id?: string }) => {
@@ -85,7 +144,7 @@ export const fetchMarketplaceItemById = async (params: { id?: string }) => {
       id: item.id.toString(),
       title: item.title,
       description: item.description,
-      price: item.price.toString(),
+      price: Number(item.price),
       category: item.category,
       pet_category: item.pet_category,
       condition: item.condition,
@@ -127,13 +186,16 @@ export const fetchPublicMarketplaceItems = async (
       name: item.seller.name,
       email: item.seller.email,
       avatar_url: item.seller.avatar_url,
+      instagram: item.seller.instagram ?? "",
+      phone: item.seller.phone ?? "",
+      created_at: item.seller.created_at.toISOString(),
     },
     title: item.title,
     description: item.description ?? undefined,
     category: item.category,
     pet_category: item.pet_category,
     condition: item.condition,
-    price: item.price.toString(),
+    price: Number(item.price),
     photo_urls: item.photo_urls,
     latitude: item.latitude,
     longitude: item.longitude,
@@ -161,12 +223,15 @@ export const fetchUserMarketplaceItems = async (
   const output = list.map(item => ({
     id: item.id.toString(),
     title: item.title,
+    description: item.description ?? undefined,
     status: item.status,
-    price: item.price.toString(),
+    price: Number(item.price),
     pet_category: item.pet_category,
     category: item.category,
     condition: item.condition,
     photo_urls: item.photo_urls,
+    latitude: item.latitude,
+    longitude: item.longitude,
     city: item.city ?? undefined,
     region: item.region ?? undefined,
     country: item.country ?? undefined,
@@ -190,15 +255,18 @@ export const fetchUserSoldMarketplaceItems = async (
     id: item.id.toString(),
     title: item.title,
     status: item.status,
-    price: item.price.toString(),
+    price: Number(item.price),
     photo_urls: item.photo_urls,
     category: item.category,
     condition: item.condition,
+    description: item.description ?? undefined,
     pet_category: item.pet_category,
+    latitude: item.latitude,
+    longitude: item.longitude,
     city: item.city ?? undefined,
     region: item.region ?? undefined,
     country: item.country ?? undefined,
-    sold_price: item.sales?.price.toString(),
+    sold_price: Number(item.sales?.price),
     sold_at: item.sales?.sold_at.toISOString(),
     notes: item.sales?.notes ?? undefined,
     created_at: item.created_at.toISOString(),
@@ -266,7 +334,7 @@ export const markMarketplaceItemAsSold = async (
     return NextResponse.json({
       success: true,
       sale: {
-        price: sale.price.toString(),
+        price: Number(sale.price),
         sold_at: sale.sold_at.toISOString(),
         notes: sale.notes,
       },
@@ -325,4 +393,45 @@ export const fetchUserMarketplaceStats = async (userId: string) => {
       { status: 500 }
     );
   }
+}
+
+export async function fetchFavorites(userId: string) {
+  const favs = await listFavorites(userId);
+  const output = favs.map(f => ({
+    ...f.item,
+    id: f.item.id.toString(),
+    price: f.item.price,
+    seller: {
+      name: f.item.seller.name,
+      email: f.item.seller.email,
+      avatar_url: f.item.seller.avatar_url,
+      instagram: f.item.seller.instagram ?? "",
+      phone: f.item.seller.phone ?? "",
+      created_at: f.item.seller.created_at.toISOString(),
+    },
+    created_at: f.item.created_at.toISOString(),
+    updated_at: f.item.updated_at.toISOString(),
+  }));
+  return NextResponse.json(output);
+}
+
+export async function createFavorite(userId: string, params: { itemId?: string }) {
+  if (!params.itemId) {
+    return NextResponse.json({ error: "Falta itemId" }, { status: 400 });
+  }
+  await addFavorite(userId, BigInt(params.itemId));
+  return NextResponse.json({ success: true });
+}
+
+export async function deleteFavorite(userId: string, params: { itemId?: string }) {
+  if (!params.itemId) {
+    return NextResponse.json({ error: "Falta itemId" }, { status: 400 });
+  }
+  await removeFavorite(userId, BigInt(params.itemId));
+  return NextResponse.json({ success: true });
+}
+
+export async function deleteAllFavorites(userId: string) {
+  await clearFavorites(userId);
+  return NextResponse.json({ success: true });
 }

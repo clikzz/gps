@@ -2,7 +2,6 @@ import prisma from "@/lib/db";
 import { reverseGeocode } from "@/utils/geocode";
 import type { MarketplaceItemInput, ListFilters } from "@/types/marketplace";
 import { ItemStatus, PetCategory, Prisma } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
 
 /**
  * Crea un nuevo anuncio en el marketplace.
@@ -37,6 +36,37 @@ export const createMarketplaceItem = async (
     });
 
     return item;
+  });
+}
+
+/** Editar un anuncio existente en el marketplace.
+ */
+export const updateMarketplaceItem = async (
+  itemId: bigint,
+  userId: string,
+  data: Partial<MarketplaceItemInput>
+) => {
+  return prisma.$transaction(async (tx) => {
+    const item = await tx.marketplaceItem.findUnique({
+      where: { id: itemId },
+    });
+
+    if (!item) {
+      throw new Error("Anuncio no encontrado.");
+    }
+
+    if (item.user_id !== userId) {
+      throw new Error("No tienes permiso para editar este anuncio.");
+    }
+
+    const updatedItem = await tx.marketplaceItem.update({
+      where: { id: itemId },
+      data: {
+        ...data,
+      },
+    });
+
+    return updatedItem;
   });
 }
 
@@ -85,7 +115,7 @@ export const softDeleteMarketplaceItem = async (
 export const markItemAsSold = async (
   itemId: bigint,
   userId: string,
-  soldPrice: string,
+  soldPrice: number,
   soldAt: Date,
   notes?: string
 ) => {
@@ -108,7 +138,7 @@ export const markItemAsSold = async (
     data: {
       item_id: itemId,
       user_id: userId,
-      price: new Prisma.Decimal(soldPrice),
+      price: soldPrice,
       sold_at: soldAt,
       notes,
     },
@@ -192,6 +222,9 @@ export const listMarketplaceItems = async (
           name: true,
           email: true,
           avatar_url: true,
+          instagram: true,
+          phone: true,
+          created_at: true,
         },
       },
     },
@@ -254,3 +287,31 @@ export async function countUserMarketplaceItems(userId: string) {
 
   return { total, active, sold };
 };
+
+export async function listFavorites(userId: string) {
+  return prisma.favorite.findMany({
+    where: { userId },
+    include: {
+      item: {
+        include: { seller: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function addFavorite(userId: string, itemId: bigint) {
+  return prisma.favorite.create({
+    data: { userId, itemId },
+  });
+}
+
+export async function removeFavorite(userId: string, itemId: bigint) {
+  return prisma.favorite.deleteMany({
+    where: { userId, itemId },
+  });
+}
+
+export async function clearFavorites(userId: string) {
+  return prisma.favorite.deleteMany({ where: { userId } });
+}

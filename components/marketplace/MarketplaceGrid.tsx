@@ -6,10 +6,11 @@ import { useState } from "react"
 
 interface Props {
   items: Item[];
-  // onToggleFav: (id: string) => void;
+  favorites: Item[];
+  onToggleFavorite: (id: string) => void;
 }
 
-export function MarketplaceGrid({ items }: Props) {
+export function MarketplaceGrid({ items, onToggleFavorite, favorites }: Props) {
   const [selected, setSelected] = useState<Item | null>(null);
 
   return (
@@ -19,7 +20,8 @@ export function MarketplaceGrid({ items }: Props) {
           <ProductCard
             key={it.id}
             item={it}
-            // onToggleFav={onToggleFav}
+            isFavorite={!!favorites.find((f) => f.id === it.id)}
+            onToggleFavorite={onToggleFavorite}
             onViewDetails={() => setSelected(it)}
           />
         ))}
@@ -28,8 +30,11 @@ export function MarketplaceGrid({ items }: Props) {
         <ProductDetailsDialog
           item={selected}
           open={!!selected}
+          isFavorite={!!favorites.find((f) => f.id === selected.id)}
           onClose={() => setSelected(null)}
-          // onToggleFav={onToggleFav}
+          onToggleFavorite={(id) => {
+            onToggleFavorite(id);
+          }}
         />
       )}
     </>

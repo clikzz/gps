@@ -8,11 +8,16 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import { useMarketplace } from "@/hooks/marketplace/useMarketplace";
 import { useUserArticles } from "@/hooks/marketplace/useUserArticles";
 import { useRepostItem } from "@/hooks/marketplace/useRepostItem";
+import { useFavorites } from "@/hooks/marketplace/useFavorites";
 import { FilterSidebar } from "@/components/marketplace/FilterSidebar";
 import { MarketplaceGrid } from "@/components/marketplace/MarketplaceGrid";
 import NewItemForm from "@/components/marketplace/NewItemForm";
 import { MyArticles } from "@/components/marketplace/MyArticles";
 import { MarkAsSoldModal }  from "@/components/marketplace/MarkAsSold";
+import { EditArticleModal } from "@/components/marketplace/EditArticle";
+import { FavoritesSection } from "@/components/marketplace/Favorites";
+import LoadingScreen from "@/components/LoadingScreen";
+import NoArticles from "@/components/marketplace/NoArticles";
 import { UserArticle } from "@/types/marketplace";
 import { Card, CardHeader } from "@/components/ui/card";
 
@@ -20,12 +25,22 @@ export default function MarketplacePage() {
   const [tab, setTab] = useState("para-ti");
   const [toSell, setToSell] = useState<UserArticle | null>(null);
   const [repostId, setRepostId] = useState<number | null>(null);
+  const [editingArticle, setEditingArticle] = useState<UserArticle | null>(null)
   const { initialData, loading: loadingRepost } = useRepostItem(repostId);
-  const { articles: userArticles, loading: userLoading, error: userError, markAsSold, fetchArticles } = useUserArticles();
+  const { articles: userArticles, setArticles, loading: userLoading, error: userError, markAsSold, fetchArticles, removeArticle } = useUserArticles();
   const {
     items, loading, error,
     filters, setters, clearFilters,
   } = useMarketplace();
+  const {
+    favorites,
+    loading: favLoading,
+    error: favError,
+    addFavorite, removeFavorite, clearFavorites,
+    filters: favFilters,
+    setters: favSetters,
+    clearFilters: favClearFilters,
+  } = useFavorites();
 
   const handleOpenMark = (id: number) => {
     const art = userArticles.find((a) => a.id === id);
@@ -48,6 +63,17 @@ export default function MarketplacePage() {
     setTab("vender");
   };
 
+  const handleEdit = (id: number) => {
+    const art = userArticles.find(a => a.id === id)
+    if (art) setEditingArticle(art)
+  };
+
+  const handleToggleFav = (id: string) => {
+    favorites.some(f => f.id === id)
+      ? removeFavorite(id)
+      : addFavorite(id);
+  };
+
   return (
     <div className="min-h-screen container mx-auto pb-20">
       <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 lg:max-w-7xl md:max-w-5xl px-6">
@@ -60,9 +86,12 @@ export default function MarketplacePage() {
               </div>
 
               <Tabs value={tab} onValueChange={setTab} className="flex-1 max-w-md">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="para-ti">
                     <ShoppingBag className="mr-1 h-4 w-4"/> Para ti
+                  </TabsTrigger>
+                  <TabsTrigger value="favoritos">
+                    <Heart className="mr-1 h-4 w-4"/> Favoritos
                   </TabsTrigger>
                   <TabsTrigger value="vender">
                     <DollarSign className="mr-1 h-4 w-4"/> Vender
@@ -72,12 +101,6 @@ export default function MarketplacePage() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
-
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="icon">
-                  <Heart className="h-5 w-5" />
-                </Button>
-              </div>
             </div>
           </div>
         </header>
@@ -123,11 +146,66 @@ export default function MarketplacePage() {
                   </Sheet>
                 </div>
 
-                {loading && <p>Cargando…</p>}
+                {loading && <LoadingScreen title="Cargando productos" subtext="Por favor, espera mientras cargamos los artículos." icon={Store} accentIcon={Store} />}
                 {error && <p className="text-red-600">Error: {error}</p>}
-                {!loading && !error && items.length === 0 && <p>No hay productos.</p>}
+                {items.length === 0 && <NoArticles title="No hay productos" subtext="No se encontraron artículos en esta categoría." icon={Store} accentIcon={Store} />}
+                <MarketplaceGrid
+                  items={items}
+                  onToggleFavorite={handleToggleFav}
+                  favorites={favorites}
+                />
+              </main>
+            </div>
+          </TabsContent>
 
-                <MarketplaceGrid items={items} />
+          <TabsContent value="favoritos" className="mt-4">
+            <div className="flex gap-6">
+              {/* Sidebar desktop */}
+              <aside className="hidden lg:block w-80 shrink-0">
+                <Card className="sticky top-24">
+                  <CardHeader>
+                    <FilterSidebar
+                      filters={favFilters}
+                      setters={favSetters}
+                      clear={favClearFilters}
+                    />
+                  </CardHeader>
+                </Card>
+              </aside>
+              {/* Contenido principal */}
+              <main className="flex-1">
+                {/* Sidebar móvil */}
+                <div className="lg:hidden mb-4">
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Filter className="h-4 w-4 mr-2"/> Filtros
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-80">
+                      <SheetHeader>
+                        <SheetTitle>Filtros</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-6">
+                        <FilterSidebar
+                          filters={filters}
+                          setters={setters}
+                          clear={clearFilters}
+                        />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+
+                {loading && <p>Cargando favoritos…</p>}
+                {error   && <p className="text-red-600">{error}</p>}
+                {!loading && !error && (
+                  <FavoritesSection
+                    favorites={favorites}
+                    onToggleFavorite={handleToggleFav}
+                    onClearAll={clearFavorites}
+                  />
+                )}
               </main>
             </div>
           </TabsContent>
@@ -135,7 +213,7 @@ export default function MarketplacePage() {
           {/* — Vender — */}
           <TabsContent value="vender" className="mt-4">
             {loadingRepost ? (
-              <p>Cargando datos…</p>
+              <LoadingScreen title="Obteniendo datos" subtext="Por favor, espera mientras rellenamos el formulario por ti." icon={Store} accentIcon={Store} />
             ) : (
               <NewItemForm
                 onSuccess={() => {
@@ -157,6 +235,8 @@ export default function MarketplacePage() {
                 onSwitchToSell={() => setTab("vender")}
                 onMarkAsSold={handleOpenMark}
                 onRepost={handleRepost}
+                onEdit={handleEdit}
+                onDelete={removeArticle}
               />
             )}
           </TabsContent>
@@ -166,6 +246,18 @@ export default function MarketplacePage() {
             article={toSell}
             onClose={handleCloseMark}
             onConfirm={handleConfirmMark}
+          />
+
+          {/* Modal para editar artículo */}
+          <EditArticleModal
+            article={editingArticle}
+            onClose={() => setEditingArticle(null)}
+            onSaved={(updated: UserArticle) => {
+              setArticles(prev =>
+                prev.map(a => (a.id === updated.id ? updated : a))
+              );
+              setEditingArticle(null);
+            }}
           />
         </Tabs>
       </div>

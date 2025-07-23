@@ -14,6 +14,7 @@ export function useMarketplace() {
   const [artCats, setArtCats] = useState<string[]>([]);
   const [condition, setCondition] = useState<string>("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [sortBy, setSortBy] = useState<"recent" | "price-low" | "price-high" | "name">("recent");
 
   useEffect(() => {
     setLoading(true);
@@ -25,36 +26,49 @@ export function useMarketplace() {
       .finally(() => setLoading(false));
   }, []);
 
-  // const toggleFav = (id: string) => {
-  //   setItems((prev) =>
-  //     prev.map((it) => it.id === id ? { ...it, isFavorite: !it.isFavorite } : it)
-  //   );
-  // };
-
-  const filtered = useMemo(() => {
-    return items.filter((p) => {
+  const filteredAndSorted = useMemo(() => {
+    const filtered = items.filter((p) => {
       if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
       if (city !== "all" && p.city !== city) return false;
-      if (petCats.length && !petCats.includes(p.category)) return false;
+      if (petCats.length && !petCats.includes("ALL") && !petCats.includes(p.pet_category)) return false;
       if (artCats.length && !artCats.includes(p.category)) return false;
       const price = Number(p.price);
       if (price < priceRange[0] || price > priceRange[1]) return false;
       if (condition && p.condition !== condition) return false;
       return true;
     });
-  }, [items, search, city, petCats, artCats, priceRange, condition]);
+
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "price-low":
+          return a.price - b.price;
+        case "price-high":
+          return b.price - a.price;
+        case "name":
+          return a.title.localeCompare(b.title);
+        case "recent":
+        default:
+          return 0;
+      }
+    });
+  }, [items, search, city, petCats, artCats, priceRange, condition, sortBy]);
 
   const clearFilters = () => {
-    setSearch(""); setCity("all"); setPetCats([]); setArtCats([]); setPriceRange([0,100000]); setCondition("");
+    setSearch("");
+    setCity("all");
+    setPetCats([]);
+    setArtCats([]);
+    setPriceRange([0, 100000]);
+    setCondition("");
+    setSortBy("recent");
   };
 
   return {
-    items: filtered,
+    items: filteredAndSorted,
     loading,
     error,
-    filters: { search, city, petCats, artCats, priceRange, condition },
-    setters: { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition },
-    // toggleFav,
+    filters: { search, city, petCats, artCats, priceRange, condition, sortBy },
+    setters: { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition, setSortBy },
     clearFilters,
   };
 }

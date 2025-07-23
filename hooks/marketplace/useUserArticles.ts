@@ -1,12 +1,20 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useDeleteItem } from "@/hooks/marketplace/useDeleteItem";
 import type { UserArticle } from "@/types/marketplace";
 
 export function useUserArticles() {
   const [articles, setArticles] = useState<UserArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { deleteItem } = useDeleteItem();
+
+  const removeArticle = useCallback(async (id: number) => {
+    await deleteItem(id);
+    setArticles(prev => prev.filter(a => a.id !== id));
+  }, [deleteItem]);
 
   const fetchArticles = useCallback(async () => {
     setLoading(true);
@@ -35,7 +43,7 @@ export function useUserArticles() {
       const res = await fetch(`/api/marketplace?mode=sold&id=${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sold_price: sold_price.toString(), sold_at: sold_at, notes }),
+        body: JSON.stringify({ sold_price: sold_price, sold_at: sold_at, notes }),
       });
       if (!res.ok) {
         throw new Error(`Error ${res.status}`);
@@ -51,5 +59,5 @@ export function useUserArticles() {
     []
   );
 
-  return { articles, loading, error, markAsSold, fetchArticles };
+  return { articles, setArticles, loading, error, markAsSold, fetchArticles, removeArticle };
 }

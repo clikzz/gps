@@ -35,6 +35,29 @@ export const createMarketplaceItem = async (
       },
     });
 
+    const existing = await tx.userBadge.findFirst({
+      where: {
+        userId,
+        badge: {
+          key: "MARKETPLACE_PUBLISH",
+        },
+      },
+    });
+
+    if (!existing) {
+      const badge = await tx.badge.findUnique({
+        where: { key: "MARKETPLACE_PUBLISH" },
+      });
+      if (badge) {
+        await tx.userBadge.create({
+          data: {
+            userId,
+            badgeId: badge.id,
+          },
+        });
+      }
+    }
+
     return item;
   });
 }
@@ -144,6 +167,29 @@ export const markItemAsSold = async (
     },
   });
 
+  const existing = await prisma.userBadge.findFirst({
+    where: {
+      userId,
+      badge: {
+        key: "MARKETPLACE_SALE",
+      },
+    },
+  });
+
+  if (!existing) {
+    const badge = await prisma.badge.findUnique({
+      where: { key: "MARKETPLACE_SALE" },
+    });
+    if (badge) {
+      await prisma.userBadge.create({
+        data: {
+          userId,
+          badgeId: badge.id,
+        },
+      });
+    }
+  }
+
   return sale;
 }
 
@@ -207,8 +253,8 @@ export const listMarketplaceItems = async (
     order === "priceAsc"
       ? { price: Prisma.SortOrder.asc }
       : order === "priceDesc"
-      ? { price: Prisma.SortOrder.desc }
-      : { created_at: Prisma.SortOrder.desc };
+        ? { price: Prisma.SortOrder.desc }
+        : { created_at: Prisma.SortOrder.desc };
 
   const items = await prisma.marketplaceItem.findMany({
     where,

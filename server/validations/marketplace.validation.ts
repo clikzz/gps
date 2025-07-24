@@ -93,9 +93,15 @@ export const deleteItemSchema = z.object({
 
 export const markSoldSchema = z.object({
   id: z.string(),
-  sold_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Precio inválido"),
+  sold_price: z.number().min(0, { message: "El precio de venta no puede ser negativo." }),
   sold_at: z.string().refine((s) => !Number.isNaN(Date.parse(s)), "Fecha inválida"),
   notes: z.string().optional(),
 });
 
 export type CreateItemInput = z.infer<typeof createItemSchema>;
+
+export const updateItemSchema = createItemSchema.partial().extend({
+  id: z.string().regex(/^\d+$/, "ID inválido"),
+})
+
+export type UpdateItem = z.infer<typeof updateItemSchema>

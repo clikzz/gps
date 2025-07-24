@@ -26,11 +26,11 @@ export async function reverseGeocode(
 
   return {
     full_address: props.full_address || "",
-    address:    ctx.address?.name || "",
-    street:     ctx.street?.name || "",
-    city:       ctx.place?.name || "",
-    region:     ctx.region?.name || "",
-    postcode:   ctx.postcode?.name || "",
-    country:    ctx.country?.name || "",
+    address: ctx.address?.name || "",
+    street: ctx.street?.name || "",
+    city: ctx.place?.name || "",
+    region: ctx.region?.name || "",
+    postcode: ctx.postcode?.name || "",
+    country: ctx.country?.name || "",
   };
 }

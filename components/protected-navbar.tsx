@@ -1,41 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Home,
-  User,
-  Settings,
   Menu,
   MoreHorizontal,
-  Mail,
-  Phone,
-  Info,
   HelpCircle,
   PawPrint,
   Clock,
-  BookCopy,
   Search,
-  Hospital,
   HeartPulse,
   MessageSquare,
   Store
 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger,
+  DropdownMenuTrigger, 
 } from "@/components/ui/dropdown-menu";
 import { 
   Sheet, 
   SheetContent, 
   SheetTrigger, 
-  SheetTitle,
+  SheetTitle, 
 } from "@/components/ui/sheet";
 import { ProfileDropdown } from "./profile/ProfileDropdown";
 import { ThemeSwitcher } from "./theme-switcher";
@@ -60,9 +53,11 @@ interface ProtectedNavbarProps {
 
 export default function ProtectedNavbar({ 
   user, 
-  userProfile,
+  userProfile 
 }: ProtectedNavbarProps) {
+  const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("home");
+  const [isMoreActive, setIsMoreActive] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const mainNavItems = [
@@ -78,6 +73,34 @@ export default function ProtectedNavbar({
     { id: "health", label: "Salud", icon: HeartPulse, href: "/health" },
     { id: "marketplace", label: "Marketplace", icon: Store, href: "/marketplace" },
   ];
+
+  useEffect(() => {
+    let foundMain = false
+    for (const item of mainNavItems) {
+      if (pathname.startsWith(item.href)) {
+        setActiveTab(item.id)
+        setIsMoreActive(false)
+        foundMain = true
+        break
+      }
+    }
+
+    if (!foundMain) {
+      let foundMore = false
+      for (const item of moreNavItems) {
+        if (pathname.startsWith(item.href)) {
+          setActiveTab("") 
+          setIsMoreActive(true)
+          foundMore = true
+          break
+        }
+      }
+      if (!foundMore) {
+        setActiveTab("") 
+        setIsMoreActive(false)
+      }
+    }
+  }, [pathname, mainNavItems, moreNavItems]) 
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -109,7 +132,7 @@ export default function ProtectedNavbar({
           user={user} 
           userProfile={userProfile} 
           onSignOut={handleSignOut} 
-        />
+          />
       </div>
     );
   };
@@ -136,7 +159,7 @@ export default function ProtectedNavbar({
         </div>
       );
     }
-    
+
     return (
       <div className="pt-4 border-t space-y-3">
         <div className="flex items-center justify-between">
@@ -154,10 +177,10 @@ export default function ProtectedNavbar({
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">
                 {userProfile?.name || "Usuario"}
-                </p>
+              </p>
               <p className="text-xs text-muted-foreground truncate">
                 {user.email}
-                </p>
+              </p>
             </div>
           </div>
         </Link>
@@ -178,7 +201,7 @@ export default function ProtectedNavbar({
       <nav className="hidden md:flex items-center justify-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between p-4">
           <div className="flex items-center">
-            <Link href="/dashboard" className="text-xl font-bold">
+            <Link href="/home" className="text-xl font-bold">
               Mi App
             </Link>
           </div>
@@ -190,7 +213,6 @@ export default function ProtectedNavbar({
                 variant={activeTab === item.id ? "default" : "ghost"}
                 size="sm"
                 asChild
-                onClick={() => setActiveTab(item.id)}
               >
                 <Link href={item.href} className="flex items-center gap-2">
                   <item.icon className="h-4 w-4" />
@@ -201,11 +223,11 @@ export default function ProtectedNavbar({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant={isMoreActive ? "default" : "ghost"} 
+                  size="sm"
                   className="flex items-center gap-2"
-                  >
+                >
                   <MoreHorizontal className="h-4 w-4" />
                   Más
                 </Button>
@@ -213,10 +235,10 @@ export default function ProtectedNavbar({
               <DropdownMenuContent align="end" className="w-48">
                 {moreNavItems.map((item) => (
                   <DropdownMenuItem key={item.id} asChild>
-                    <Link 
-                      href={item.href} 
+                    <Link
+                      href={item.href}
                       className="flex items-center gap-2 cursor-pointer"
-                      >
+                    >
                       <item.icon className="h-4 w-4" />
                       {item.label}
                     </Link>
@@ -225,7 +247,7 @@ export default function ProtectedNavbar({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
+          
           <div className="flex items-center">
             <AuthSection />
           </div>
@@ -240,7 +262,6 @@ export default function ProtectedNavbar({
               variant={activeTab === item.id ? "default" : "ghost"}
               size="sm"
               asChild
-              onClick={() => setActiveTab(item.id)}
               className="flex flex-col gap-1 h-auto py-2 px-3"
             >
               <Link href={item.href}>
@@ -249,14 +270,14 @@ export default function ProtectedNavbar({
               </Link>
             </Button>
           ))}
-
+          
           <Sheet>
             <SheetTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant={isMoreActive ? "default" : "ghost"} 
+                size="sm"
                 className="flex flex-col gap-1 h-auto py-2 px-3"
-                >
+              >
                 <Menu className="h-5 w-5" />
                 <span className="text-xs">Más</span>
               </Button>
@@ -266,12 +287,12 @@ export default function ProtectedNavbar({
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   {moreNavItems.map((item) => (
-                    <Button 
-                      key={item.id} 
-                      variant="ghost" 
-                      asChild 
+                    <Button
+                      key={item.id}
+                      variant={pathname.startsWith(item.href) ? "default" : "ghost"} 
+                      asChild
                       className="justify-start gap-3 h-12"
-                      >
+                    >
                       <Link href={item.href}>
                         <item.icon className="h-5 w-5" />
                         {item.label}

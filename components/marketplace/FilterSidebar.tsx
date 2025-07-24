@@ -19,7 +19,7 @@ import { PET_OPTIONS, CATEGORY_OPTIONS, CONDITION_OPTIONS } from "@/types/market
 import { PetCategory } from "@prisma/client";
 import { useMarketplaceCities } from "@/hooks/marketplace/useMarketplaceCities";
 import { useMarketplacePetCategories } from "@/hooks/marketplace/useMarketplacePetCategories";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, ArrowDownAZ, ArrowDown10, ArrowUp10, ClockArrowDown } from "lucide-react";
 
 interface Props {
   filters: {
@@ -29,6 +29,7 @@ interface Props {
     artCats: string[];
     condition: string;
     priceRange: [number,number];
+    sortBy: "recent" | "price-low" | "price-high" | "name";
   };
   setters: {
     setSearch: (v:string)=>void;
@@ -37,13 +38,14 @@ interface Props {
     setArtCats: (v:string[])=>void;
     setCondition: (v:string)=>void;
     setPriceRange: (v:[number,number])=>void;
+    setSortBy: (v: Props["filters"]["sortBy"]) => void;
   };
   clear: () => void;
 }
 
 export function FilterSidebar({ filters, setters, clear }: Props) {
-  const { search, city, petCats, artCats, priceRange, condition } = filters;
-  const { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition } = setters;
+  const { search, city, petCats, artCats, priceRange, condition, sortBy } = filters;
+  const { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition, setSortBy } = setters;
 
   const { locations, loading: locationsLoading, error: locationsError } = useMarketplaceCities();
   const { categories, loading: petsLoading, error: petsError } = useMarketplacePetCategories();
@@ -98,6 +100,37 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
             className="pl-10"
           />
         </div>
+      </div>
+
+      {/* Ordenamiento */}
+      <div className="space-y-2">
+        <Label>Ordenar por</Label>
+        <Select
+          value={sortBy}
+          onValueChange={(v) => setters.setSortBy(v as any)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Más recientes" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent" className="flex items-center">
+              <ClockArrowDown className="inline h-4 w-4 mr-2" />
+              Más recientes
+            </SelectItem>
+            <SelectItem value="price-high" className="flex items-center">
+              <ArrowDown10 className="inline h-4 w-4 mr-2" />
+              Precio
+            </SelectItem>
+            <SelectItem value="price-low" className="flex items-center">
+              <ArrowUp10 className="inline h-4 w-4 mr-2" />
+              Precio
+            </SelectItem>
+            <SelectItem value="name" className="flex items-center">
+              <ArrowDownAZ className="inline h-4 w-4 mr-2" />
+              Nombre
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Precio */}

@@ -69,12 +69,12 @@ export function ReplyItem({
             {reply.author.avatar_url ? (
               <img
                 src={reply.author.avatar_url ?? "/placeholder.svg"}
-                className="w-24 h-24 rounded border"
+                className="w-32 h-32 rounded border"
               />
             ) : (
               <img
                 src="/placeholder.svg?height=120&width=120"
-                className="w-24 h-24 rounded border"
+                className="w-32 h-32 rounded border"
               />
             )}
           </div>
@@ -85,7 +85,7 @@ export function ReplyItem({
                   <img
                     src={badge.icon || "/placeholder.svg"}
                     alt={badge.label}
-                    className="inline-block w-6 h-6"
+                    className="inline-block w-9 h-9"
                   />
                 </div>
               ))}

@@ -37,6 +37,8 @@ export type UserProfile = {
   status: UserStatus;
   menssageCount: number;
   selectedBadgeIds: string[];
+  instagram?: string;
+  phone?: string;
 };
 
 type UserProfileStore = {

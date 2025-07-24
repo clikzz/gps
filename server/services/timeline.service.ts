@@ -57,18 +57,43 @@ export async function createTimelineEntry(petId: bigint, userId: string, data: N
         event_date: new Date(data.eventDate),
         Milestones: data.milestoneIds?.length
           ? { connect: data.milestoneIds.map(id => ({ id })) }
-          : undefined,          
+          : undefined,
       },
     });
 
-    if (data.photoUrls && data.photoUrls.length > 0) {
+    const hasPhotos = data.photoUrls && data.photoUrls.length > 0;
+
+    if (hasPhotos) {
       await tx.timelineEntryPhotos.createMany({
-        data: data.photoUrls.map((url, index) => ({
+        data: (data.photoUrls ?? []).map((url, index) => ({
           timeline_entry_id: newEntry.id,
           photo_url: url,
           order: index + 1,
         })),
       });
+
+      const alreadyHasFirstPhotoBadge = await tx.userBadge.findFirst({
+        where: {
+          userId: userId,
+          badge: { key: "FIRST_PHOTO" },
+        },
+      });
+
+      if (!alreadyHasFirstPhotoBadge) {
+        const badge = await tx.badge.findUnique({
+          where: { key: "FIRST_PHOTO" },
+        });
+
+        if (badge) {
+          await tx.userBadge.create({
+            data: {
+              userId: userId,
+              badgeId: badge.id,
+              awardedAt: new Date(),
+            },
+          });
+        }
+      }
     }
 
     return tx.timelineEntries.findUniqueOrThrow({
@@ -80,6 +105,8 @@ export async function createTimelineEntry(petId: bigint, userId: string, data: N
     });
   });
 }
+
+
 
 export async function getPetOwnerId(petId: bigint): Promise<string | null> {
   const pet = await prisma.pets.findUnique({

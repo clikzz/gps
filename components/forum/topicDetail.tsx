@@ -166,13 +166,13 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
               <img
                 src={topic.author.avatar_url ?? "/placeholder.svg"}
                 alt={`Avatar de ${topic.author.name}`}
-                className="w-24 h-24 rounded border"
+                className="w-32 h-32 rounded border"
               />
             ) : (
               <img
                 src="/placeholder.svg?height=120&width=120"
                 alt={`Avatar de ${topic.author.name}`}
-                className="w-24 h-24 rounded border"
+                className="w-32 h-32 rounded border"
               />
             )}
           </div>
@@ -183,7 +183,7 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
                     <img
                       src={badge.icon}
                       alt={badge.label}
-                      className="inline-block w-6 h-6"
+                      className="inline-block w-9 h-9"
                     />
                   </div>
                 ))}

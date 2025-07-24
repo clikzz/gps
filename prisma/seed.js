@@ -40,7 +40,7 @@ async function main() {
     },
   ];
 
-const badges = [
+  const badges = [
     {
       key: "WELCOME",
       name: "Bienvenida",
@@ -50,12 +50,12 @@ const badges = [
     {
       key: "FIRST_PHOTO",
       name: "Primera foto",
-      description: "Por subir la primera foto en el Timeline",
+      description: "Por subir tu primera foto en el Timeline",
       icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//first_photo.png",
     },
     {
-      key: "PET_LOVER",
-      name: "Pet Lover",
+      key: "PET_LOVER2",
+      name: "PetLover",
       description: "Por registrar más de un tipo de mascota",
       icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//pet_lover.png",
     },
@@ -73,15 +73,57 @@ const badges = [
     },
     {
       key: "DOG_LOVER",
-      name: "Dog Lover",
+      name: "DogLover",
       description: "Por registrar al menos una mascota de especie perro",
-      icon_url:"https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//dog_lover.png",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//dog_lover.png",
     },
     {
       key: "CAT_LOVER",
-      name: "Cat Lover",
+      name: "CatLover",
       description: "Por registrar al menos una mascota de especie gato",
-      icon_url:"https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//cat_lover.png",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//cat_lover.png",
+    },
+    {
+      key: "ADMIN_ROLE",
+      name: "Administrador",
+      description: "Por formar parte del equipo de administración",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//admin.png",
+    },
+    {
+      key: "MODERATOR_ROLE",
+      name: "Moderador",
+      description: "Por colaborar como moderador del foro",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//mod.png",
+    },
+    {
+      key: "MARKETPLACE_PUBLISH",
+      name: "Emprendedor",
+      description: "Por publicar un artículo en el Marketplace",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//marketplace_publish.png",
+    },
+    {
+      key: "MARKETPLACE_SALE",
+      name: "Vendedor",
+      description: "Por vender un artículo en el Marketplace",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//marketplace_sale.png",
+    },
+    {
+      key: "FIRST_MEDICATION",
+      name: "Primer Tratamiento",
+      description: "Por registrar la primera medicación para una mascota",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//first_medication.png",
+    },
+    {
+      key: "FIRST_VACCINE",
+      name: "Primera Vacuna",
+      description: "Por registrar la primera vacuna para una mascota",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//first_vaccine.png",
+    },
+    {
+      key: "FIRST_REVIEW",
+      name: "Primera Reseña",
+      description: "Por dejar tu primera reseña de un servicio",
+      icon_url: "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/badges//first_review.png",
     },
   ];
 

@@ -9,18 +9,51 @@ export const getMedications = async (userId: string) => {
 };
 
 export const createMedication = async (petId: number, data: Medication) => {
-  return prisma.medications.create({
-    data: {
-      pet_id: petId,
-      name: data.name,
-      dose: data.dose,
-      duration: data.duration,
-      start_date: data.start_date,
-      next_dose_date: data.next_dose_date ?? null,
-      notes: data.notes ?? null,
-    },
+  return prisma.$transaction(async (tx) => {
+    const medication = await tx.medications.create({
+      data: {
+        pet_id: petId,
+        name: data.name,
+        dose: data.dose,
+        duration: data.duration,
+        start_date: data.start_date,
+        next_dose_date: data.next_dose_date ?? null,
+        notes: data.notes ?? null,
+      },
+    });
+
+    const pet = await tx.pets.findUnique({
+      where: { id: petId },
+      select: { user_id: true },
+    });
+
+    if (!pet) throw new Error("Mascota no encontrada");
+
+    const existing = await tx.userBadge.findFirst({
+      where: {
+        userId: pet.user_id,
+        badge: { key: "FIRST_MEDICATION" },
+      },
+    });
+
+    if (!existing) {
+      const badge = await tx.badge.findUnique({
+        where: { key: "FIRST_MEDICATION" },
+      });
+      if (badge) {
+        await tx.userBadge.create({
+          data: {
+            userId: pet.user_id,
+            badgeId: badge.id,
+          },
+        });
+      }
+    }
+
+    return medication;
   });
 };
+
 
 export const updateMedicationById = async (
   id: number,

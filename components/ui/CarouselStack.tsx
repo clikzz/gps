@@ -15,12 +15,12 @@ export default function CarouselStack({ images }: CarouselStackProps) {
   const [mounted, setMounted] = useState(false)
   const total = images.length
 
-  // Asegurar que el componente está montado en el cliente
+
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Agregar listener para la tecla Escape
+
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isModalOpen) {

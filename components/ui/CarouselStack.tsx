@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { X } from "lucide-react"
 
@@ -11,7 +12,30 @@ interface CarouselStackProps {
 export default function CarouselStack({ images }: CarouselStackProps) {
   const [index, setIndex] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const total = images.length
+
+  // Asegurar que el componente está montado en el cliente
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Agregar listener para la tecla Escape
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isModalOpen) {
+        setIsModalOpen(false)
+      }
+    }
+
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleEscape)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isModalOpen])
 
   if (total === 0) return null
 
@@ -190,55 +214,57 @@ export default function CarouselStack({ images }: CarouselStackProps) {
         )}
       </motion.div>
 
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            onClick={() => setIsModalOpen(false)}
-          >
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isModalOpen && (
             <motion.div
-              className="absolute inset-0 backdrop-blur-md bg-white/10"
-              initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-              animate={{ opacity: 1, backdropFilter: "blur(8px)" }}
-              exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-              transition={{ duration: 0.8 , ease: "easeOut" }}
-            />
-
-            <motion.div
-              className="relative max-w-[90vw] max-h-[90vh] w-auto h-auto"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setIsModalOpen(false)}
             >
-              <motion.button
-                onClick={() => setIsModalOpen(false)}
-                className="absolute -top-4 -right-4 z-10 bg-white/90 hover:bg-white text-black rounded-full p-2 shadow-lg transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                aria-label="Cerrar imagen"
-              >
-                <X className="w-5 h-5" />
-              </motion.button>
-
-
-              <motion.img
-                src={images[index]}
-                alt={`Memory ${index + 1} - Vista completa`}
-                className="w-full h-full object-contain rounded-lg shadow-2xl max-w-[85vw] max-h-[85vh] sm:max-w-[80vw] sm:max-h-[80vh] md:max-w-[75vw] md:max-h-[75vh]"
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3 }}
+              <motion.div
+                className="absolute inset-0 backdrop-blur-md bg-white/10"
+                initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                animate={{ opacity: 1, backdropFilter: "blur(8px)" }}
+                exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                transition={{ duration: 0.8 , ease: "easeOut" }}
               />
+
+              <motion.div
+                className="relative max-w-[90vw] max-h-[90vh] w-auto h-auto"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <motion.button
+                  onClick={() => setIsModalOpen(false)}
+                  className="absolute -top-4 -right-4 z-10 bg-white/90 hover:bg-white text-black rounded-full p-2 shadow-lg transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label="Cerrar imagen"
+                >
+                  <X className="w-5 h-5" />
+                </motion.button>
+
+                <motion.img
+                  src={images[index]}
+                  alt={`Memory ${index + 1} - Vista completa`}
+                  className="w-full h-full object-contain rounded-lg shadow-2xl max-w-[85vw] max-h-[85vh] sm:max-w-[80vw] sm:max-h-[80vh] md:max-w-[75vw] md:max-h-[75vh]"
+                  initial={{ scale: 1.1 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   )
 }

@@ -193,12 +193,11 @@ export default function TimelineMemoryCard({
                 {milestones.slice(0, initialVisibleCount).map((milestone, idx) => (
                   <motion.span
                     key={`${entry.id}-${milestone.id}`}
-                    className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] whitespace-normal break-words"
+                    className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] whitespace-normal break-words hover:bg-muted/80 transition-colors duration-200"
                     variants={badgeVariants}
                     initial={{ opacity: 1, scale: 1 }}
                     whileHover={{
                       scale: 1.05,
-                      backgroundColor: "hsl(var(--muted) / 0.8)",
                     }}
                     transition={{ duration: 0.2 }}
                     layout
@@ -214,7 +213,7 @@ export default function TimelineMemoryCard({
                     milestones.slice(initialVisibleCount).map((milestone, idx) => (
                       <motion.span
                         key={`${entry.id}-${milestone.id}`}
-                        className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] whitespace-normal break-words"
+                        className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] whitespace-normal break-words hover:bg-muted/80 transition-colors duration-200"
                         initial={{ opacity: 0, scale: 0.8, y: -10 }}
                         animate={{
                           opacity: 1,
@@ -237,7 +236,6 @@ export default function TimelineMemoryCard({
                         }}
                         whileHover={{
                           scale: 1.05,
-                          backgroundColor: "hsl(var(--muted) / 0.8)",
                         }}
                         layout
                         layoutId={`milestone-${entry.id}-${milestone.id}`}

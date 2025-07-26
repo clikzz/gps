@@ -3,7 +3,8 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Calendar, Eye, MapPin, AlertTriangle } from "lucide-react"
+import ConfirmationButton from "@/components/ConfirmationButton"
+import { Calendar, Eye, MapPin, AlertTriangle, Search } from "lucide-react"
 import type { MissingReport } from "@/types/find"
 import { translateSpecies } from "@/utils/translateSpecies"
 
@@ -12,6 +13,8 @@ interface Props {
   screenXY: { xPct: number; yPct: number }
   onViewDetails: (r: MissingReport) => void
   onReportSighting: (r: MissingReport) => void
+  onMarkFound: (r: MissingReport) => Promise<void>
+  meIsReporter: boolean
   onClose: () => void
 }
 
@@ -20,6 +23,8 @@ export default function PetReportCard({
   screenXY,
   onViewDetails,
   onReportSighting,
+  onMarkFound,
+  meIsReporter,
   onClose,
 }: Props) {
   const style = {
@@ -29,13 +34,15 @@ export default function PetReportCard({
 
   const petCategory = translateSpecies(report.pet.species)
 
+  console.log("meIsReporter", meIsReporter)
+
   return (
     <>
       {/* overlay para cerrar haciendo clic fuera */}
       <div className="absolute inset-0 z-40" onClick={onClose} />
 
       <div className="absolute z-50 -translate-x-1/2" style={style}>
-        <Card className="w-80 shadow-xl border-2 border-background">
+        <Card className="shadow-xl border-2 border-background">
           <CardContent className="p-0">
             {/* ——— Cabecera ——— */}
             <div className="p-4 pb-3 flex items-start gap-3">
@@ -68,7 +75,7 @@ export default function PetReportCard({
               <div className="flex items-start gap-2 text-sm">
                 <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <span className="line-clamp-2">
-                  {report.address ? `${report.address}, ${report.city}` : `${report.street}, ${report.city}` || "Ubicación no registrada"}
+                  {report.address ? `${report.address}, ${report.city}` : `${report.street}, ${report.city}` ? `${report.city}` : "Ubicación no registrada"}
                 </span>
               </div>
 
@@ -99,14 +106,31 @@ export default function PetReportCard({
                 <Eye className="w-4 h-4 mr-1" /> Ver detalles
               </Button>
 
-              <Button
-                variant="default"
-                size="sm"
-                className="flex-1"
-                onClick={() => onReportSighting(report)}
-              >
-                <AlertTriangle className="w-4 h-4 mr-1" /> Reportar hallazgo
-              </Button>
+              {meIsReporter ? (
+                <ConfirmationButton
+                  onConfirm={async () => await onMarkFound(report)}
+                  triggerText={
+                    <>
+                      <Search className="w-4 h-4 mr-1" /> Marcar como encontrada
+                    </>
+                  }
+                  dialogTitle="Confirmar mascota encontrada"
+                  dialogDescription="¿Estás seguro de que tu mascota ya fue encontrada? Esta acción cerrará el reporte."
+                  confirmText="Confirmar"
+                  cancelText="Cancelar"
+                  variant="destructive"
+                  size="sm"
+                />
+              ) : (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => onReportSighting(report)}
+                >
+                  <AlertTriangle className="w-4 h-4 mr-1" /> Reportar hallazgo
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

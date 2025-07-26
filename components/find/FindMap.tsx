@@ -205,8 +205,25 @@ export default function FindMap() {
       setPickedLocation(null);
       refreshReports();
     } catch (e: any) {
-      console.error("Error al enviar reporte:", e);
-      toast.error(`Error al enviar reporte: ${e.message}`);
+      toast.error(e.message);
+    }
+  }
+
+  const markMissingResolved = async (r: MissingReport) => {
+    try {
+      const petId = parseInt(r.pet.id, 10)
+      const res = await fetch(`/api/find?mode=resolved&pet=${petId}`, {
+        method: "PUT",
+      })
+      if (!res.ok) throw new Error("No se pudo marcar como encontrada.")
+      toast.success("Mascota marcada como encontrada.")
+      setShowDialog(false)
+      setShowCard(false)
+      setSelectedReport(null)
+      refreshReports()
+      refreshFoundReports()
+    } catch (e: any) {
+      toast.error(e.message)
     }
   }
 
@@ -394,6 +411,8 @@ export default function FindMap() {
               setShowDialog(true)
               setShowCard(false)
             }}
+            onMarkFound={markMissingResolved}
+            meIsReporter={selectedReport.reporter_id === userId}
             onReportSighting={openFoundModal}
             onClose={() => {
               setShowCard(false)
@@ -409,6 +428,8 @@ export default function FindMap() {
             setShowDialog(false)
             setSelectedReport(null)
           }}
+          onMarkFound={markMissingResolved}
+          meIsReporter={selectedReport?.reporter_id === userId}
           onReportSighting={openFoundModal}
         />
 

@@ -17,8 +17,8 @@ import {
 export const reportMissingPet = async (reporterId: string, body: any) => {
   const parseResult = reportMissingPetSchema.safeParse(body);
   if (!parseResult.success) {
-    const formatted = parseResult.error.format();
-    return new Response(JSON.stringify({ error: formatted }), {
+    const firstMessage = parseResult.error.errors[0]?.message ?? "Datos inválidos";
+    return new Response(JSON.stringify({ error: firstMessage }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });

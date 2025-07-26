@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, Camera, MapPin, Phone, X, Instagram, Mail } from "lucide-react"
+import ConfirmationButton from "@/components/ConfirmationButton"
+import { Calendar, Camera, MapPin, Phone, X, Instagram, Mail, Search } from "lucide-react"
 import type { MissingReport } from "@/types/find"
 import { translateSpecies } from "@/utils/translateSpecies"
 
@@ -13,6 +14,8 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   onReportSighting: (r: MissingReport) => void
+  onMarkFound: (r: MissingReport) => Promise<void>
+  meIsReporter: boolean
 }
 
 export default function PetReportDialog({
@@ -20,6 +23,8 @@ export default function PetReportDialog({
   isOpen,
   onClose,
   onReportSighting,
+  onMarkFound,
+  meIsReporter,
 }: Props) {
   if (!isOpen || !report) return null
 
@@ -159,12 +164,29 @@ export default function PetReportDialog({
             </div>
 
             <div className="flex">
-              <Button
-                className="flex-1"
-                onClick={() => onReportSighting(report)}
-              >
-                <MapPin className="w-4 h-4 mr-2" /> Reportar hallazgo
-              </Button>
+              {meIsReporter ? (
+                <ConfirmationButton
+                  onConfirm={async () => await onMarkFound(report)}
+                  triggerText={
+                    <>
+                      <Search className="w-4 h-4 mr-1" /> Marcar como encontrada
+                    </>
+                  }
+                  dialogTitle="Confirmar mascota encontrada"
+                  dialogDescription="¿Estás seguro de que tu mascota ya fue encontrada? Esta acción cerrará el reporte."
+                  confirmText="Confirmar"
+                  cancelText="Cancelar"
+                  variant="destructive"
+                  size="sm"
+                />
+              ) : (
+                <Button
+                  className="flex-1"
+                  onClick={() => onReportSighting(report)}
+                >
+                  <MapPin className="w-4 h-4 mr-2" /> Reportar hallazgo
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>

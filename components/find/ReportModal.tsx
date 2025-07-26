@@ -88,7 +88,7 @@ export default function ReportModal({
         photo_urls = await uploadAll();
       } catch (err) {
         console.error(err);
-        toast.error("Error subiendo fotos de referencia");
+        toast.error("Error subiendo fotos de referencia.");
         return;
       }
     }
@@ -96,7 +96,7 @@ export default function ReportModal({
     onSubmit({
       pet_id: selectedPetId,
       description: description || undefined,
-      photo_urls: photo_urls.length ? photo_urls : undefined,
+      photo_urls,
       location: pickedLocation || undefined,
     });
   };
@@ -141,7 +141,11 @@ export default function ReportModal({
                 multiple
                 onChange={(e) => {
                   const chosen = Array.from(e.target.files || []);
-                  setFiles(chosen.slice(0, 3)); // límite 3
+                  if (chosen.length > 3) {
+                    toast.error("Máximo 3 fotos de referencia.");
+                    return;
+                  }
+                  setFiles(chosen);
                 }}
                 className="mt-1"
               />

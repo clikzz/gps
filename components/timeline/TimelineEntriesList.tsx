@@ -15,8 +15,6 @@ interface TimelineEntriesListProps {
   reloadSignal?: number
 }
 
-const TAKE = 10
-
 function parseEventDateLocal(input: string | Date): Date {
   if (typeof input === "string") {
     const [y, m, d] = input.split("T")[0].split("-").map(Number)
@@ -65,15 +63,6 @@ const stateVariants = {
   },
 }
 
-const paginationVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, delay: 0.2 },
-  },
-}
-
 export default function TimelineEntriesList({
   startDate,
   endDate,
@@ -83,15 +72,10 @@ export default function TimelineEntriesList({
   const activePet = useActivePet((state) => state.activePet)
   const petId = activePet?.id ?? ""
 
-  const [page, setPage] = useState(0)
-  const skip = page * TAKE
-
-  const { entries, total, isLoading, error, mutateEntries } = useTimelineData(petId, {
+  const { entries, isLoading, error, mutateEntries } = useTimelineData(petId, {
     startDate,
     endDate,
     milestoneId,
-    skip,
-    take: TAKE,
   })
 
   const { isDeleting, deleteEntry } = useDeleteTimelineEntry(petId)
@@ -111,12 +95,6 @@ export default function TimelineEntriesList({
   useEffect(() => {
     if (reloadSignal !== undefined) mutateEntries()
   }, [reloadSignal, mutateEntries])
-
-  useEffect(() => {
-    setPage(0)
-  }, [startDate, endDate, milestoneId])
-
-  const totalPages = Math.ceil(total / TAKE)
 
   if (!petId) {
     return null
@@ -200,30 +178,6 @@ export default function TimelineEntriesList({
                   />
                 ))}
               </AnimatePresence>
-            </motion.div>
-
-            <motion.div className="flex justify-center gap-2 mt-6" variants={paginationVariants}>
-              <motion.button
-                onClick={() => setPage((p) => Math.max(p - 1, 0))}
-                disabled={page === 0}
-                className="px-3 py-1 rounded border transition-colors hover:bg-muted disabled:opacity-50"
-                whileHover={{ scale: page === 0 ? 1 : 1.05 }}
-                whileTap={{ scale: page === 0 ? 1 : 0.95 }}
-              >
-                Anterior
-              </motion.button>
-              <span className="px-2 py-1 text-sm">
-                Página {page + 1} de {totalPages}
-              </span>
-              <motion.button
-                onClick={() => setPage((p) => (p + 1 < totalPages ? p + 1 : p))}
-                disabled={page + 1 >= totalPages}
-                className="px-3 py-1 rounded border transition-colors hover:bg-muted disabled:opacity-50"
-                whileHover={{ scale: page + 1 >= totalPages ? 1 : 1.05 }}
-                whileTap={{ scale: page + 1 >= totalPages ? 1 : 0.95 }}
-              >
-                Siguiente
-              </motion.button>
             </motion.div>
           </motion.div>
         )}

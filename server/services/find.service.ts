@@ -1,5 +1,6 @@
 import prisma from "@/lib/db";
 import { reverseGeocode } from "@/utils/geocode";
+import { PetCategory } from "@prisma/client";
 
 export interface MissingPetInput {
   pet_id: number;
@@ -95,10 +96,10 @@ export const listAllMissingPets = async () => {
     },
     include: {
       Pets: {
-        select: { id: true, name: true, photo_url: true },
+        select: { id: true, name: true, photo_url: true, species: true },
       },
       users: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, phone: true, instagram: true, email: true},
       },
     },
     orderBy: { reported_at: "desc" },
@@ -117,10 +118,10 @@ export const listOtherMissingPets = async (userId: string) => {
     },
     include: {
       Pets: {
-        select: { id: true, name: true, photo_url: true, is_lost: true },
+        select: { id: true, name: true, photo_url: true, is_lost: true, species: true },
       },
       users: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, phone: true, instagram: true, email: true },
       },
     },
     orderBy: { reported_at: "desc" },
@@ -142,10 +143,10 @@ export const listRecentMissingPets = async () => {
     },
     include: {
       Pets: {
-        select: { id: true, name: true, photo_url: true },
+        select: { id: true, name: true, photo_url: true, species: true },
       },
       users: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, phone: true, instagram: true, email: true },
       },
     },
     orderBy: { reported_at: "desc" },
@@ -163,8 +164,8 @@ export const listMyMissingPets = async (userId: string) => {
       Pets: { is_lost: true },
     },
     include: {
-      Pets: { select: { id: true, name: true, photo_url: true } },
-      users: { select: { id: true, name: true } },
+      Pets: { select: { id: true, name: true, photo_url: true, species: true } },
+      users: { select: { id: true, name: true, phone: true, instagram: true, email: true } },
     },
     orderBy: { reported_at: "desc" },
   });
@@ -241,6 +242,7 @@ export const listFoundReportsForUser = async (userId: string) => {
             select: {
               name: true,
               photo_url: true,
+              species: true,
             },
           },
         },
@@ -249,6 +251,9 @@ export const listFoundReportsForUser = async (userId: string) => {
         select: {
           id: true,
           name: true,
+          phone: true,
+          instagram: true,
+          email: true,
         },
       },
     },

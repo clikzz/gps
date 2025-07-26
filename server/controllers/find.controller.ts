@@ -101,10 +101,14 @@ export const fetchAllMissingPets = async () => {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url ?? undefined,
+      species: item.Pets.species || "Desconocido",
     },
     reporter: {
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
+      phone: item.users.phone || "No disponible",
+      instagram: item.users.instagram || "No disponible",
+      email: item.users.email || "No disponible",
     },
   }));
 
@@ -116,8 +120,6 @@ export const fetchAllMissingPets = async () => {
 
 export const fetchRecentMissingPets = async () => {
   const list = await listRecentMissingPets();
-
-  console.log(list);
 
   const output = list.map((item) => ({
     id: item.id.toString(),
@@ -139,10 +141,14 @@ export const fetchRecentMissingPets = async () => {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url,
+      species: item.Pets.species || "Desconocido",
     },
     reporter: {
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
+      phone: item.users.phone || "No disponible",
+      instagram: item.users.instagram || "No disponible",
+      email: item.users.email || "No disponible",
     },
   }));
 
@@ -173,10 +179,14 @@ export const fetchMyMissingPets = async (userId: string) => {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url,
+      species: item.Pets.species || "Desconocido",
     },
     reporter: {
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
+      phone: item.users.phone || "No disponible",
+      instagram: item.users.instagram || "No disponible",
+      email: item.users.email || "No disponible",
     },
   }));
   return new Response(JSON.stringify(output), {
@@ -206,10 +216,14 @@ export const fetchOtherMissingPets = async (userId: string) => {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url,
+      species: item.Pets.species || "Desconocido",
     },
     reporter: {
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
+      phone: item.users.phone || "No disponible",
+      instagram: item.users.instagram || "No disponible",
+      email: item.users.email || "No disponible",
     },
     reported_at: item.reported_at.toISOString(),
   }));
@@ -288,12 +302,16 @@ export const fetchFoundReports = async (userId: string) => {
     ownerId: r.MissingPets.reporter_id.toString(),
     helper: {
       id: r.users.id.toString(),
-      name: r.users.name
+      name: r.users.name || "Desconocido",
+      phone: r.users.phone || "No disponible",
+      instagram: r.users.instagram || "No disponible",
+      email: r.users.email || "No disponible",
     },
     pet: {
       id: r.MissingPets.pet_id.toString(),
       name: r.MissingPets.Pets.name,
-      photo_url: r.MissingPets.Pets.photo_url
+      photo_url: r.MissingPets.Pets.photo_url,
+      species: r.MissingPets.Pets.species || "Desconocido",
     },
     description: r.description,
     latitude: r.latitude,

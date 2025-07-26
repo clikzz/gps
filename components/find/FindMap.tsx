@@ -7,16 +7,19 @@ import { Marker } from 'react-map-gl/mapbox';
 import { useUserProfile } from '@/stores/userProfile';
 import { MissingReport, FoundReport } from '@/types/find';
 import { useUserLocation } from '@/hooks/useUserLocation';
-import { MapPin, Plus, Minus, Compass } from 'lucide-react';
+import { MapPin, Plus, Minus, Compass, Search } from 'lucide-react';
 import ActionsMenu from '@/components/find/ActionsMenu';
 import ReportModal, { LatLng } from '@/components/find/ReportModal';
 import MyReports from '@/components/find/MyReports';
 import OthersReports from '@/components/find/OthersReports';
 import FoundReportModal from '@/components/find/FoundReportModal';
 import { Markers } from '@/components/find/FindMarkers';
-import ReportPopup from '@/components/find/ReportPopup';
 import FoundReports from '@/components/find/FoundReports';
-import FoundPopup from '@/components/find/FoundPopup';
+import PetReportCard from "@/components/find/PetReportCard"
+import PetReportDialog from "@/components/find/PetReportDialog"
+import FoundReportCard from "@/components/find/FoundReportCard"
+import FoundReportDialog from "@/components/find/FoundReportDialog"
+import LoadingScreen from "@/components/LoadingScreen";
 import { toast } from "sonner";
 import { fetcher } from "@/lib/utils";
 
@@ -34,8 +37,6 @@ export default function FindMap() {
   const [mapLoaded, setMapLoaded] = useState(false);
 
   const [reports, setReports] = useState<MissingReport[]>([]);
-  const [selected, setSelected] = useState<MissingReport | null>(null);
-  const [photoIndex, setPhotoIndex] = useState(0);
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isMyReportsModalOpen, setIsMyReportsModalOpen] = useState(false);
@@ -53,7 +54,14 @@ export default function FindMap() {
 
   const [foundReportsOnMap, setFoundReportsOnMap] = useState<FoundReport[]>([]);
   const [foundSelected, setFoundSelected] = useState<FoundReport | null>(null);
-  const [foundPhotoIndex, setFoundPhotoIndex] = useState(0);
+
+  const [selectedReport, setSelectedReport] = useState<MissingReport | null>(null);
+  const [showCard, setShowCard] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const [foundShowCard,   setFoundShowCard] = useState(false)
+  const [foundShowDialog, setFoundShowDialog] = useState(false)
 
   async function refreshReports() {
     try {
@@ -74,13 +82,16 @@ export default function FindMap() {
   }
 
   useEffect(() => {
-    setPhotoIndex(0);
-  }, [selected]);
-
-  useEffect(() => {
     refreshReports();
     refreshFoundReports();
   }, []);
+
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < 768)
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [])
 
   const flyToReport = (report: MissingReport) => {
     if (!mapRef.current) return;
@@ -92,11 +103,60 @@ export default function FindMap() {
     });
   };
 
+  const projectToPct = (lng: number, lat: number) => {
+    if (!mapRef.current) return { xPct: 50, yPct: 50 }
+    const { x, y } = mapRef.current.project([lng, lat])
+    return { xPct: (x / window.innerWidth) * 100, yPct: (y / window.innerHeight) * 100 }
+  }
+
   const handleGoTo = (report: MissingReport) => {
     setIsOthersReportsModalOpen(false);
     setIsMyReportsModalOpen(false);
     flyToReport(report);
   };
+
+  const handleMarkerSelect = (r: MissingReport) => {
+    setSelectedReport(r)
+    setFoundSelected(null)
+
+    if (isMobile) {
+      setShowDialog(true)
+      setShowCard(false)
+    } else {
+      setShowCard(true)
+      setShowDialog(false)
+    }
+  }
+
+  const handleFoundMarkerSelect = (r: FoundReport) => {
+    setFoundSelected(r)
+    setSelectedReport(null)
+
+    if (isMobile) {
+      setFoundShowDialog(true)
+      setFoundShowCard(false)
+    } else {
+      setFoundShowCard(true)
+      setFoundShowDialog(false)
+    }
+  }
+
+  const markFoundResolved = async (r: FoundReport) => {
+    try {
+      const res = await fetch(`/api/find?mode=resolved&pet=${r.pet.id}`, {
+        method: "PUT",
+      })
+      if (!res.ok) throw new Error("No se pudo marcar como encontrada.")
+      toast.success("Mascota marcada como encontrada.")
+      setFoundShowDialog(false)
+      setFoundShowCard(false)
+      setFoundSelected(null)
+      refreshReports()
+      refreshFoundReports()
+    } catch (e: any) {
+      toast.error(e.message)
+    }
+  }
 
   function openFoundModal(report: MissingReport) {
     setTargetReport(report);
@@ -110,7 +170,7 @@ export default function FindMap() {
     photo_urls?: string[];
     location?: LatLng;
   }) {
-    if (!mapRef.current) return alert("El mapa no está listo aún.");
+    if (!mapRef.current) return toast.error("El mapa no está listo aún.");
 
     const [lat, lng] = data.location
       ? [data.location.lat, data.location.lng]
@@ -262,10 +322,7 @@ export default function FindMap() {
         {/* Marcadores de desapariciones */}
         <Markers
           reports={reports}
-          onSelect={(r) => {
-            setSelected(r);
-            setFoundSelected(null);
-          }}
+          onSelect={handleMarkerSelect}
         />
 
         {/* Marcadores de hallazgos */}
@@ -273,40 +330,36 @@ export default function FindMap() {
           key="found-markers"
           reports={foundReportsOnMap}
           variant="found"
-          onSelect={(r) => {
-            setFoundPhotoIndex(0);
-            setFoundSelected(r);
-            setSelected(null);
-          }}
+          onSelect={handleFoundMarkerSelect}
         />
 
-        {/* Popup */}
-        <ReportPopup
-          selected={selected}
-          userId={userId}
-          photoIndex={photoIndex}
-          setPhotoIndex={setPhotoIndex}
-          onClose={() => setSelected(null)}
-          onFound={() => {
-            setSelected(null);
-            refreshReports();
-          }}
-          onOpenFoundModal={openFoundModal}
-        />
-
-        {foundSelected && (
-          <FoundPopup
-            selected={foundSelected}
-            userId={userId}
-            photoIndex={foundPhotoIndex}
-            setPhotoIndex={setFoundPhotoIndex}
-            onClose={() => setFoundSelected(null)}
-            onMarkResolved={(petId) => {
-              refreshReports();
-              refreshFoundReports();
+        {foundShowCard && foundSelected && !isMobile && (
+          <FoundReportCard
+            report={foundSelected}
+            screenXY={projectToPct(foundSelected.longitude, foundSelected.latitude)}
+            meIsReporter={foundSelected.ownerId === userId}
+            onViewDetails={() => {
+              setFoundShowDialog(true)
+              setFoundShowCard(false)
+            }}
+            onMarkResolved={markFoundResolved}
+            onClose={() => {
+              setFoundShowCard(false)
+              setFoundSelected(null)
             }}
           />
         )}
+
+        <FoundReportDialog
+          report={foundSelected}
+          isOpen={foundShowDialog}
+          meIsReporter={foundSelected?.ownerId === userId}
+          onClose={() => {
+            setFoundShowDialog(false)
+            setFoundSelected(null)
+          }}
+          onMarkResolved={markFoundResolved}
+        />
 
         {targetReport && (
           <FoundReportModal
@@ -329,6 +382,35 @@ export default function FindMap() {
             }}
           />
         )}
+
+        {showCard && selectedReport && !isMobile && (
+          <PetReportCard
+            report={selectedReport}
+            screenXY={projectToPct(
+              selectedReport.longitude,
+              selectedReport.latitude
+            )}
+            onViewDetails={() => {
+              setShowDialog(true)
+              setShowCard(false)
+            }}
+            onReportSighting={openFoundModal}
+            onClose={() => {
+              setShowCard(false)
+              setSelectedReport(null)
+            }}
+          />
+        )}
+
+        <PetReportDialog
+          report={selectedReport}
+          isOpen={showDialog}
+          onClose={() => {
+            setShowDialog(false)
+            setSelectedReport(null)
+          }}
+          onReportSighting={openFoundModal}
+        />
 
         {/* Marcador de ubicación marcada */}
         {pickedLocation && (
@@ -364,12 +446,7 @@ export default function FindMap() {
         </div>
 
       {!mapLoaded && (
-        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando mapa...</p>
-          </div>
-        </div>
+        <LoadingScreen title="Cargando reportes" subtext="Por favor, espera mientras cargamos los reportes de mascotas desaparecidas." icon={Search} accentIcon={Search} />
       )}
     </div>
   );

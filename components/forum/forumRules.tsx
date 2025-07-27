@@ -29,18 +29,18 @@ export function ForumRules() {
       <div className="flex flex-col lg:flex-row">
         <div className="w-full lg:w-48 border-b lg:border-b-0 lg:border-r p-4 bg-muted/30 lg:bg-transparent">
           <div className="flex flex-row lg:flex-col items-center lg:items-center gap-4 lg:gap-3 lg:text-center">
+            <div className="text-center lg:space-y-1">
+              <div className="font-medium text-sm">
+                <span className="text-accent">{rulesAuthor.name}</span>
+                <span className="text-gray-400"> #{rulesAuthor.tag}</span>
+              </div>
+              <div className="text-xs font-semibold text-destructive">Administrador</div>
+            </div>
             <div className="flex flex-col items-center gap-2 lg:gap-3">
               <img
                 src={rulesAuthor.avatar_url || "/placeholder.svg"}
                 className="w-16 h-16 lg:w-24 lg:h-24 rounded border flex-shrink-0"
               />
-              <div className="text-center lg:space-y-1">
-                <div className="font-medium text-sm">
-                  <span className="text-accent">{rulesAuthor.name}</span>
-                  <span className="text-gray-400"> #{rulesAuthor.tag}</span>
-                </div>
-                <div className="text-xs font-semibold text-destructive">Administrador</div>
-              </div>
             </div>
             <div className="flex lg:flex-col gap-4 lg:gap-1 lg:w-full">
               <div className="text-xs whitespace-nowrap">Mensajes: {rulesAuthor.menssageCount.toLocaleString()}</div>

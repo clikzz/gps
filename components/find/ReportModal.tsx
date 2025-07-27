@@ -143,7 +143,10 @@ export default function ReportModal({
                 onChange={(e) => {
                   const chosen = Array.from(e.target.files || []);
                   if (chosen.length > 3) {
-                    toast.error("Máximo 3 fotos de referencia.");
+                    toast.error("Solo puedes subir hasta 3 fotos.");
+                    return;
+                  } else if (chosen.length === 0) {
+                    toast.info("Debes seleccionar al menos una foto.");
                     return;
                   }
                   setFiles(chosen);

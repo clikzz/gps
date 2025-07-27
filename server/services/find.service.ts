@@ -1,6 +1,5 @@
 import prisma from "@/lib/db";
 import { reverseGeocode } from "@/utils/geocode";
-import { PetCategory } from "@prisma/client";
 
 export interface MissingPetInput {
   pet_id: number;
@@ -57,6 +56,65 @@ export const createMissingPet = async (
     return missing;
   });
 };
+
+/**
+ * Actualiza un reporte de mascota desaparecida.
+ */
+export const updateMissingPet = async (
+  reportId: number,
+  userId: string,
+  data: Partial<{
+    latitude: number
+    longitude: number
+    description: string
+    photo_urls: string[]
+  }>
+) => {
+  return prisma.$transaction(async (tx) => {
+    const rpt = await tx.missingPets.findFirst({
+      where: { id: reportId, reporter_id: userId, resolved: false },
+    })
+    if (!rpt) throw new Error("No autorizado o reporte ya resuelto")
+
+    let addr = {}
+    if (data.latitude !== undefined && data.longitude !== undefined) {
+      addr = await reverseGeocode(data.latitude, data.longitude)
+    }
+
+    const updated = await tx.missingPets.update({
+      where: { id: reportId },
+      data: {
+        ...data,
+        ...addr,
+      },
+    })
+
+    return updated
+  })
+}
+
+/**
+ * Elimina un reporte de mascota desaparecida. Solo el usuario que lo creó puede eliminarlo
+ * y solo si no ha sido resuelto.
+ */
+export const deleteMissingPet = async (reportId: number, userId: string) => {
+  return prisma.$transaction(async (tx) => {
+    const rpt = await tx.missingPets.findFirst({
+      where: { id: reportId, reporter_id: userId },
+      include: { Pets: true },
+    })
+    if (!rpt) throw new Error("No autorizado o no existe")
+
+    await tx.missingPets.delete({ where: { id: reportId } })
+
+    await tx.pets.update({
+      where: { id: rpt.pet_id },
+      data: { is_lost: false },
+    })
+
+    return true
+  })
+}
 
 /**
  * Marca una mascota como encontrada y resuelve su reporte activos. Solo el usuario que reportó la desaparición puede marcarla como encontrada.
@@ -215,6 +273,25 @@ export const createFoundReport = async (
       postcode: addr.postcode,
       country: addr.country,
     },
+  });
+};
+
+/**
+ * Rechazar un reporte de hallazgo. Solo el dueño de la mascota desaparecida puede rechazarlo.
+ */
+export const rejectFoundReport = async (foundId: number, ownerId: string) => {
+  return prisma.$transaction(async (tx) => {
+    const fr = await tx.foundReports.findUnique({
+      where: { id: foundId },
+      include: { MissingPets: { select: { reporter_id: true } } },
+    });
+
+    if (!fr || fr.MissingPets.reporter_id !== ownerId) {
+      throw new Error("No autorizado o reporte inexistente");
+    }
+
+    await tx.foundReports.delete({ where: { id: foundId } });
+    return true;
   });
 };
 

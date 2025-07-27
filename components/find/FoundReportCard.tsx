@@ -87,17 +87,6 @@ export default function FoundReportCard({
               >
                 <Eye className="w-4 h-4 mr-1" /> Ver detalles
               </Button>
-
-              {meIsReporter && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => onMarkResolved(report)}
-                >
-                  <CheckCircle className="w-4 h-4 mr-1" /> Marcar resuelto
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>

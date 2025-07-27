@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Calendar, Camera, MapPin, CheckCircle, X, Phone, Mail, Instagram } from "lucide-react"
+import { Calendar, Camera, MapPin, CheckCircle, X, Phone, Mail, Instagram, Ban } from "lucide-react"
+import { Label } from "@/components/ui/label"
 import type { FoundReport } from "@/types/find"
 import { translateSpecies } from "@/utils/translateSpecies"
 
@@ -13,6 +14,7 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   onMarkResolved: (r: FoundReport) => void
+  onReject: (r: FoundReport) => void
   meIsReporter: boolean
 }
 
@@ -21,6 +23,7 @@ export default function FoundReportDialog({
   isOpen,
   onClose,
   onMarkResolved,
+  onReject,
   meIsReporter,
 }: Props) {
   if (!isOpen || !report) return null
@@ -69,7 +72,7 @@ export default function FoundReportDialog({
           {/* Descripción */}
           <div className="p-6 space-y-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground mb-2">
+              <p className="font-semibold text-base mb-2">
                 Descripción
               </p>
               <p className="text-sm leading-relaxed">
@@ -106,7 +109,7 @@ export default function FoundReportDialog({
               <div className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Camera className="w-4 h-4 text-foreground" />
-                  <h3 className="text-medium">Fotos de referencia</h3>
+                  <Label className="font-semibold text-base">Fotos del hallazgo</Label>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   {report.photo_urls.map((u, i) => (
@@ -130,9 +133,7 @@ export default function FoundReportDialog({
           {/* Contacto */}
           <div className="pt-4 space-y-4">
             <div className="flex flex-col justify-center items-center text-sm">
-              <h3 className="font-medium mb-3">
-                Información de contacto
-              </h3>
+              <Label className="font-semibold mb-3 text-base">Datos de contacto</Label>
 
               <div className="flex items-center gap-4 text-sm">
                 {report.helper.phone && (
@@ -163,12 +164,22 @@ export default function FoundReportDialog({
 
           {/* Acción */}
           {meIsReporter && (
-            <div className="p-4">
+            <div className="flex justify-center items-center p-4 gap-2">
               <Button
-                className="w-full"
+              className="flex-1"
                 onClick={() => onMarkResolved(report)}
               >
-                <CheckCircle className="w-4 h-4 mr-2" /> Marcar resuelto
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Marcar resuelto
+              </Button>
+
+              <Button
+                className="flex-1"
+                variant="destructive"
+                onClick={() => onReject(report)}
+              >
+                <Ban className="w-4 h-4 mr-2" />
+                Rechazar hallazgo
               </Button>
             </div>
           )}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -67,7 +68,7 @@ export default function FoundReportModal({
         body: JSON.stringify({
           missingPetId: Number(report.id),
           description: description || undefined,
-          photo_urls: photo_urls.length ? photo_urls : undefined,
+          photo_urls,
           latitude: pickedLocation?.lat || report.latitude,
           longitude: pickedLocation?.lng || report.longitude,
         }),
@@ -79,7 +80,7 @@ export default function FoundReportModal({
       }
       onSubmitted();
     } catch (err: any) {
-      alert('Error al enviar hallazgo: ' + err.message);
+      toast.error(err.message)
     }
   };
 
@@ -102,7 +103,14 @@ export default function FoundReportModal({
                 multiple
                 onChange={(e) => {
                   const chosen = Array.from(e.target.files || []);
-                  setFiles(chosen.slice(0, 3)); // límite 3
+                  if (chosen.length > 3) {
+                    toast.error('Solo puedes subir hasta 3 fotos.');
+                    return;
+                  } else if (chosen.length === 0) {
+                    toast.info('Debes seleccionar al menos una foto.');
+                    return;
+                  }
+                  setFiles(chosen);
                 }}
                 className="mt-1"
               />

@@ -69,3 +69,22 @@ export const reportFoundSchema = z.object({
       message: "Longitud debe estar entre -180 y 180.",
     }),
 });
+
+export const editMissingPetSchema = z.object({
+  latitude: z
+    .number({ invalid_type_error: "Latitud debe ser un número." })
+    .refine((v) => v >= -90 && v <= 90, { message: "Latitud  -90 a 90" })
+    .optional(),
+  longitude: z
+    .number({ invalid_type_error: "Longitud debe ser un número." })
+    .refine((v) => v >= -180 && v <= 180, { message: "Longitud -180 a 180" })
+    .optional(),
+  description: z
+    .string().max(250, "Máx. 250 caracteres")
+    .optional(),
+  photo_urls: z
+    .array(z.string().url())
+    .min(1, "Al menos 1 foto")
+    .max(3, "Máx. 3 fotos")
+    .optional(),
+});

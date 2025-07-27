@@ -158,6 +158,25 @@ export default function FindMap() {
     }
   }
 
+  const rejectFound = async (r: FoundReport) => {
+    try {
+      const res = await fetch(`/api/find?mode=found&id=${r.id}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "No se pudo rechazar el hallazgo.")
+      }
+      toast.success("Reporte de hallazgo rechazado.")
+      setFoundShowDialog(false)
+      setFoundShowCard(false)
+      setFoundSelected(null)
+      refreshFoundReports()
+    } catch (e: any) {
+      toast.error(e.message)
+    }
+  }
+
   function openFoundModal(report: MissingReport) {
     setTargetReport(report);
     setIsFoundModalOpen(true);
@@ -377,6 +396,7 @@ export default function FindMap() {
             setFoundSelected(null)
           }}
           onMarkResolved={markFoundResolved}
+          onReject={rejectFound}
         />
 
         {targetReport && (

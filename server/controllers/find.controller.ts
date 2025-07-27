@@ -7,11 +7,15 @@ import {
   listOtherMissingPets,
   markPetAsFound,
   createFoundReport,
-  listFoundReportsForUser
+  listFoundReportsForUser,
+  updateMissingPet,
+  deleteMissingPet,
+  rejectFoundReport
 } from "@/server/services/find.service";
 import { 
   reportMissingPetSchema,
-  reportFoundSchema
+  reportFoundSchema,
+  editMissingPetSchema
 } from "@/server/validations/find.validation";
 
 export const reportMissingPet = async (reporterId: string, body: any) => {
@@ -60,6 +64,53 @@ export const reportMissingPet = async (reporterId: string, body: any) => {
     );
   }
 };
+
+export const editMissingPet = async (
+  reporterId: string,
+  reportId: number,
+  body: any
+) => {
+  const parse = editMissingPetSchema.safeParse(body)
+  if (!parse.success) {
+    return new Response(
+      JSON.stringify({ error: parse.error.errors[0]?.message }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    )
+  }
+
+  try {
+    const rpt = await updateMissingPet(reportId, reporterId, parse.data)
+    return new Response(JSON.stringify({ ok: true, report: rpt }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })
+  } catch (e: any) {
+    const msg = e.message.includes("No autorizado") ? 403 : 500
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: msg,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+}
+
+export const removeMissingPet = async (
+  reporterId: string,
+  reportId: number
+) => {
+  try {
+    await deleteMissingPet(reportId, reporterId)
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })
+  } catch (e: any) {
+    const msg = e.message.includes("No autorizado") ? 403 : 500
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: msg,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+}
 
 export const reportPetFound = async (
   userId: string,
@@ -254,7 +305,7 @@ export const reportFound = async (
 ) => {
   const parseResult = reportFoundSchema.safeParse(body);
   if (!parseResult.success) {
-    return new Response(JSON.stringify({ error: parseResult.error.format() }), {
+    return new Response(JSON.stringify({ error: parseResult.error.errors[0]?.message  }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
@@ -290,6 +341,25 @@ export const reportFound = async (
       JSON.stringify({ error: err.message || "Error interno" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
+  }
+};
+
+export const removeFoundReport = async (
+  ownerId: string,
+  foundId: number
+) => {
+  try {
+    await rejectFoundReport(foundId, ownerId);
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e: any) {
+    const status = e.message.includes("No autorizado") ? 403 : 404;
+    return new Response(JSON.stringify({ error: e.message }), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 

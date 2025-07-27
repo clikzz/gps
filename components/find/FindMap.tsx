@@ -203,6 +203,7 @@ export default function FindMap() {
       }
       setIsReportModalOpen(false);
       setPickedLocation(null);
+      toast.success("Desaparición reportada correctamente.");
       refreshReports();
     } catch (e: any) {
       toast.error(e.message);
@@ -413,7 +414,10 @@ export default function FindMap() {
             }}
             onMarkFound={markMissingResolved}
             meIsReporter={selectedReport.reporter_id === userId}
-            onReportSighting={openFoundModal}
+            onReportSighting={(r) => {
+              openFoundModal(r);
+              setShowCard(false);
+            }}
             onClose={() => {
               setShowCard(false)
               setSelectedReport(null)
@@ -430,7 +434,10 @@ export default function FindMap() {
           }}
           onMarkFound={markMissingResolved}
           meIsReporter={selectedReport?.reporter_id === userId}
-          onReportSighting={openFoundModal}
+          onReportSighting={(r) => {
+            openFoundModal(r);
+            setShowDialog(false);
+          }}
         />
 
         {/* Marcador de ubicación marcada */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { MissingReport } from '@/types/find';
+import { MapPin } from 'lucide-react';
 import { LatLng } from '@/components/find/ReportModal';
 
 interface FoundReportModalProps {
@@ -119,26 +120,28 @@ export default function FoundReportModal({
               />
             </div>
 
-            <div>
+            <div className="flex flex-col gap-2">
+              <Label>Ubicación del hallazgo</Label>
               <Button
                 type="button"
                 variant="outline"
                 className="w-full"
                 onClick={onPickLocation}
               >
+                <MapPin className="w-4 h-4" />
                 {pickedLocation
                   ? `Ubicación hallazgo: (${pickedLocation.lat.toFixed(5)}, ${pickedLocation.lng.toFixed(5)})`
                   : 'Marcar ubicación en el mapa'}
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center text-sm text-muted-foreground justify-center">
               {pickedLocation
                 ? 'Si te gusta esa ubicación, continúa.'
                 : 'Si no marcas ubicación, se toma la original.'}
-            </p>
+            </div>
           </CardContent>
 
-          <CardFooter className="flex justify-end space-x-2">
+          <CardFooter className="flex justify-center space-x-2">
             <Button variant="outline" onClick={onClose} type="button">
               Cancelar
             </Button>

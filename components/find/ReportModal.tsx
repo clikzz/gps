@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Pet {
@@ -166,12 +167,14 @@ export default function ReportModal({
 
             {/* Botón para marcar ubicación en mapa */}
             <div>
+              <Label>Ubicación de desaparición</Label>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full mt-2"
                 onClick={onPickLocation}
               >
+                <MapPin className="w-4 h-4" />
                 {pickedLocation
                   ? `Ubicación seleccionada: (${pickedLocation.lat.toFixed(5)}, ${pickedLocation.lng.toFixed(5)})`
                   : 'Marcar ubicación en el mapa'}

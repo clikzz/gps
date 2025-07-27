@@ -529,7 +529,7 @@ export default function FindMap() {
             longitude={pickedLocation.lng}
             anchor="bottom"
           >
-            <MapPin size={28} className="text-red-400 drop-shadow-lg" fill="currentColor" />
+            <MapPin size={28} className="text-secondary drop-shadow-lg" fill="currentColor" />
           </Marker>
         )}
       </Map>

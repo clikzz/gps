@@ -62,7 +62,7 @@ export function Minimap({
           latitude={location.lat}
           anchor="bottom"
         >
-          <MapPin className="text-red-600" size={28} />
+          <MapPin size={28} className="text-secondary drop-shadow-lg" fill="currentColor" />
         </Marker>
       </Map>
     </div>

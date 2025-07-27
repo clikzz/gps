@@ -21,7 +21,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { DollarSign, MapPin, Plus } from "lucide-react";
 import { useNewItemForm } from "@/hooks/marketplace/useNewItemForm";
-import { Minimap } from "@/components/marketplace/Minimap";
+import { Minimap } from "@/components/Minimap";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker";
 import type { ItemCondition, ItemCategory, PetCategory } from "@prisma/client";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS, PET_OPTIONS } from "@/types/marketplace";

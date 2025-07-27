@@ -6,11 +6,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
+import { Minimap } from "@/components/Minimap"
+import PhotoThumb from '@/components/PhotoThumb'
 import { toast } from 'sonner';
 
 interface Pet {
   id: string;
   name: string;
+}
+
+type Added = { file: File; preview: string }
+
+function revokeAll(arr: Added[]) {
+  arr.forEach(a => URL.revokeObjectURL(a.preview))
 }
 
 export interface LatLng {
@@ -42,7 +50,12 @@ export default function ReportModal({
   const [selectedPetId, setSelectedPetId] = useState<string>('');
   const [files, setFiles] = useState<File[]>([]);
   const [description, setDescription] = useState<string>('');
+  const [added, setAdded] = useState<Added[]>([]);
   const [loadingPets, setLoadingPets] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen && added.length) revokeAll(added)
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return;
@@ -102,6 +115,15 @@ export default function ReportModal({
     });
   };
 
+  const totalFotos = added.length
+  const handleRemove = (url: string) => {
+    setAdded(prev => {
+      const tgt = prev.find(a => a.preview === url)
+      if (tgt) URL.revokeObjectURL(tgt.preview)
+      return prev.filter(a => a.preview !== url)
+    })
+  }
+
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
       <Card className="w-full max-w-md mx-4">
@@ -135,21 +157,29 @@ export default function ReportModal({
             {/* Input de foto */}
             <div>
               <Label htmlFor="photo-input">Foto de respaldo</Label>
+              {totalFotos > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {added.map(a => (
+                    <PhotoThumb key={a.preview} url={a.preview} onRemove={handleRemove} />
+                  ))}
+                </div>
+              )}
               <Input
                 id="photo-input"
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(e) => {
-                  const chosen = Array.from(e.target.files || []);
-                  if (chosen.length > 3) {
-                    toast.error("Solo puedes subir hasta 3 fotos.");
-                    return;
-                  } else if (chosen.length === 0) {
-                    toast.info("Debes seleccionar al menos una foto.");
-                    return;
-                  }
-                  setFiles(chosen);
+                onChange={e => {
+                  const chosen = Array.from(e.target.files || [])
+                  if (chosen.length === 0) return
+                  if (chosen.length + totalFotos > 3)
+                    return toast.error('Máx. 3 fotos en total')
+
+                  const newOnes: Added[] = chosen.map(f => ({
+                    file: f,
+                    preview: URL.createObjectURL(f),
+                  }))
+                  setAdded(prev => [...prev, ...newOnes])
                 }}
                 className="mt-1"
               />
@@ -162,7 +192,7 @@ export default function ReportModal({
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={4}
+                rows={3}
                 className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 placeholder="Agregar detalles que ayuden a encontrarla"
               />
@@ -171,6 +201,18 @@ export default function ReportModal({
             {/* Botón para marcar ubicación en mapa */}
             <div>
               <Label>Ubicación de desaparición</Label>
+              {pickedLocation && (
+                <div className="mt-3">
+                  <Minimap
+                    location={{
+                      lat: pickedLocation.lat,
+                      lng: pickedLocation.lng,
+                    }}
+                    height="180px"
+                    zoom={14}
+                  />
+                </div>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -179,7 +221,7 @@ export default function ReportModal({
               >
                 <MapPin className="w-4 h-4" />
                 {pickedLocation
-                  ? `Ubicación seleccionada: (${pickedLocation.lat.toFixed(5)}, ${pickedLocation.lng.toFixed(5)})`
+                  ? 'Cambiar ubicación'
                   : 'Marcar ubicación en el mapa'}
               </Button>
             </div>
@@ -192,7 +234,7 @@ export default function ReportModal({
             </p>
           </CardContent>
 
-          <CardFooter className="flex justify-end space-x-2">
+          <CardFooter className="flex justify-center space-x-2">
             <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>

@@ -14,6 +14,8 @@ import {
 import { MapPin, Trash } from "lucide-react"
 import { LatLng } from "@/components/find/ReportModal"
 import { MissingReport } from "@/types/find"
+import { Minimap } from "@/components/Minimap"
+import PhotoThumb from "@/components/PhotoThumb"
 import { toast } from "sonner"
 
 type Added = { file: File; preview: string }
@@ -116,7 +118,7 @@ export default function EditReportModal({
   console.log("Existing photos:", existingPhotos);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
           <CardTitle>Editar reporte de {report.pet.name}</CardTitle>
@@ -133,10 +135,10 @@ export default function EditReportModal({
               ) : (
                 <div className="flex gap-2 flex-wrap">
                   {existingPhotos.map(u => (
-                    <Thumb key={u} url={u} onRemove={removePhoto} />
+                    <PhotoThumb key={u} url={u} onRemove={removePhoto} />
                   ))}
                   {added.map(a => (
-                    <Thumb key={a.preview} url={a.preview} onRemove={removePhoto} />
+                    <PhotoThumb key={a.preview} url={a.preview} onRemove={removePhoto} />
                   ))}
                 </div>
               )}
@@ -166,7 +168,7 @@ export default function EditReportModal({
               <Label htmlFor="desc">Descripción</Label>
               <textarea
                 id="desc"
-                rows={4}
+                rows={3}
                 className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -176,6 +178,18 @@ export default function EditReportModal({
             {/* ubicación */}
             <div className="space-y-1">
               <Label>Ubicación</Label>
+              {(pickedLocation || (report.latitude && report.longitude)) && (
+                <div className="mt-3">
+                  <Minimap
+                    location={{
+                      lat: pickedLocation?.lat || report.latitude,
+                      lng: pickedLocation?.lng || report.longitude,
+                    }}
+                    height="180px"
+                    zoom={14}
+                  />
+                </div>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -190,9 +204,9 @@ export default function EditReportModal({
                   : "Cambiar ubicación"}
               </Button>
             </div>
-          </CardContent>
+            </CardContent>
 
-          <CardFooter className="flex justify-end space-x-2">
+          <CardFooter className="flex justify-center space-x-2">
             <Button variant="outline" type="button" onClick={onClose}>
               Cancelar
             </Button>
@@ -200,25 +214,6 @@ export default function EditReportModal({
           </CardFooter>
         </form>
       </Card>
-    </div>
-  )
-}
-
-function Thumb(
-  { url, onRemove }: { url: string; onRemove: (u: string) => void }
-) {
-  return (
-    <div className="relative">
-      <img src={url} alt="foto" className="w-20 h-20 object-cover rounded" />
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="absolute -top-2 -right-2 bg-white/70"
-        onClick={() => onRemove(url)}
-      >
-        <Trash className="w-4 h-4" />
-      </Button>
     </div>
   )
 }

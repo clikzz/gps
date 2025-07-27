@@ -163,7 +163,7 @@ export default function PetReportDialog({
               </div>
             </div>
 
-            <div className="flex">
+            <div className="flex justify-center items-center">
               {meIsReporter ? (
                 <ConfirmationButton
                   onConfirm={async () => await onMarkFound(report)}
@@ -176,7 +176,7 @@ export default function PetReportDialog({
                   dialogDescription="¿Estás seguro de que tu mascota ya fue encontrada? Esta acción cerrará el reporte."
                   confirmText="Confirmar"
                   cancelText="Cancelar"
-                  variant="destructive"
+                  variant="default"
                   size="sm"
                 />
               ) : (

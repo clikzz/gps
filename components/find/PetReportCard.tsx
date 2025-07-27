@@ -118,7 +118,7 @@ export default function PetReportCard({
                   dialogDescription="¿Estás seguro de que tu mascota ya fue encontrada? Esta acción cerrará el reporte."
                   confirmText="Confirmar"
                   cancelText="Cancelar"
-                  variant="destructive"
+                  variant="default"
                   size="sm"
                 />
               ) : (

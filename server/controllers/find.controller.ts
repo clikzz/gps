@@ -80,7 +80,13 @@ export const editMissingPet = async (
 
   try {
     const rpt = await updateMissingPet(reportId, reporterId, parse.data)
-    return new Response(JSON.stringify({ ok: true, report: rpt }), {
+    const output = {
+      ...rpt,
+      id: rpt.id.toString(),
+      pet_id: rpt.pet_id.toString(),
+      reporter_id: rpt.reporter_id.toString(),
+    };
+    return new Response(JSON.stringify({ ok: true, report: output }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     })
@@ -219,6 +225,7 @@ export const fetchMyMissingPets = async (userId: string) => {
     description: item.description,
     latitude: item.latitude,
     longitude: item.longitude,
+    photo_urls: item.photo_urls,
     full_address: item.full_address,
     address: item.address,
     street: item.street,
@@ -254,6 +261,7 @@ export const fetchOtherMissingPets = async (userId: string) => {
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
     description: item.description,
+    photo_urls: item.photo_urls,
     latitude: item.latitude,
     longitude: item.longitude,
     full_address: item.full_address,

@@ -19,6 +19,7 @@ import PetReportCard from "@/components/find/PetReportCard"
 import PetReportDialog from "@/components/find/PetReportDialog"
 import FoundReportCard from "@/components/find/FoundReportCard"
 import FoundReportDialog from "@/components/find/FoundReportDialog"
+import EditReportModal from "@/components/find/EditReportModal"
 import LoadingScreen from "@/components/LoadingScreen";
 import { toast } from "sonner";
 import { fetcher } from "@/lib/utils";
@@ -27,6 +28,8 @@ const Map = dynamic(
   () => import("react-map-gl/mapbox").then((mod) => mod.default),
   { ssr: false }
 );
+
+type LocationReturn = "new" | "edit" | null;
 
 export default function FindMap() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -62,6 +65,11 @@ export default function FindMap() {
 
   const [foundShowCard,   setFoundShowCard] = useState(false)
   const [foundShowDialog, setFoundShowDialog] = useState(false)
+
+  const [reportToEdit, setReportToEdit] = useState<MissingReport | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  const [locationReturnTo, setLocationReturnTo] = useState<LocationReturn>(null);
 
   async function refreshReports() {
     try {
@@ -247,8 +255,39 @@ export default function FindMap() {
     }
   }
 
+  const handleSaveEditedReport = async (changes: Partial<{
+    description: string
+    photo_urls: string[]
+    latitude: number
+    longitude: number
+  }>) => {
+    if (!reportToEdit) return
+
+    try {
+      const res = await fetch(`/api/find?id=${reportToEdit.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(changes),
+      })
+
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: "Error desconocido" }))
+        throw new Error(error)
+      }
+
+      toast.success("Reporte actualizado")
+      setIsEditModalOpen(false)
+      setReportToEdit(null)
+      setPickedLocation(null)
+      refreshReports()
+    } catch (e: any) {
+      toast.error(e.message)
+    }
+  }
+
   function handlePickLocation() {
     setIsReportModalOpen(false);
+    setLocationReturnTo("new");
     setPickLocationMode(true);
   }
 
@@ -257,7 +296,9 @@ export default function FindMap() {
     if (pickLocationMode) {
       setPickedLocation({ lat, lng });
       setPickLocationMode(false);
-      setIsReportModalOpen(true);
+      if (locationReturnTo === "new") setIsReportModalOpen(true);
+      if (locationReturnTo === "edit") setIsEditModalOpen(true);
+      setLocationReturnTo(null);
     }
     if (foundPickMode) {
       setFoundLocation({ lat, lng });
@@ -314,6 +355,11 @@ export default function FindMap() {
         isOpen={isMyReportsModalOpen}
         onClose={() => setIsMyReportsModalOpen(false)}
         onGoTo={handleGoTo}
+        onEdit={(r) => {
+          setIsMyReportsModalOpen(false);
+          setReportToEdit(r);
+          setIsEditModalOpen(true);
+        }}
       />
       <OthersReports
         isOpen={isOthersReportsModalOpen}
@@ -323,6 +369,22 @@ export default function FindMap() {
       <FoundReports
         isOpen={isFoundReportsModalOpen}
         onClose={() => setIsFoundReportsModalOpen(false)}
+      />
+      <EditReportModal
+        report={reportToEdit}
+        isOpen={isEditModalOpen}
+        pickedLocation={pickedLocation}
+        onPickLocation={() => {
+          setIsEditModalOpen(false);
+          setLocationReturnTo("edit");
+          setPickLocationMode(true);
+        }}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setReportToEdit(null);
+          setPickedLocation(null);
+        }}
+        onSave={handleSaveEditedReport}
       />
 
       {/* Indicador de modo selección */}
@@ -376,13 +438,13 @@ export default function FindMap() {
             screenXY={projectToPct(foundSelected.longitude, foundSelected.latitude)}
             meIsReporter={foundSelected.ownerId === userId}
             onViewDetails={() => {
-              setFoundShowDialog(true)
-              setFoundShowCard(false)
+              setFoundShowDialog(true);
+              setFoundShowCard(false);
             }}
             onMarkResolved={markFoundResolved}
             onClose={() => {
-              setFoundShowCard(false)
-              setFoundSelected(null)
+              setFoundShowCard(false);
+              setFoundSelected(null);
             }}
           />
         )}
@@ -392,8 +454,8 @@ export default function FindMap() {
           isOpen={foundShowDialog}
           meIsReporter={foundSelected?.ownerId === userId}
           onClose={() => {
-            setFoundShowDialog(false)
-            setFoundSelected(null)
+            setFoundShowDialog(false);
+            setFoundSelected(null);
           }}
           onMarkResolved={markFoundResolved}
           onReject={rejectFound}
@@ -439,8 +501,8 @@ export default function FindMap() {
               setShowCard(false);
             }}
             onClose={() => {
-              setShowCard(false)
-              setSelectedReport(null)
+              setShowCard(false);
+              setSelectedReport(null);
             }}
           />
         )}
@@ -449,8 +511,8 @@ export default function FindMap() {
           report={selectedReport}
           isOpen={showDialog}
           onClose={() => {
-            setShowDialog(false)
-            setSelectedReport(null)
+            setShowDialog(false);
+            setSelectedReport(null);
           }}
           onMarkFound={markMissingResolved}
           meIsReporter={selectedReport?.reporter_id === userId}

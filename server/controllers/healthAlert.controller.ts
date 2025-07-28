@@ -49,6 +49,7 @@ export const addHealthAlert = async (user_id: string, data: any) => {
       alert_date: new Date(
         new Date(data.next_dose_date).getTime() - 3 * 24 * 60 * 60 * 1000
       ),
+      next_dose_date: medication.next_dose_date,
       sent: false,
     };
 
@@ -116,6 +117,7 @@ export const addHealthAlert = async (user_id: string, data: any) => {
       alert_date: new Date(
         new Date(data.next_dose_date).getTime() - 3 * 24 * 60 * 60 * 1000
       ),
+      next_dose_date: vaccination.next_dose_date,
       sent: false,
     };
 

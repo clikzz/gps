@@ -238,7 +238,7 @@ export function NextDosesTable() {
                             </span>
                           }
                           dialogTitle={`Notificar sobre ${dose.name}`}
-                          dialogDescription={`¿Deseas recibir un recordatorio 1 día antes en tu correo para la próxima dosis de ${dose.name}?`}
+                          dialogDescription={`¿Deseas recibir un recordatorio 3 día antes en tu correo para la próxima dosis de ${dose.name}?`}
                           confirmText="Notificar"
                           cancelText="Cancelar"
                           variant="secondary"

@@ -1,7 +1,11 @@
 import { useForm } from "@tanstack/react-form"
-import { zodValidator } from "@tanstack/zod-form-adapter"
 import { toast } from "sonner"
 import { useUserProfile } from "@/stores/userProfile"
+import {
+  NewReviewFormData,
+  NewReviewFormInput,
+  newReviewFormSchema
+} from "@/types/review"
 
 interface UseNewReviewFormProps {
   serviceId: string
@@ -13,9 +17,10 @@ export const useNewReviewForm = ({ serviceId, onSuccess }: UseNewReviewFormProps
 
   const form = useForm({
     defaultValues: {
-      rating: 0,
+      service_id: serviceId,
+      rating: 1,
       comment: "",
-    },
+    } as NewReviewFormData,
     onSubmit: async ({ value }) => {
       if (!user) {
         toast.error("Debes iniciar sesión para dejar una reseña")

@@ -8,16 +8,7 @@ import Map from "@/components/services/Map"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { NewServiceDrawer } from "@/components/services/NewServiceDrawer"
 import { EditServiceDrawer } from "@/components/services/EditServiceDrawer"
-
-interface Service {
-  id: string
-  name: string
-  categories: string[]
-  description: string
-  latitude: number
-  longitude: number
-  phone: string
-}
+import { ServiceFromDB } from "@/types/service"
 
 export default function MapsPage() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -26,7 +17,7 @@ export default function MapsPage() {
   const [selectedServiceLocation, setSelectedServiceLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const [editingService, setEditingService] = useState<Service | null>(null)
+  const [editingService, setEditingService] = useState<ServiceFromDB | null>(null)
   const [editDrawerOpen, setEditDrawerOpen] = useState(false)
   const [isSelectingEditLocation, setIsSelectingEditLocation] = useState(false)
   const [selectedEditLocation, setSelectedEditLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -92,7 +83,7 @@ export default function MapsPage() {
         .filter((cat: string) => cat.length > 0)
     }
 
-    const serviceToEdit: Service = {
+    const serviceToEdit: ServiceFromDB = {
       id: service.id.replace("custom-", "").split("-")[0],
       name: service.name,
       categories: categories,
@@ -100,6 +91,8 @@ export default function MapsPage() {
       latitude: service.lat,
       longitude: service.lng,
       phone: service.phone || "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
 
     setEditingService(serviceToEdit)

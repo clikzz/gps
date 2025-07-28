@@ -3,19 +3,10 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { useEditServiceForm } from "@/hooks/useEditServiceForm"
-import { TextField, MultiSelectField, CATEGORY_OPTIONS } from "@/components/services/ServiceFormField"
+import { TextField, MultiSelectField, PhoneField } from "@/components/services/ServiceFormField"
+import { CATEGORY_OPTIONS } from "@/types/service"
 import { Save, MapPin, Loader2 } from "lucide-react"
-import { useEffect } from "react"
-
-interface Service {
-  id: string
-  name: string
-  categories: string[]
-  description: string
-  latitude: number
-  longitude: number
-  phone: string
-}
+import { Service } from "@/types/service"
 
 interface EditServiceFormProps {
   service: Service
@@ -39,16 +30,10 @@ const EditServiceForm: React.FC<EditServiceFormProps> = ({
     },
   })
 
-  useEffect(() => {
-    console.log("EditServiceForm - Service recibido:", service)
-    console.log("EditServiceForm - Categorías del servicio:", service.categories)
-    console.log("EditServiceForm - Valores del formulario:", serviceForm.form.state.values)
-  }, [service, serviceForm.form.state.values])
-
   React.useEffect(() => {
     if (selectedServiceLocation) {
-      serviceForm.form.setFieldValue("latitude", selectedServiceLocation.lat.toString())
-      serviceForm.form.setFieldValue("longitude", selectedServiceLocation.lng.toString())
+      serviceForm.form.setFieldValue("latitude", selectedServiceLocation.lat)
+      serviceForm.form.setFieldValue("longitude", selectedServiceLocation.lng)
     }
   }, [selectedServiceLocation, serviceForm.form])
 
@@ -131,11 +116,10 @@ const EditServiceForm: React.FC<EditServiceFormProps> = ({
         {/* Teléfono */}
         <serviceForm.form.Field name="phone">
           {(field) => (
-            <TextField
+            <PhoneField
               field={field}
               label="Teléfono de contacto"
-              placeholder="Ej: +56 9 1234 5678"
-              type="tel"
+              placeholder="9 1234 5678"
               required
             />
           )}

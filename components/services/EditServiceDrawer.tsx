@@ -12,19 +12,10 @@ import {
 } from "@/components/ui/drawer"
 import EditServiceForm from "./EditServiceForm"
 import { MapPin, Trash2 } from "lucide-react"
-
-interface Service {
-  id: string
-  name: string
-  categories: string[]
-  description: string
-  latitude: number
-  longitude: number
-  phone: string
-}
+import { ServiceFromDB, transformServiceFromDB } from "@/types/service"
 
 interface EditServiceDrawerProps {
-  service: Service | null
+  service: ServiceFromDB | null
   onStartLocationSelection: () => void
   onCancelLocationSelection: () => void
   selectedServiceLocation: { lat: number; lng: number } | null
@@ -88,13 +79,15 @@ export function EditServiceDrawer({
             </DrawerDescription>
           </DrawerHeader>
           <div className="overflow-y-auto max-h-[60vh] px-4">
-            <EditServiceForm
-              service={service}
-              selectedServiceLocation={selectedServiceLocation}
-              isSelectingLocation={isSelectingLocation}
-              onCancelLocationSelection={onCancelLocationSelection}
-              onServiceUpdated={onServiceUpdated}
-            />
+            {service && (
+              <EditServiceForm
+                service={transformServiceFromDB(service)}
+                selectedServiceLocation={selectedServiceLocation}
+                isSelectingLocation={isSelectingLocation}
+                onCancelLocationSelection={onCancelLocationSelection}
+                onServiceUpdated={onServiceUpdated}
+              />
+            )}
           </div>
           <DrawerFooter>
             <div className="flex space-x-2">

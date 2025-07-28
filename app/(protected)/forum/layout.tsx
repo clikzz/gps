@@ -19,7 +19,6 @@ export default function ForumLayout({ children }: { children: ReactNode }) {
           const profile = await res.json()
           setUser(profile)
           setReady(true)
-          console.log("User profile loaded:", profile)
         } else if (res.status === 401) {
           router.push("/sign-in")
         }

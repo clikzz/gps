@@ -46,6 +46,13 @@ export const healthAlertSchema = z.object({
     })
     .optional()
     .default(false),
+  next_dose_date: z
+    .date({
+      invalid_type_error:
+        "La fecha de la próxima dosis debe ser una fecha válida",
+    })
+    .optional()
+    .nullable(),
   created_at: z
     .date({
       invalid_type_error: "La fecha de creación debe ser una fecha válida",

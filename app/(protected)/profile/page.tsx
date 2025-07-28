@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { useUserProfile } from "@/stores/userProfile"
 import LoadingScreen from "@/components/LoadingScreen";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import PhoneInput from "@/components/ui/phone-input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,11 +57,19 @@ export default function ProfileConfigPage() {
   useEffect(() => {
     if (user) {
       setName(user.name || "")
-      const initialPhone = user.phone ? user.phone : "+569"
-      setPhone(initialPhone)
-      const initialInstagram = user.instagram ? user.instagram : "@"
-      setInstagram(initialInstagram)
-      setSelectedBadgeIds(user.selectedBadgeIds || [])
+      
+      setPhone(user.phone && user.phone !== "" ? user.phone : "")
+      setInstagram(user.instagram && user.instagram !== "" ? user.instagram : "@")
+      
+      const validSelectedBadges = (user.selectedBadgeIds || [])
+        .filter(badgeId => user.unlockedBadges?.some(badge => badge.id === badgeId))
+      
+      setSelectedBadgeIds(validSelectedBadges)
+      
+      if (validSelectedBadges.length !== (user.selectedBadgeIds || []).length) {
+        updateProfile({ selectedBadgeIds: validSelectedBadges })
+      }
+      
       if (!selectedFile) {
         setImagePreview(null)
       }
@@ -94,8 +103,8 @@ export default function ProfileConfigPage() {
         avatar_url: updatedData?.avatar_url !== undefined ? updatedData?.avatar_url : user?.avatar_url,
         selectedBadgeIds:
           updatedData?.selectedBadgeIds !== undefined ? updatedData?.selectedBadgeIds : user?.selectedBadgeIds,
-        phone: updatedData?.phone !== undefined ? updatedData?.phone : user?.phone,
-        instagram: updatedData?.instagram !== undefined ? updatedData?.instagram : user?.instagram,
+        phone: updatedData?.phone,
+        instagram: updatedData?.instagram,
       }
       const response = await fetch("/api/profile", {
         method: "POST",
@@ -149,6 +158,11 @@ export default function ProfileConfigPage() {
   }
 
   const handleBadgeToggle = async (badgeId: string) => {
+    if (!user?.unlockedBadges?.some(badge => badge.id === badgeId)) {
+      toast.error("Esta insignia ya no está disponible")
+      return
+    }
+
     const newSelectedBadgeIds = selectedBadgeIds.includes(badgeId)
       ? selectedBadgeIds.filter((id) => id !== badgeId)
       : selectedBadgeIds.length < 3
@@ -209,8 +223,8 @@ export default function ProfileConfigPage() {
         name: name.trim() || undefined,
         avatar_url: avatarUrl,
         selectedBadgeIds: selectedBadgeIds,
-        phone: phone.trim() || undefined,
-        instagram: instagram.trim() || undefined,
+        phone: phone.trim() ? phone.trim() : undefined,
+        instagram: instagram.trim() && instagram.trim() !== "@" ? instagram.trim() : undefined,
       })
 
       if (success) {
@@ -558,27 +572,11 @@ export default function ProfileConfigPage() {
                       <Label htmlFor="phone" className="text-sm font-medium">
                         Número de Teléfono
                       </Label>
-                      <Input
-                        id="phone"
-                        type="tel"
+                      <PhoneInput
                         value={phone}
-                        onChange={(e) => {
-                          let value = e.target.value
-                          if (!value.startsWith("+569")) {
-                            value = "+569" + value.replace(/[^0-9]/g, "").substring(4)
-                          } else {
-                            const prefix = "+569"
-                            const digits = value.substring(prefix.length).replace(/[^0-9]/g, "")
-                            value = prefix + digits
-                          }
-                          if (value.length > 12) {
-                            value = value.substring(0, 12)
-                          }
-                          setPhone(value)
-                        }}
-                        placeholder="Ej: +569 1234 5678"
-                        maxLength={12}
-                        className="h-12 text-base"
+                        onChange={setPhone}
+                        placeholder="9 1234 5678"
+                        required={false}
                       />
                     </div>
                     <div className="space-y-2">
@@ -597,7 +595,7 @@ export default function ProfileConfigPage() {
                             }
                             setInstagram(value)
                           }}
-                          placeholder="Ej: tu_usuario"
+                          placeholder="@tu_usuario (opcional)"
                           maxLength={30}
                           className="h-12 text-base"
                         />

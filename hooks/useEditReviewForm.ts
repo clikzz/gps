@@ -1,6 +1,11 @@
 import { useForm } from "@tanstack/react-form"
 import { toast } from "sonner"
 import { useUserProfile } from "@/stores/userProfile"
+import { 
+  EditReviewFormData, 
+  EditReviewFormInput, 
+  editReviewFormSchema 
+} from "@/types/review"
 
 interface UseEditReviewFormProps {
   reviewId: string
@@ -21,7 +26,7 @@ export const useEditReviewForm = ({
     defaultValues: {
       rating: initialRating,
       comment: initialComment || "",
-    },
+    } as EditReviewFormData,
     onSubmit: async ({ value }) => {
       if (!user) {
         toast.error("Debes iniciar sesión para editar tu reseña")

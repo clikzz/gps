@@ -41,9 +41,21 @@ export const fetchUserProfile = async (userId: string) => {
       key: badge.key
     }));
 
+  const validSelectedBadgeIds = (profile.selectedBadgeIds || [])
+    .filter(selectedId => unlockedBadges.some(badge => badge.id === selectedId));
+
+  const originalSelectedIds = profile.selectedBadgeIds || [];
+  if (originalSelectedIds.length !== validSelectedBadgeIds.length ||
+      !originalSelectedIds.every(id => validSelectedBadgeIds.includes(id))) {
+    import("@/server/services/userprofile.service").then(({ updateBadgeSelection }) => {
+      updateBadgeSelection(userId, validSelectedBadgeIds).catch(() => {});
+    });
+  }
+
   const userProfile = {
     ...profile,
     tag: profile.tag.toString(),
+    selectedBadgeIds: validSelectedBadgeIds,
     Pets: profile.Pets.map((pet: Pet) => ({
       ...pet,
       id: pet.id.toString(),
@@ -100,12 +112,15 @@ export const modifyUserProfile = async (userId: string, body: any) => {
       key: badge.key,
     }));
 
+  const validSelectedBadgeIds = (updatedProfile?.selectedBadgeIds || [])
+    .filter(selectedId => unlockedBadges.some(badge => badge.id === selectedId));
+
   const serializedProfile = {
     ...updatedProfile,
     tag: updatedProfile?.tag?.toString(),
     instagram: updatedProfile.instagram,
     phone: updatedProfile.phone,
-    selectedBadgeIds: updatedProfile?.selectedBadgeIds || [],
+    selectedBadgeIds: validSelectedBadgeIds,
     Pets: updatedProfile?.Pets?.map((pet: Pet) => ({
       ...pet,
       id: pet.id.toString(),

@@ -3,16 +3,12 @@
 import { useForm } from "@tanstack/react-form"
 import { useState } from "react"
 import { toast } from "sonner"
-
-interface Service {
-  id: string
-  name: string
-  categories: string[]
-  description: string
-  latitude: number
-  longitude: number
-  phone: string
-}
+import { 
+  Service, 
+  EditServiceFormData, 
+  EditServiceFormInput, 
+  editServiceFormSchema 
+} from "@/types/service"
 
 interface UseEditServiceFormProps {
   service: Service
@@ -27,10 +23,10 @@ export const useEditServiceForm = ({ service, onSuccess }: UseEditServiceFormPro
       name: service.name || "",
       categories: service.categories || [],
       description: service.description || "",
-      latitude: service.latitude.toString(),
-      longitude: service.longitude.toString(),
+      latitude: service.latitude,
+      longitude: service.longitude,
       phone: service.phone || "",
-    },
+    } as EditServiceFormData,
     onSubmit: async ({ value }) => {
       setIsSubmitting(true)
       try {
@@ -43,8 +39,8 @@ export const useEditServiceForm = ({ service, onSuccess }: UseEditServiceFormPro
             name: value.name,
             categories: value.categories, 
             description: value.description,
-            latitude: Number.parseFloat(value.latitude),
-            longitude: Number.parseFloat(value.longitude),
+            latitude: value.latitude,
+            longitude: value.longitude,
             phone: value.phone,
           }),
         })

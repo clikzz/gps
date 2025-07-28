@@ -57,6 +57,7 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
 
   useEffect(() => {
     if (user) {
+      setReviews([])
       fetchReviews()
     }
   }, [service.id, user])
@@ -261,8 +262,11 @@ export function ServiceDetailTabs({ service, onClose, onCalculateRoute, onEditSe
           <div className="flex justify-center mt-2">
             <div className="flex items-center space-x-2 text-sm px-3 py-2 rounded-lg">
               {renderStars(calculateAverageRating())}
+              <span className="text-foreground">
+                {calculateAverageRating().toFixed(1)}
+              </span>
               <span className="text-muted-foreground">
-                {reviews.length} reseña{reviews.length !== 1 ? "s" : ""}
+                ({reviews.length} reseña{reviews.length !== 1 ? "s" : ""})
               </span>
             </div>
           </div>

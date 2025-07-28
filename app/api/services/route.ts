@@ -21,6 +21,13 @@ export async function POST(req: Request) {
   const user = await authenticateUser(req)
   if (user instanceof Response) return user
 
+  if (user.role !== "ADMIN") {
+    return new Response(JSON.stringify({ error: "No tienes permisos para crear servicios. Solo los administradores pueden realizar esta acción." }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+
   const body = await req.json()
 
   try {
@@ -44,6 +51,13 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   const user = await authenticateUser(req)
   if (user instanceof Response) return user
+
+  if (user.role !== "ADMIN") {
+    return new Response(JSON.stringify({ error: "No tienes permisos para editar servicios. Solo los administradores pueden realizar esta acción." }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
 
   const { searchParams } = new URL(req.url)
   const serviceId = searchParams.get("id")

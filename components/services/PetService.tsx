@@ -285,7 +285,7 @@ const PetService = forwardRef<PetServiceRef, PetServiceProps>(
               service={selectedService}
               onClose={handleCloseServiceDetail}
               onCalculateRoute={calculateRoute}
-              onEditService={handleEditService}
+              onEditService={user?.role === "ADMIN" ? handleEditService : undefined}
               onDeleteService={user?.role === "ADMIN" ? handleDeleteService : undefined}
             />
           </div>

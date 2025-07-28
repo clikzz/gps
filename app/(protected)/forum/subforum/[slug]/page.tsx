@@ -74,7 +74,7 @@ export default async function SubforumPage({
         <div className="flex justify-end">
           <Link
             href={`/forum/subforum/${slug}/new-topic`}
-            className="border rounded-full py-2 px-4 text-sm hover:bg-accent transition-colors"
+            className="border rounded-full py-2 px-4 text-sm hover:bg-muted transition-colors"
           >
             Nuevo tema
           </Link>

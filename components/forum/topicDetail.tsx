@@ -146,7 +146,7 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
 
   return (
     <div className="border rounded-lg overflow-hidden relative">
-      <div className="border-b p-3 flex justify-end items-center text-sm">
+      <div className="border-b p-3 flex justify-end bg-accent text-white items-center text-sm">
         <div className="flex items-center gap-4">
           <span>{formatDateLabel(topic.createdAt)}</span>
           <span>#{topic.id}</span>

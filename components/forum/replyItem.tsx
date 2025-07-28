@@ -50,7 +50,7 @@ export function ReplyItem({
 
   return (
     <div className="border rounded-lg overflow-hidden">
-      <div className="border-b p-3 flex justify-end items-center text-sm">
+      <div className="border-b p-3 flex justify-end bg-accent text-white items-center text-sm">
         <div className="flex items-center gap-4">
           <span>{formatDateLabel(reply.createdAt)}</span>
           <span>#{reply.id}</span>

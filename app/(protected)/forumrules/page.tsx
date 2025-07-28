@@ -574,7 +574,7 @@ export default function ForumRulesPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-2 justify-center mt-3 sm:mt-4">
                 <Badge variant="outline" className="bg-transparent text-xs sm:text-sm">
-                  📧 soporte@miapp.com
+                  📧 soporte@petly.com
                 </Badge>
               </div>
             </div>

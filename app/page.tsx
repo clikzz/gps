@@ -364,7 +364,7 @@ export default function HomePage() {
                 <ul className="space-y-2">
                   <li>
                     <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                      info@miapp.com
+                      info@petly.com
                     </Link>
                   </li>
                   <li>
@@ -381,7 +381,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="text-center text-xs sm:text-sm text-muted-foreground mt-6 sm:mt-8">
-              {"©"} {new Date().getFullYear()} MiApp. Todos los derechos reservados.
+              {"©"} {new Date().getFullYear()} petly. Todos los derechos reservados.
             </div>
           </div>
         </footer>

@@ -29,7 +29,7 @@ export function TopicList({ topics, subforumSlug }: TopicListProps) {
 
     return (
       <div className={`${!isRules ? "border-t" : ""}`}>
-        <div className="p-3 sm:p-4 hover:bg-muted/30 transition-colors">
+        <div className="p-3 sm:p-4 hover:bg-accent/10 transition-colors">
           <div className="block lg:hidden space-y-3">
             <div>
               <Link
@@ -45,13 +45,6 @@ export function TopicList({ topics, subforumSlug }: TopicListProps) {
               </Link>
 
               <div className="text-sm text-muted-foreground mt-2 space-y-1">
-                <div>
-                  <span>por </span>
-                  <Link href={`/forum/user/${topic.author.id}`} className="hover:underline">
-                    <span className="text-accent font-semibold">{topic.author.name}</span>
-                    <span className="text-gray-400 font-semibold ml-1">#{topic.author.tag}</span>
-                  </Link>
-                </div>
 
                 {pagesCount > 1 && (
                   <div className="flex flex-wrap gap-1 text-xs">
@@ -169,7 +162,7 @@ export function TopicList({ topics, subforumSlug }: TopicListProps) {
 
   return (
     <div className="border rounded-lg overflow-hidden">
-      <div className="bg-muted/50">
+      <div className="bg-accent/10">
         <TopicRow topic={rulesTopic} isRules={true} />
       </div>
       {topics.map((topic) => (

@@ -414,11 +414,11 @@ export function MembersSearch({ users }: MembersSearchProps) {
               </TableHeader>
               <TableBody>
                 {paginatedUsers.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell className="font-medium">
+                  <TableRow key={user.id} className="hover:bg-accent/10 transition-colors">
+                    <TableCell className="font-semibold">
                       <Link href={`/forum/user/${user.id}`} className="text-sm font-medium hover:underline">
-                        <span className="text-accent">{user.name}</span>
-                        <span className="text-gray-400"> #{user.tag}</span>
+                        <span className="text-accent font-semibold">{user.name}</span>
+                        <span className="text-gray-400 font-semibold"> #{user.tag}</span>
                       </Link>
                     </TableCell>
                     <TableCell className="hover:underline text-xs font-semibold text-destructive">
@@ -514,13 +514,13 @@ export function MembersSearch({ users }: MembersSearchProps) {
 
           <div className="md:hidden space-y-3 p-4">
             {paginatedUsers.map((user) => (
-              <Card key={user.id} className="p-4 hover:bg-muted/30 transition-colors">
+              <Card key={user.id} className="p-4 hover:bg-accent/10 transition-colors">
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <Link href={`/forum/user/${user.id}`} className="font-medium hover:underline block">
-                        <span className="text-accent text-base">{user.name}</span>
-                        <span className="text-gray-400 text-sm"> #{user.tag}</span>
+                        <span className="text-accent text-base font-semibold">{user.name}</span>
+                        <span className="text-gray-400 text-sm font-semibold"> #{user.tag}</span>
                       </Link>
                       <p className="text-xs font-semibold text-destructive mt-1">{getUserTitle(user.menssageCount)}</p>
                     </div>

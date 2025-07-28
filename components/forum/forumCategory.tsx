@@ -29,7 +29,7 @@ export function ForumCategory({ category }: ForumCategoryProps) {
             key={`${category.id}-${subforum.slug}`} 
             className={`${index !== 0 ? "border-t" : ""}`}
             >
-            <div className="p-3 sm:p-4 hover:bg-muted/30 transition-colors">
+            <div className="p-3 sm:p-4 hover:bg-accent/10 transition-colors">
               <div className="block lg:hidden space-y-3">
                 <div>
                   <Link

@@ -43,8 +43,8 @@ export default function Home() {
     return (
       <LoadingScreen
         title="Cargando"
-        subtext="Obteniendo perfil"
-        icon={Heart}
+        subtext="Obteniendo página de inicio..."
+        icon={Home}
         accentIcon={Heart}
       />
     );
@@ -53,7 +53,7 @@ export default function Home() {
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center text-red-500">
-        Error al cargar el perfil.
+        Error al cargar la página de inicio.
       </div>
     );
   }

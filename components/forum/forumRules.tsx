@@ -20,7 +20,7 @@ export function ForumRules() {
 
   return (
     <div className="border rounded-lg overflow-hidden relative">
-      <div className="border-b p-3 flex justify-end items-center text-sm">
+      <div className="border-b p-3 flex justify-end bg-accent text-white items-center text-sm">
         <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
           <span>{formatDateLabel(createdAt)}</span>
           <span>#REGLAS</span>
@@ -455,7 +455,7 @@ export function ForumRules() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
                   <Badge variant="outline" className="bg-transparent text-xs sm:text-sm">
-                    📧 soporte@miapp.com
+                    📧 soporte@petly.com
                   </Badge>
                 </div>
               </div>

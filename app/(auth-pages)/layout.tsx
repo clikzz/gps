@@ -13,7 +13,7 @@ export default function AuthLayout({
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex items-center justify-between p-4">
           <Link href="/" className="text-xl font-bold">
-            Mi App
+            petly
           </Link>
           <ThemeSwitcher />
         </div>

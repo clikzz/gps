@@ -52,12 +52,12 @@ interface TopicDetailProps {
 }
 
 const getUserTitle = (messageCount: number): string => {
-  if (messageCount >= 150) return "Líder de Manada"
-  if (messageCount >= 100) return "Veterinario(a)"
-  if (messageCount >= 50) return "Maullador(a) Senior"
-  if (messageCount >= 25) return "Amante de Mascotas"
-  if (messageCount >= 15) return "Cachorro Activo"
-  if (messageCount >= 8) return "Gatito Curioso"
+  if (messageCount >= 100) return "Líder de Manada"
+  if (messageCount >= 50) return "Veterinario(a)"
+  if (messageCount >= 30) return "Maullador(a) Senior"
+  if (messageCount >= 20) return "Amante de Mascotas"
+  if (messageCount >= 10) return "Cachorro Activo"
+  if (messageCount >= 5) return "Gatito Curioso"
   return "Mascota Nueva"
 }
 

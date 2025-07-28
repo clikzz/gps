@@ -20,6 +20,8 @@ import LoadingScreen from "@/components/LoadingScreen";
 import NoArticles from "@/components/marketplace/NoArticles";
 import { UserArticle } from "@/types/marketplace";
 import { Card, CardHeader } from "@/components/ui/card";
+import { useUpdateItem } from "@/hooks/marketplace/useUpdateItem";
+import { Item } from "@/types/marketplace";
 
 export default function MarketplacePage() {
   const [tab, setTab] = useState("para-ti");
@@ -27,9 +29,10 @@ export default function MarketplacePage() {
   const [repostId, setRepostId] = useState<number | null>(null);
   const [editingArticle, setEditingArticle] = useState<UserArticle | null>(null)
   const { initialData, loading: loadingRepost } = useRepostItem(repostId);
+  const { updateItem } = useUpdateItem();
   const { articles: userArticles, setArticles, loading: userLoading, error: userError, markAsSold, fetchArticles, removeArticle } = useUserArticles();
   const {
-    items, loading, error,
+    items, loading, error, fetchItems, updateLocalItem,
     filters, setters, clearFilters,
   } = useMarketplace();
   const {
@@ -65,13 +68,22 @@ export default function MarketplacePage() {
 
   const handleEdit = (id: number) => {
     const art = userArticles.find(a => a.id === id)
-    if (art) setEditingArticle(art)
+    if (art) setEditingArticle(art);
   };
 
   const handleToggleFav = (id: string) => {
     favorites.some(f => f.id === id)
       ? removeFavorite(id)
       : addFavorite(id);
+  };
+
+  const handleSaveEdit = (updated: UserArticle) => {
+    updateLocalItem({ ...updated, updated_at: updated.updated_at.toString() });
+    setArticles(prev =>
+      prev.map(a => a.id === updated.id ? { ...a, ...updated } : a)
+    );
+
+    setEditingArticle(null);
   };
 
   return (
@@ -252,12 +264,7 @@ export default function MarketplacePage() {
           <EditArticleModal
             article={editingArticle}
             onClose={() => setEditingArticle(null)}
-            onSaved={(updated: UserArticle) => {
-              setArticles(prev =>
-                prev.map(a => (a.id === updated.id ? updated : a))
-              );
-              setEditingArticle(null);
-            }}
+            onSaved={handleSaveEdit}
           />
         </Tabs>
       </div>

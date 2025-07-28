@@ -46,7 +46,7 @@ export default function FindPage() {
   }
 
   const mapPortal = (
-    <div className="fixed inset-0 top-[64px] z-30">
+    <div className="fixed left-0 right-0 z-30 top-0 md:top-16 bottom-0">
       <FindMap />
     </div>
   )

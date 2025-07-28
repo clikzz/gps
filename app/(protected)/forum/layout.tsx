@@ -3,12 +3,13 @@
 import { ReactNode, useEffect, useState } from "react"
 import { useUserProfile } from "@/stores/userProfile"
 import { useRouter, usePathname } from "next/navigation"
+import { BadgeListenerProvider } from "@/components/BadgeListenerProvider"
 
 export default function ForumLayout({ children }: { children: ReactNode }) {
   const setUser = useUserProfile((s) => s.setUser)
   const user = useUserProfile((s) => s.user)
   const path = usePathname()
-  const router  = useRouter()
+  const router = useRouter()
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -40,5 +41,9 @@ export default function ForumLayout({ children }: { children: ReactNode }) {
 
   if (!ready) return null
 
-  return <>{children}</>
+  return (
+    <BadgeListenerProvider>
+      {children}
+    </BadgeListenerProvider>
+  )
 }

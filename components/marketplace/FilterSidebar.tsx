@@ -119,11 +119,11 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
             </SelectItem>
             <SelectItem value="price-high" className="flex items-center">
               <ArrowDown10 className="inline h-4 w-4 mr-2" />
-              Precio
+              Mayor precio
             </SelectItem>
             <SelectItem value="price-low" className="flex items-center">
               <ArrowUp10 className="inline h-4 w-4 mr-2" />
-              Precio
+              Menor precio
             </SelectItem>
             <SelectItem value="name" className="flex items-center">
               <ArrowDownAZ className="inline h-4 w-4 mr-2" />
@@ -140,7 +140,7 @@ export function FilterSidebar({ filters, setters, clear }: Props) {
           <Slider
             value={priceRange}
             onValueChange={setPriceRange}
-            min={0} max={100000} step={1000}
+            min={0} max={10000000} step={1000}
           />
           <div className="flex justify-between text-sm text-muted-foreground mt-2">
             <span>${priceRange[0].toLocaleString()}</span>

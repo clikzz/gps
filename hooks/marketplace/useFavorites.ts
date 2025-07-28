@@ -37,7 +37,7 @@ export function useFavorites() {
         body: JSON.stringify({ itemId }),
       });
       if (!res.ok) throw new Error(`Error ${res.status}`);
-      toast.success("Añadido a favoritos");
+      toast.success("Artículo añadido a favoritos");
       await fetchFavorites();
     } catch (e: any) {
       toast.error(e.message);
@@ -48,7 +48,7 @@ export function useFavorites() {
     try {
       const res = await fetch(`/api/marketplace?mode=favorite&id=${itemId}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`Error ${res.status}`);
-      toast.success("Eliminado de favoritos");
+      toast.success("Artículo quitado de favoritos.");
       setRawFavs(prev => prev.filter(i => i.id !== itemId));
     } catch (e: any) {
       toast.error(e.message);
@@ -59,7 +59,7 @@ export function useFavorites() {
     try {
       const res = await fetch(`/api/marketplace?mode=favorites`, { method: "DELETE" });
       if (!res.ok) throw new Error(`Error ${res.status}`);
-      toast.success("Favoritos limpiados");
+      toast.success("Se han quitado todos los favoritos.");
       setRawFavs([]);
     } catch (e: any) {
       toast.error(e.message);
@@ -98,7 +98,7 @@ export function useFavorites() {
   }, [rawFavs, search, city, petCats, artCats, priceRange, condition, sortBy]);
 
   const clearFilters = () => {
-    setSearch(""); setCity("all"); setPetCats([]); setArtCats([]); setPriceRange([0,100000]); setCondition("");
+    setSearch(""); setCity("all"); setPetCats([]); setArtCats([]); setPriceRange([0,10000000]); setCondition("");
   };
 
   return {

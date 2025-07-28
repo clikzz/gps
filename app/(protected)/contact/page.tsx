@@ -134,7 +134,7 @@ export default async function ContactPage() {
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium text-foreground">Email de Apelaciones</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">apelaciones@miapp.com</p>
+                    <p className="text-sm text-muted-foreground">apelaciones@petly.com</p>
                     <p className="text-xs text-muted-foreground">Respuesta en 3-5 días hábiles</p>
                   </CardContent>
                 </Card>
@@ -145,7 +145,7 @@ export default async function ContactPage() {
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium text-foreground">Soporte General</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">soporte@miapp.com</p>
+                    <p className="text-sm text-muted-foreground">soporte@petly.com</p>
                     <p className="text-xs text-muted-foreground">Para consultas generales</p>
                   </CardContent>
                 </Card>

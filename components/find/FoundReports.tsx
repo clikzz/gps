@@ -6,6 +6,9 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { FoundReport } from "@/types/find";
 import { fetcher } from "@/lib/utils";
+import { toast } from "sonner";
+import { Ban, CheckCircle, X } from "lucide-react";
+import { translateSpecies } from "@/utils/translateSpecies"
 
 interface FoundReportsModalProps {
   isOpen: boolean;
@@ -20,7 +23,7 @@ export default function FoundReports({
 }: FoundReportsModalProps) {
   const [foundReports, setFoundReports] = useState<FoundReport[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [rejecting, setRejecting] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [marking, setMarking] = useState(false);
@@ -67,20 +70,49 @@ export default function FoundReports({
         const err = await res.json();
         throw new Error(err.error || res.statusText);
       }
-      alert("¡Tu mascota ha sido marcada como encontrada!");
+      toast.success("¡Tu mascota ha sido marcada como encontrada!");
       if (onMarkedFound) onMarkedFound();
       onClose();
     } catch (e: any) {
-      console.error(e);
-      alert("Error marcando encontrada: " + e.message);
+      toast.error(e.message || "Error al marcar como encontrada.");
     } finally {
       setMarking(false);
     }
   };
 
+  const handleReject = async () => {
+    if (!report) return
+    setRejecting(true)
+    try {
+      const res = await fetch(`/api/find?mode=found&id=${report.id}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || res.statusText)
+      }
+      toast.success("Hallazgo rechazado.");
+      setFoundReports(prev => prev.filter(r => r.id !== report.id));
+      if (currentIdx >= total - 1) setCurrentIdx(0);
+      if (onMarkedFound) onMarkedFound();
+    } catch (e: any) {
+      toast.error(e.message || "Error al rechazar hallazgo.")
+    } finally {
+      setRejecting(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
       <Card className="w-full max-w-3xl mx-4 relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4"
+          onClick={onClose}
+        >
+          <X className="w-5 h-5" />
+        </Button>
         <CardHeader>
           <CardTitle>Avisos de Hallazgo</CardTitle>
         </CardHeader>
@@ -94,15 +126,15 @@ export default function FoundReports({
             <>
               <div className="flex justify-between items-center">
                 <p className="text-lg font-semibold">🐾 {report.pet.name}</p>
-                <Badge variant="secondary">Aviso</Badge>
+                <Badge variant="outline">{translateSpecies(report.pet.species)}</Badge>
               </div>
 
               {report.photo_urls && report.photo_urls.length > 0 ? (
-                <div className="relative w-full h-80 mb-4">
+                <div className="relative w-full max-h-80 mb-4 flex items-center justify-center">
                   <img
                     src={report.photo_urls[photoIdx]}
                     alt={`evidencia ${photoIdx + 1}`}
-                    className="w-full h-full object-cover rounded"
+                    className="w-auto max-h-80 object-contain rounded"
                   />
                   <button
                     className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 p-1 rounded-full"
@@ -130,7 +162,7 @@ export default function FoundReports({
                   <img
                     src={report.pet.photo_url}
                     alt={report.pet.name}
-                    className="w-full h-48 object-cover rounded mb-4"
+                    className="w-auto max-h-48 object-contain rounded mb-4 mx-auto"
                   />
                 )
               )}
@@ -170,18 +202,28 @@ export default function FoundReports({
 
           <div className="flex items-center space-x-2">
             {/* Botón para marcar encontrada */}
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleMarkFound}
-              disabled={marking}
-            >
-              {marking ? "Marcando..." : "Marcar encontrada"}
-            </Button>
+            {report && !loading && (
+              <Button
+                size="sm"
+                onClick={handleMarkFound}
+                disabled={marking}
+              >
+                <CheckCircle className="w-4 h-4 mr-1" />
+                {marking ? "Marcando..." : "Marcar encontrada"}
+              </Button>
+            )}
 
-            <Button variant="outline" size="sm" onClick={onClose}>
-              Cerrar
-            </Button>
+            {report && !loading && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleReject}
+                disabled={rejecting}
+              >
+                <Ban className="w-4 h-4 mr-1" />
+                {rejecting ? "Rechazando…" : "Rechazar hallazgo"}
+              </Button>
+            )}
           </div>
         </CardFooter>
       </Card>

@@ -9,8 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { NewServiceDrawer } from "@/components/services/NewServiceDrawer"
 import { EditServiceDrawer } from "@/components/services/EditServiceDrawer"
 import { ServiceFromDB } from "@/types/service"
+import { useUserProfile } from "@/stores/userProfile"
 
 export default function MapsPage() {
+  const { user } = useUserProfile()
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [mounted, setMounted] = useState(false)
   const [isSelectingLocation, setIsSelectingLocation] = useState(false)
@@ -155,31 +157,35 @@ export default function MapsPage() {
 
       <div className="absolute top-4 right-4 z-40 pr-8 md:pr-8">
         <div className="md:block">
-          <NewServiceDrawer
-            userLocation={location}
-            onStartLocationSelection={handleStartLocationSelection}
-            onCancelLocationSelection={handleCancelLocationSelection}
-            onOpenExistingSelection={handleOpenExistingSelection}
-            selectedServiceLocation={selectedServiceLocation}
-            isSelectingLocation={isSelectingLocation}
-            open={drawerOpen}
-            onOpenChange={setDrawerOpen}
-            onServiceCreated={handleServiceCreated}
-          />
+          {user?.role === "ADMIN" && (
+            <NewServiceDrawer
+              userLocation={location}
+              onStartLocationSelection={handleStartLocationSelection}
+              onCancelLocationSelection={handleCancelLocationSelection}
+              onOpenExistingSelection={handleOpenExistingSelection}
+              selectedServiceLocation={selectedServiceLocation}
+              isSelectingLocation={isSelectingLocation}
+              open={drawerOpen}
+              onOpenChange={setDrawerOpen}
+              onServiceCreated={handleServiceCreated}
+            />
+          )}
         </div>
       </div>
 
-      <EditServiceDrawer
-        service={editingService}
-        onStartLocationSelection={handleStartEditLocationSelection}
-        onCancelLocationSelection={handleCancelEditLocationSelection}
-        selectedServiceLocation={selectedEditLocation}
-        isSelectingLocation={isSelectingEditLocation}
-        open={editDrawerOpen}
-        onOpenChange={setEditDrawerOpen}
-        onServiceUpdated={handleServiceUpdated}
-        showDeleteButton={true}
-      />
+      {user?.role === "ADMIN" && (
+        <EditServiceDrawer
+          service={editingService}
+          onStartLocationSelection={handleStartEditLocationSelection}
+          onCancelLocationSelection={handleCancelEditLocationSelection}
+          selectedServiceLocation={selectedEditLocation}
+          isSelectingLocation={isSelectingEditLocation}
+          open={editDrawerOpen}
+          onOpenChange={setEditDrawerOpen}
+          onServiceUpdated={handleServiceUpdated}
+          showDeleteButton={true}
+        />
+      )}
 
       {(isSelectingLocation || isSelectingEditLocation) && (
         <div className="absolute top-4 left-4 z-40 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border">

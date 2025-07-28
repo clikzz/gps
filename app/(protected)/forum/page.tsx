@@ -71,7 +71,7 @@ const defaultCategories = [
       },
       {
         name: "La cafetería",
-        description: "Conversaciones sobre otros temas que no sean del foro.",
+        description: "Conversaciones sobre otros temas que no sean temática de mascotas.",
         slug: "cafeteria",
       },
     ],

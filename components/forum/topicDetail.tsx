@@ -52,12 +52,12 @@ interface TopicDetailProps {
 }
 
 const getUserTitle = (messageCount: number): string => {
-  if (messageCount >= 150) return "Líder de Manada"
-  if (messageCount >= 100) return "Veterinario(a)"
-  if (messageCount >= 50) return "Maullador(a) Senior"
-  if (messageCount >= 25) return "Amante de Mascotas"
-  if (messageCount >= 15) return "Cachorro Activo"
-  if (messageCount >= 8) return "Gatito Curioso"
+  if (messageCount >= 100) return "Líder de Manada"
+  if (messageCount >= 50) return "Veterinario(a)"
+  if (messageCount >= 30) return "Maullador(a) Senior"
+  if (messageCount >= 20) return "Amante de Mascotas"
+  if (messageCount >= 10) return "Cachorro Activo"
+  if (messageCount >= 5) return "Gatito Curioso"
   return "Mascota Nueva"
 }
 
@@ -146,7 +146,7 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
 
   return (
     <div className="border rounded-lg overflow-hidden relative">
-      <div className="border-b p-3 flex justify-end items-center text-sm">
+      <div className="border-b p-3 flex justify-end bg-accent text-white items-center text-sm">
         <div className="flex items-center gap-4">
           <span>{formatDateLabel(topic.createdAt)}</span>
           <span>#{topic.id}</span>
@@ -156,8 +156,8 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
         <div className="w-48 border-r p-4 text-center space-y-3">
           <div>
             <Link href={`/forum/user/${topic.author.id}`} className="font-medium hover:underline text-sm">
-              <span className="text-accent">{topic.author.name}</span>
-              <span className="text-gray-400"> #{topic.author.tag}</span>
+              <span className="text-accent font-semibold">{topic.author.name}</span>
+              <span className="text-gray-400 font-semibold"> #{topic.author.tag}</span>
             </Link>
           </div>
           <div className="text-xs font-semibold text-destructive">{getUserTitle(topic.author.menssageCount)}</div>{" "}

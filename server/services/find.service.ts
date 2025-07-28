@@ -58,6 +58,65 @@ export const createMissingPet = async (
 };
 
 /**
+ * Actualiza un reporte de mascota desaparecida.
+ */
+export const updateMissingPet = async (
+  reportId: number,
+  userId: string,
+  data: Partial<{
+    latitude: number
+    longitude: number
+    description: string
+    photo_urls: string[]
+  }>
+) => {
+  return prisma.$transaction(async (tx) => {
+    const rpt = await tx.missingPets.findFirst({
+      where: { id: reportId, reporter_id: userId, resolved: false },
+    })
+    if (!rpt) throw new Error("No autorizado o reporte ya resuelto")
+
+    let addr = {}
+    if (data.latitude !== undefined && data.longitude !== undefined) {
+      addr = await reverseGeocode(data.latitude, data.longitude)
+    }
+
+    const updated = await tx.missingPets.update({
+      where: { id: reportId },
+      data: {
+        ...data,
+        ...addr,
+      },
+    })
+
+    return updated
+  })
+}
+
+/**
+ * Elimina un reporte de mascota desaparecida. Solo el usuario que lo creó puede eliminarlo
+ * y solo si no ha sido resuelto.
+ */
+export const deleteMissingPet = async (reportId: number, userId: string) => {
+  return prisma.$transaction(async (tx) => {
+    const rpt = await tx.missingPets.findFirst({
+      where: { id: reportId, reporter_id: userId },
+      include: { Pets: true },
+    })
+    if (!rpt) throw new Error("No autorizado o no existe")
+
+    await tx.missingPets.delete({ where: { id: reportId } })
+
+    await tx.pets.update({
+      where: { id: rpt.pet_id },
+      data: { is_lost: false },
+    })
+
+    return true
+  })
+}
+
+/**
  * Marca una mascota como encontrada y resuelve su reporte activos. Solo el usuario que reportó la desaparición puede marcarla como encontrada.
  */
 export const markPetAsFound = async (petId: number, userId: string) => {
@@ -95,10 +154,10 @@ export const listAllMissingPets = async () => {
     },
     include: {
       Pets: {
-        select: { id: true, name: true, photo_url: true },
+        select: { id: true, name: true, photo_url: true, species: true },
       },
       users: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, phone: true, instagram: true, email: true},
       },
     },
     orderBy: { reported_at: "desc" },
@@ -117,10 +176,10 @@ export const listOtherMissingPets = async (userId: string) => {
     },
     include: {
       Pets: {
-        select: { id: true, name: true, photo_url: true, is_lost: true },
+        select: { id: true, name: true, photo_url: true, is_lost: true, species: true },
       },
       users: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, phone: true, instagram: true, email: true },
       },
     },
     orderBy: { reported_at: "desc" },
@@ -142,10 +201,10 @@ export const listRecentMissingPets = async () => {
     },
     include: {
       Pets: {
-        select: { id: true, name: true, photo_url: true },
+        select: { id: true, name: true, photo_url: true, species: true },
       },
       users: {
-        select: { id: true, name: true },
+        select: { id: true, name: true, phone: true, instagram: true, email: true },
       },
     },
     orderBy: { reported_at: "desc" },
@@ -163,8 +222,8 @@ export const listMyMissingPets = async (userId: string) => {
       Pets: { is_lost: true },
     },
     include: {
-      Pets: { select: { id: true, name: true, photo_url: true } },
-      users: { select: { id: true, name: true } },
+      Pets: { select: { id: true, name: true, photo_url: true, species: true } },
+      users: { select: { id: true, name: true, phone: true, instagram: true, email: true } },
     },
     orderBy: { reported_at: "desc" },
   });
@@ -178,6 +237,8 @@ export const findPetsByUser = async (userId: string) => {
     where: {
       user_id: userId,
       is_lost: false,
+      active: true,
+      deleted: false,
     },
     orderBy: { name: "asc" },
   });
@@ -218,6 +279,25 @@ export const createFoundReport = async (
 };
 
 /**
+ * Rechazar un reporte de hallazgo. Solo el dueño de la mascota desaparecida puede rechazarlo.
+ */
+export const rejectFoundReport = async (foundId: number, ownerId: string) => {
+  return prisma.$transaction(async (tx) => {
+    const fr = await tx.foundReports.findUnique({
+      where: { id: foundId },
+      include: { MissingPets: { select: { reporter_id: true } } },
+    });
+
+    if (!fr || fr.MissingPets.reporter_id !== ownerId) {
+      throw new Error("No autorizado o reporte inexistente");
+    }
+
+    await tx.foundReports.delete({ where: { id: foundId } });
+    return true;
+  });
+};
+
+/**
  * Listar reportes de hallazgo a la mascota desaparecida.
  */
 export const listFoundReportsForUser = async (userId: string) => {
@@ -241,6 +321,7 @@ export const listFoundReportsForUser = async (userId: string) => {
             select: {
               name: true,
               photo_url: true,
+              species: true,
             },
           },
         },
@@ -249,6 +330,9 @@ export const listFoundReportsForUser = async (userId: string) => {
         select: {
           id: true,
           name: true,
+          phone: true,
+          instagram: true,
+          email: true,
         },
       },
     },

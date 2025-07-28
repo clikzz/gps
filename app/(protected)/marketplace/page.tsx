@@ -20,6 +20,8 @@ import LoadingScreen from "@/components/LoadingScreen";
 import NoArticles from "@/components/marketplace/NoArticles";
 import { UserArticle } from "@/types/marketplace";
 import { Card, CardHeader } from "@/components/ui/card";
+import { useUpdateItem } from "@/hooks/marketplace/useUpdateItem";
+import { Item } from "@/types/marketplace";
 
 export default function MarketplacePage() {
   const [tab, setTab] = useState("para-ti");
@@ -27,9 +29,10 @@ export default function MarketplacePage() {
   const [repostId, setRepostId] = useState<number | null>(null);
   const [editingArticle, setEditingArticle] = useState<UserArticle | null>(null)
   const { initialData, loading: loadingRepost } = useRepostItem(repostId);
+  const { updateItem } = useUpdateItem();
   const { articles: userArticles, setArticles, loading: userLoading, error: userError, markAsSold, fetchArticles, removeArticle } = useUserArticles();
   const {
-    items, loading, error,
+    items, loading, error, fetchItems, updateLocalItem,
     filters, setters, clearFilters,
   } = useMarketplace();
   const {
@@ -65,7 +68,7 @@ export default function MarketplacePage() {
 
   const handleEdit = (id: number) => {
     const art = userArticles.find(a => a.id === id)
-    if (art) setEditingArticle(art)
+    if (art) setEditingArticle(art);
   };
 
   const handleToggleFav = (id: string) => {
@@ -74,18 +77,27 @@ export default function MarketplacePage() {
       : addFavorite(id);
   };
 
+  const handleSaveEdit = (updated: UserArticle) => {
+    updateLocalItem({ ...updated, updated_at: updated.updated_at.toString() });
+    setArticles(prev =>
+      prev.map(a => a.id === updated.id ? { ...a, ...updated } : a)
+    );
+
+    setEditingArticle(null);
+  };
+
   return (
     <div className="min-h-screen container mx-auto pb-20">
       <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 lg:max-w-7xl md:max-w-5xl px-6">
         <header>
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-2">
-                <Store className="h-6 w-6 text-primary" />
-                <h1 className="font-bold text-2xl md:text-3xl">Marketplace</h1>
-              </div>
+          <div className="container mx-auto px-4 space-y-2">
+            <div className="flex justify-start items-center gap-2">
+              <Store className="h-6 w-6 text-primary" />
+              <h1 className="font-bold text-2xl md:text-3xl">Marketplace</h1>
+            </div>
 
-              <Tabs value={tab} onValueChange={setTab} className="flex-1 max-w-md">
+            <div className="flex justify-center items-center">
+              <Tabs value={tab} onValueChange={setTab} className="flex-1">
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="para-ti">
                     <ShoppingBag className="mr-1 h-4 w-4"/> Para ti
@@ -148,7 +160,7 @@ export default function MarketplacePage() {
 
                 {loading && <LoadingScreen title="Cargando productos" subtext="Por favor, espera mientras cargamos los artículos." icon={Store} accentIcon={Store} />}
                 {error && <p className="text-red-600">Error: {error}</p>}
-                {items.length === 0 && <NoArticles title="No hay productos" subtext="No se encontraron artículos en esta categoría." icon={Store} accentIcon={Store} />}
+                {items.length === 0 && !loading && <NoArticles title="No hay productos" subtext="No se encontraron artículos en esta categoría." icon={Store} accentIcon={Store} />}
                 <MarketplaceGrid
                   items={items}
                   onToggleFavorite={handleToggleFav}
@@ -210,7 +222,7 @@ export default function MarketplacePage() {
             </div>
           </TabsContent>
 
-          {/* — Vender — */}
+          {/* Vender */}
           <TabsContent value="vender" className="mt-4">
             {loadingRepost ? (
               <LoadingScreen title="Obteniendo datos" subtext="Por favor, espera mientras rellenamos el formulario por ti." icon={Store} accentIcon={Store} />
@@ -225,7 +237,7 @@ export default function MarketplacePage() {
             )}
           </TabsContent>
 
-          {/* “Mis artículos” */}
+          {/* Mis artículos */}
           <TabsContent value="mis-articulos" className="mt-4">
             {userLoading && <p>Cargando tus artículos…</p>}
             {userError && <p className="text-red-600">Error: {userError}</p>}
@@ -252,12 +264,7 @@ export default function MarketplacePage() {
           <EditArticleModal
             article={editingArticle}
             onClose={() => setEditingArticle(null)}
-            onSaved={(updated: UserArticle) => {
-              setArticles(prev =>
-                prev.map(a => (a.id === updated.id ? updated : a))
-              );
-              setEditingArticle(null);
-            }}
+            onSaved={handleSaveEdit}
           />
         </Tabs>
       </div>

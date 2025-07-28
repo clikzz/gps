@@ -7,23 +7,35 @@ import { Marker } from 'react-map-gl/mapbox';
 import { useUserProfile } from '@/stores/userProfile';
 import { MissingReport, FoundReport } from '@/types/find';
 import { useUserLocation } from '@/hooks/useUserLocation';
-import { MapPin, Plus, Minus, Compass } from 'lucide-react';
+import { MapPin, Plus, Minus, Compass, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ActionsMenu from '@/components/find/ActionsMenu';
 import ReportModal, { LatLng } from '@/components/find/ReportModal';
 import MyReports from '@/components/find/MyReports';
 import OthersReports from '@/components/find/OthersReports';
 import FoundReportModal from '@/components/find/FoundReportModal';
 import { Markers } from '@/components/find/FindMarkers';
-import ReportPopup from '@/components/find/ReportPopup';
 import FoundReports from '@/components/find/FoundReports';
-import FoundPopup from '@/components/find/FoundPopup';
+import PetReportCard from "@/components/find/PetReportCard"
+import PetReportDialog from "@/components/find/PetReportDialog"
+import FoundReportCard from "@/components/find/FoundReportCard"
+import FoundReportDialog from "@/components/find/FoundReportDialog"
+import EditReportModal from "@/components/find/EditReportModal"
+import LoadingScreen from "@/components/LoadingScreen";
 import { toast } from "sonner";
 import { fetcher } from "@/lib/utils";
+import { EMPTY_DRAFT, ReportDraft, EMPTY_FOUND_DRAFT, FoundDraft, Added } from "@/types/find";
 
 const Map = dynamic(
   () => import("react-map-gl/mapbox").then((mod) => mod.default),
   { ssr: false }
 );
+
+type LocationReturn = "new" | "edit" | null;
+
+function revokeAll(arr: Added[]) {
+  arr.forEach(a => URL.revokeObjectURL(a.preview))
+}
 
 export default function FindMap() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -34,8 +46,6 @@ export default function FindMap() {
   const [mapLoaded, setMapLoaded] = useState(false);
 
   const [reports, setReports] = useState<MissingReport[]>([]);
-  const [selected, setSelected] = useState<MissingReport | null>(null);
-  const [photoIndex, setPhotoIndex] = useState(0);
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isMyReportsModalOpen, setIsMyReportsModalOpen] = useState(false);
@@ -53,7 +63,22 @@ export default function FindMap() {
 
   const [foundReportsOnMap, setFoundReportsOnMap] = useState<FoundReport[]>([]);
   const [foundSelected, setFoundSelected] = useState<FoundReport | null>(null);
-  const [foundPhotoIndex, setFoundPhotoIndex] = useState(0);
+
+  const [selectedReport, setSelectedReport] = useState<MissingReport | null>(null);
+  const [showCard, setShowCard] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const [foundShowCard,   setFoundShowCard] = useState(false)
+  const [foundShowDialog, setFoundShowDialog] = useState(false)
+
+  const [reportToEdit, setReportToEdit] = useState<MissingReport | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  const [locationReturnTo, setLocationReturnTo] = useState<LocationReturn>(null);
+
+  const [reportDraft, setReportDraft] = useState<ReportDraft>(EMPTY_DRAFT)
+  const [foundDraft, setFoundDraft] = useState<FoundDraft>(EMPTY_FOUND_DRAFT)
 
   async function refreshReports() {
     try {
@@ -74,13 +99,16 @@ export default function FindMap() {
   }
 
   useEffect(() => {
-    setPhotoIndex(0);
-  }, [selected]);
-
-  useEffect(() => {
     refreshReports();
     refreshFoundReports();
   }, []);
+
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < 768)
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [])
 
   const flyToReport = (report: MissingReport) => {
     if (!mapRef.current) return;
@@ -92,16 +120,78 @@ export default function FindMap() {
     });
   };
 
+  const projectToPct = (lng: number, lat: number) => {
+    if (!mapRef.current) return { xPct: 50, yPct: 50 }
+    const { x, y } = mapRef.current.project([lng, lat])
+    return { xPct: (x / window.innerWidth) * 100, yPct: (y / window.innerHeight) * 100 }
+  }
+
   const handleGoTo = (report: MissingReport) => {
     setIsOthersReportsModalOpen(false);
     setIsMyReportsModalOpen(false);
     flyToReport(report);
   };
 
-  function openFoundModal(report: MissingReport) {
-    setTargetReport(report);
-    setIsFoundModalOpen(true);
-    setFoundLocation(null);
+  const handleMarkerSelect = (r: MissingReport) => {
+    setSelectedReport(r)
+    setFoundSelected(null)
+
+    if (isMobile) {
+      setShowDialog(true)
+      setShowCard(false)
+    } else {
+      setShowCard(true)
+      setShowDialog(false)
+    }
+  }
+
+  const handleFoundMarkerSelect = (r: FoundReport) => {
+    setFoundSelected(r)
+    setSelectedReport(null)
+
+    if (isMobile) {
+      setFoundShowDialog(true)
+      setFoundShowCard(false)
+    } else {
+      setFoundShowCard(true)
+      setFoundShowDialog(false)
+    }
+  }
+
+  const markFoundResolved = async (r: FoundReport) => {
+    try {
+      const res = await fetch(`/api/find?mode=resolved&pet=${r.pet.id}`, {
+        method: "PUT",
+      })
+      if (!res.ok) throw new Error("No se pudo marcar como encontrada.")
+      toast.success("Mascota marcada como encontrada.")
+      setFoundShowDialog(false)
+      setFoundShowCard(false)
+      setFoundSelected(null)
+      refreshReports()
+      refreshFoundReports()
+    } catch (e: any) {
+      toast.error(e.message)
+    }
+  }
+
+  const rejectFound = async (r: FoundReport) => {
+    try {
+      const res = await fetch(`/api/find?mode=found&id=${r.id}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "No se pudo rechazar el hallazgo.")
+      }
+      toast.success("Reporte de hallazgo rechazado.")
+      setFoundShowDialog(false)
+      setFoundShowCard(false)
+      setFoundSelected(null)
+      refreshFoundReports()
+    } catch (e: any) {
+      toast.error(e.message)
+    }
   }
 
   async function handleSubmitReport(data: {
@@ -110,7 +200,7 @@ export default function FindMap() {
     photo_urls?: string[];
     location?: LatLng;
   }) {
-    if (!mapRef.current) return alert("El mapa no está listo aún.");
+    if (!mapRef.current) return toast.error("El mapa no está listo aún.");
 
     const [lat, lng] = data.location
       ? [data.location.lat, data.location.lng]
@@ -142,16 +232,79 @@ export default function FindMap() {
         throw new Error(msg);
       }
       setIsReportModalOpen(false);
+      reportDraft.photos.forEach(p => URL.revokeObjectURL(p.preview));
+      setReportDraft(EMPTY_DRAFT);
       setPickedLocation(null);
+      toast.success("Desaparición reportada correctamente.");
       refreshReports();
     } catch (e: any) {
-      console.error("Error al enviar reporte:", e);
-      toast.error(`Error al enviar reporte: ${e.message}`);
+      toast.error(e.message);
     }
+  }
+
+  const markMissingResolved = async (r: MissingReport) => {
+    try {
+      const petId = parseInt(r.pet.id, 10)
+      const res = await fetch(`/api/find?mode=resolved&pet=${petId}`, {
+        method: "PUT",
+      })
+      if (!res.ok) throw new Error("No se pudo marcar como encontrada.")
+      toast.success("Mascota marcada como encontrada.")
+      setShowDialog(false)
+      setShowCard(false)
+      setSelectedReport(null)
+      refreshReports()
+      refreshFoundReports()
+    } catch (e: any) {
+      toast.error(e.message)
+    }
+  }
+
+  const handleSaveEditedReport = async (changes: Partial<{
+    description: string
+    photo_urls: string[]
+    latitude: number
+    longitude: number
+  }>) => {
+    if (!reportToEdit) return
+
+    try {
+      const res = await fetch(`/api/find?id=${reportToEdit.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(changes),
+      })
+
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: "Error desconocido" }))
+        throw new Error(error)
+      }
+
+      toast.success("Reporte actualizado correctamente.")
+      setIsEditModalOpen(false)
+      setReportToEdit(null)
+      setPickedLocation(null)
+      refreshReports()
+    } catch (e: any) {
+      toast.error(e.message)
+    }
+  }
+
+  function openReportModal() {
+    setReportDraft(EMPTY_DRAFT);
+    setIsReportModalOpen(true);
+  }
+
+  function openFoundModal(report: MissingReport) {
+    setTargetReport(report);
+    setFoundDraft(EMPTY_FOUND_DRAFT);
+    setIsFoundModalOpen(true);
+    setFoundLocation(null);
   }
 
   function handlePickLocation() {
     setIsReportModalOpen(false);
+    setLocationReturnTo("new");
     setPickLocationMode(true);
   }
 
@@ -160,7 +313,9 @@ export default function FindMap() {
     if (pickLocationMode) {
       setPickedLocation({ lat, lng });
       setPickLocationMode(false);
-      setIsReportModalOpen(true);
+      if (locationReturnTo === "new") setIsReportModalOpen(true);
+      if (locationReturnTo === "edit") setIsEditModalOpen(true);
+      setLocationReturnTo(null);
     }
     if (foundPickMode) {
       setFoundLocation({ lat, lng });
@@ -212,11 +367,18 @@ export default function FindMap() {
         onSubmit={handleSubmitReport}
         onPickLocation={handlePickLocation}
         pickedLocation={pickedLocation}
+        draft={reportDraft}
+        onDraftChange={setReportDraft}
       />
       <MyReports
         isOpen={isMyReportsModalOpen}
         onClose={() => setIsMyReportsModalOpen(false)}
         onGoTo={handleGoTo}
+        onEdit={(r) => {
+          setIsMyReportsModalOpen(false);
+          setReportToEdit(r);
+          setIsEditModalOpen(true);
+        }}
       />
       <OthersReports
         isOpen={isOthersReportsModalOpen}
@@ -226,16 +388,35 @@ export default function FindMap() {
       <FoundReports
         isOpen={isFoundReportsModalOpen}
         onClose={() => setIsFoundReportsModalOpen(false)}
+        onMarkedFound={() => {
+          refreshFoundReports();
+        }}
+      />
+      <EditReportModal
+        report={reportToEdit}
+        isOpen={isEditModalOpen}
+        pickedLocation={pickedLocation}
+        onPickLocation={() => {
+          setIsEditModalOpen(false);
+          setLocationReturnTo("edit");
+          setPickLocationMode(true);
+        }}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setReportToEdit(null);
+          setPickedLocation(null);
+        }}
+        onSave={handleSaveEditedReport}
       />
 
       {/* Indicador de modo selección */}
       {(pickLocationMode || foundPickMode) && (
-        <div className="absolute top-4 left-4 z-30 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border">
+        <div className="absolute top-4 left-4 z-30 bg-background/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-yellow-600 rounded-full animate-pulse" />
             <div>
-              <h3 className="font-semibold text-gray-800">Modo selección activo</h3>
-              <p className="text-sm text-gray-700">
+              <h3 className="font-semibold">Modo selección activo</h3>
+              <p className="text-sm">
                 {pickLocationMode
                   ? "Haz clic en el mapa para seleccionar la última ubicación de tu mascota"
                   : "Haz clic en el mapa para indicar dónde viste la mascota"}
@@ -262,10 +443,7 @@ export default function FindMap() {
         {/* Marcadores de desapariciones */}
         <Markers
           reports={reports}
-          onSelect={(r) => {
-            setSelected(r);
-            setFoundSelected(null);
-          }}
+          onSelect={handleMarkerSelect}
         />
 
         {/* Marcadores de hallazgos */}
@@ -273,40 +451,37 @@ export default function FindMap() {
           key="found-markers"
           reports={foundReportsOnMap}
           variant="found"
-          onSelect={(r) => {
-            setFoundPhotoIndex(0);
-            setFoundSelected(r);
-            setSelected(null);
-          }}
+          onSelect={handleFoundMarkerSelect}
         />
 
-        {/* Popup */}
-        <ReportPopup
-          selected={selected}
-          userId={userId}
-          photoIndex={photoIndex}
-          setPhotoIndex={setPhotoIndex}
-          onClose={() => setSelected(null)}
-          onFound={() => {
-            setSelected(null);
-            refreshReports();
-          }}
-          onOpenFoundModal={openFoundModal}
-        />
-
-        {foundSelected && (
-          <FoundPopup
-            selected={foundSelected}
-            userId={userId}
-            photoIndex={foundPhotoIndex}
-            setPhotoIndex={setFoundPhotoIndex}
-            onClose={() => setFoundSelected(null)}
-            onMarkResolved={(petId) => {
-              refreshReports();
-              refreshFoundReports();
+        {foundShowCard && foundSelected && !isMobile && (
+          <FoundReportCard
+            report={foundSelected}
+            screenXY={projectToPct(foundSelected.longitude, foundSelected.latitude)}
+            meIsReporter={foundSelected.ownerId === userId}
+            onViewDetails={() => {
+              setFoundShowDialog(true);
+              setFoundShowCard(false);
+            }}
+            onMarkResolved={markFoundResolved}
+            onClose={() => {
+              setFoundShowCard(false);
+              setFoundSelected(null);
             }}
           />
         )}
+
+        <FoundReportDialog
+          report={foundSelected}
+          isOpen={foundShowDialog}
+          meIsReporter={foundSelected?.ownerId === userId}
+          onClose={() => {
+            setFoundShowDialog(false);
+            setFoundSelected(null);
+          }}
+          onMarkResolved={markFoundResolved}
+          onReject={rejectFound}
+        />
 
         {targetReport && (
           <FoundReportModal
@@ -323,12 +498,55 @@ export default function FindMap() {
             }}
             onSubmitted={() => {
               setIsFoundModalOpen(false);
+              revokeAll(foundDraft.photos)
               setFoundLocation(null);
+              setFoundDraft(EMPTY_FOUND_DRAFT);
               toast.success("Se ha reportado el hallazgo correctamente.");
               refreshReports();
             }}
+            draft={foundDraft}
+            onDraftChange={setFoundDraft}
           />
         )}
+
+        {showCard && selectedReport && !isMobile && (
+          <PetReportCard
+            report={selectedReport}
+            screenXY={projectToPct(
+              selectedReport.longitude,
+              selectedReport.latitude
+            )}
+            onViewDetails={() => {
+              setShowDialog(true)
+              setShowCard(false)
+            }}
+            onMarkFound={markMissingResolved}
+            meIsReporter={selectedReport.reporter_id === userId}
+            onReportSighting={(r) => {
+              openFoundModal(r);
+              setShowCard(false);
+            }}
+            onClose={() => {
+              setShowCard(false);
+              setSelectedReport(null);
+            }}
+          />
+        )}
+
+        <PetReportDialog
+          report={selectedReport}
+          isOpen={showDialog}
+          onClose={() => {
+            setShowDialog(false);
+            setSelectedReport(null);
+          }}
+          onMarkFound={markMissingResolved}
+          meIsReporter={selectedReport?.reporter_id === userId}
+          onReportSighting={(r) => {
+            openFoundModal(r);
+            setShowDialog(false);
+          }}
+        />
 
         {/* Marcador de ubicación marcada */}
         {pickedLocation && (
@@ -337,39 +555,34 @@ export default function FindMap() {
             longitude={pickedLocation.lng}
             anchor="bottom"
           >
-            <MapPin size={28} className="text-red-400 drop-shadow-lg" fill="currentColor" />
+            <MapPin size={28} className="text-secondary drop-shadow-lg" fill="currentColor" />
           </Marker>
         )}
       </Map>
 
         <div className="absolute bottom-6 right-4 flex flex-col space-y-2 z-20">
-          <button
+          <Button
+            variant="outline"
             onClick={handleZoomIn}
-            className="p-2 bg-white rounded shadow hover:bg-gray-100"
           >
-            <Plus size={20} />
-          </button>
-          <button
+            <Plus className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleZoomOut}
-            className="p-2 bg-white rounded shadow hover:bg-gray-100"
           >
-            <Minus size={20} />
-          </button>
-          <button
+            <Minus className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleCenter}
-            className="p-2 bg-white rounded shadow hover:bg-gray-100"
           >
-            <Compass size={20} />
-          </button>
+            <Compass className="h-6 w-6" />
+          </Button>
         </div>
 
       {!mapLoaded && (
-        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando mapa...</p>
-          </div>
-        </div>
+        <LoadingScreen title="Cargando reportes" subtext="Por favor, espera mientras cargamos los reportes de mascotas desaparecidas." icon={Search} accentIcon={Search} />
       )}
     </div>
   );

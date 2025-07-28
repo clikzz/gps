@@ -21,7 +21,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { DollarSign, MapPin, Plus } from "lucide-react";
 import { useNewItemForm } from "@/hooks/marketplace/useNewItemForm";
-import { Minimap } from "@/components/marketplace/Minimap";
+import { Minimap } from "@/components/Minimap";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker";
 import type { ItemCondition, ItemCategory, PetCategory } from "@prisma/client";
 import { CATEGORY_OPTIONS, CONDITION_OPTIONS, PET_OPTIONS } from "@/types/marketplace";
@@ -68,10 +68,6 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
       setValue("longitude", loc.lng, { shouldValidate: true });
     }
   }, [loc, setValue]);
-
-  const condition = watch("condition");
-  const category = watch("category");
-  const petCategory = watch("pet_category");
 
   const handleFiles = (files: FileList) => {
     imageUpload.handleFileChange({ target: { files } } as any);
@@ -123,7 +119,7 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
               id="description"
               {...register("description")}
               placeholder="Describe tu producto…"
-              rows={4}
+              rows={3}
             />
             {errors.description && (
               <p className="text-sm text-destructive">

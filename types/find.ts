@@ -14,16 +14,16 @@ export interface MissingReport {
   photo_urls?: string[];
   description?: string;
   reported_at: string;
-  pet: { id: string; name: string; photo_url?: string };
-  reporter: { id: string; name: string };
+  pet: { id: string; name: string; photo_url?: string, species: string };
+  reporter: { id: string; name: string, phone?: string; instagram?: string, email?: string };
 }
 
 export interface FoundReport {
   id: string;
   missingPetId: string;
   ownerId: string;
-  helper: { id: string; name: string };
-  pet: { id: string; name: string; photo_url?: string };
+  helper: { id: string; name: string, phone?: string; instagram?: string; email?: string };
+  pet: { id: string; name: string; photo_url?: string, species: string };
   photo_urls?: string[];
   description?: string;
   latitude: number;
@@ -47,3 +47,23 @@ export type AddressComponents = {
   postcode?: string;
   country?: string;
 };
+
+export type Added = { file: File; preview: string };
+
+export type ReportDraft = {
+  petId: string;
+  description: string;
+  photos: Added[];
+};
+
+export const EMPTY_DRAFT: ReportDraft = {
+  petId: "",
+  description: "",
+  photos: [],
+}
+
+export interface FoundDraft {
+  photos: Added[]
+  description: string
+}
+export const EMPTY_FOUND_DRAFT: FoundDraft = { photos: [], description: "" }

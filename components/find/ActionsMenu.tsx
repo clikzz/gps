@@ -27,7 +27,7 @@ export default function FindActionsMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="secondary"
+          variant="outline"
           size="sm"
           className="flex items-center gap-1"
         >

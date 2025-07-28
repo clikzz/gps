@@ -55,7 +55,7 @@ export default function PetReportDialog({
               </div>
 
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold">
                   {report.pet.name}
                 </h2>
                 <p className="font-medium text-sm">Reportado por <span className="font-semibold">{report.reporter.name}</span></p>

@@ -79,7 +79,7 @@ export default function EditReportModal({
         photo_urls = [...photo_urls, ...uploaded]
       } catch (err) {
         console.error(err)
-        return toast.error("No se pudieron subir las fotos")
+        return toast.error("No se pudieron subir las fotos.")
       }
     }
 
@@ -96,7 +96,7 @@ export default function EditReportModal({
     }
 
     if (Object.keys(changes).length === 0)
-      return toast.info("No hiciste cambios")
+      return toast.info("No hiciste cambios.");
 
     onSave(changes)
   }
@@ -118,8 +118,8 @@ export default function EditReportModal({
   console.log("Existing photos:", existingPhotos);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <Card className="w-full max-w-md mx-4">
+    <div className="fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/50">
+      <Card className="w-full max-w-md max-h-full overflow-y-auto">
         <CardHeader>
           <CardTitle>Editar reporte de {report.pet.name}</CardTitle>
         </CardHeader>
@@ -152,7 +152,7 @@ export default function EditReportModal({
                   if (files.length === 0) return
 
                   if (files.length + totalFotos > 3)
-                    return toast.error("Máx. 3 fotos en total")
+                    return toast.error("Solo puedes subir 3 fotos.")
 
                   const toAdd: Added[] = files.map(f => ({
                     file: f,
@@ -185,8 +185,7 @@ export default function EditReportModal({
                       lat: pickedLocation?.lat || report.latitude,
                       lng: pickedLocation?.lng || report.longitude,
                     }}
-                    height="180px"
-                    zoom={14}
+                    height="100px"
                   />
                 </div>
               )}

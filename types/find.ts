@@ -47,3 +47,23 @@ export type AddressComponents = {
   postcode?: string;
   country?: string;
 };
+
+export type Added = { file: File; preview: string };
+
+export type ReportDraft = {
+  petId: string;
+  description: string;
+  photos: Added[];
+};
+
+export const EMPTY_DRAFT: ReportDraft = {
+  petId: "",
+  description: "",
+  photos: [],
+}
+
+export interface FoundDraft {
+  photos: Added[]
+  description: string
+}
+export const EMPTY_FOUND_DRAFT: FoundDraft = { photos: [], description: "" }

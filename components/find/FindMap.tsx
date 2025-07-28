@@ -8,6 +8,7 @@ import { useUserProfile } from '@/stores/userProfile';
 import { MissingReport, FoundReport } from '@/types/find';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { MapPin, Plus, Minus, Compass, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ActionsMenu from '@/components/find/ActionsMenu';
 import ReportModal, { LatLng } from '@/components/find/ReportModal';
 import MyReports from '@/components/find/MyReports';
@@ -23,6 +24,7 @@ import EditReportModal from "@/components/find/EditReportModal"
 import LoadingScreen from "@/components/LoadingScreen";
 import { toast } from "sonner";
 import { fetcher } from "@/lib/utils";
+import { EMPTY_DRAFT, ReportDraft, EMPTY_FOUND_DRAFT, FoundDraft, Added } from "@/types/find";
 
 const Map = dynamic(
   () => import("react-map-gl/mapbox").then((mod) => mod.default),
@@ -30,6 +32,10 @@ const Map = dynamic(
 );
 
 type LocationReturn = "new" | "edit" | null;
+
+function revokeAll(arr: Added[]) {
+  arr.forEach(a => URL.revokeObjectURL(a.preview))
+}
 
 export default function FindMap() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -70,6 +76,9 @@ export default function FindMap() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const [locationReturnTo, setLocationReturnTo] = useState<LocationReturn>(null);
+
+  const [reportDraft, setReportDraft] = useState<ReportDraft>(EMPTY_DRAFT)
+  const [foundDraft, setFoundDraft] = useState<FoundDraft>(EMPTY_FOUND_DRAFT)
 
   async function refreshReports() {
     try {
@@ -185,12 +194,6 @@ export default function FindMap() {
     }
   }
 
-  function openFoundModal(report: MissingReport) {
-    setTargetReport(report);
-    setIsFoundModalOpen(true);
-    setFoundLocation(null);
-  }
-
   async function handleSubmitReport(data: {
     pet_id: string;
     description?: string;
@@ -229,6 +232,8 @@ export default function FindMap() {
         throw new Error(msg);
       }
       setIsReportModalOpen(false);
+      reportDraft.photos.forEach(p => URL.revokeObjectURL(p.preview));
+      setReportDraft(EMPTY_DRAFT);
       setPickedLocation(null);
       toast.success("Desaparición reportada correctamente.");
       refreshReports();
@@ -275,7 +280,7 @@ export default function FindMap() {
         throw new Error(error)
       }
 
-      toast.success("Reporte actualizado")
+      toast.success("Reporte actualizado correctamente.")
       setIsEditModalOpen(false)
       setReportToEdit(null)
       setPickedLocation(null)
@@ -283,6 +288,18 @@ export default function FindMap() {
     } catch (e: any) {
       toast.error(e.message)
     }
+  }
+
+  function openReportModal() {
+    setReportDraft(EMPTY_DRAFT);
+    setIsReportModalOpen(true);
+  }
+
+  function openFoundModal(report: MissingReport) {
+    setTargetReport(report);
+    setFoundDraft(EMPTY_FOUND_DRAFT);
+    setIsFoundModalOpen(true);
+    setFoundLocation(null);
   }
 
   function handlePickLocation() {
@@ -350,6 +367,8 @@ export default function FindMap() {
         onSubmit={handleSubmitReport}
         onPickLocation={handlePickLocation}
         pickedLocation={pickedLocation}
+        draft={reportDraft}
+        onDraftChange={setReportDraft}
       />
       <MyReports
         isOpen={isMyReportsModalOpen}
@@ -389,12 +408,12 @@ export default function FindMap() {
 
       {/* Indicador de modo selección */}
       {(pickLocationMode || foundPickMode) && (
-        <div className="absolute top-4 left-4 z-30 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border">
+        <div className="absolute top-4 left-4 z-30 bg-background/90 backdrop-blur-sm p-3 rounded-lg shadow-lg border">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-yellow-600 rounded-full animate-pulse" />
             <div>
-              <h3 className="font-semibold text-gray-800">Modo selección activo</h3>
-              <p className="text-sm text-gray-700">
+              <h3 className="font-semibold">Modo selección activo</h3>
+              <p className="text-sm">
                 {pickLocationMode
                   ? "Haz clic en el mapa para seleccionar la última ubicación de tu mascota"
                   : "Haz clic en el mapa para indicar dónde viste la mascota"}
@@ -476,10 +495,14 @@ export default function FindMap() {
             }}
             onSubmitted={() => {
               setIsFoundModalOpen(false);
+              revokeAll(foundDraft.photos)
               setFoundLocation(null);
+              setFoundDraft(EMPTY_FOUND_DRAFT);
               toast.success("Se ha reportado el hallazgo correctamente.");
               refreshReports();
             }}
+            draft={foundDraft}
+            onDraftChange={setFoundDraft}
           />
         )}
 
@@ -535,24 +558,24 @@ export default function FindMap() {
       </Map>
 
         <div className="absolute bottom-6 right-4 flex flex-col space-y-2 z-20">
-          <button
+          <Button
+            variant="outline"
             onClick={handleZoomIn}
-            className="p-2 bg-white rounded shadow hover:bg-gray-100"
           >
-            <Plus size={20} />
-          </button>
-          <button
+            <Plus className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleZoomOut}
-            className="p-2 bg-white rounded shadow hover:bg-gray-100"
           >
-            <Minus size={20} />
-          </button>
-          <button
+            <Minus className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="outline"
             onClick={handleCenter}
-            className="p-2 bg-white rounded shadow hover:bg-gray-100"
           >
-            <Compass size={20} />
-          </button>
+            <Compass className="h-6 w-6" />
+          </Button>
         </div>
 
       {!mapLoaded && (

@@ -237,6 +237,8 @@ export const findPetsByUser = async (userId: string) => {
     where: {
       user_id: userId,
       is_lost: false,
+      active: true,
+      deleted: false,
     },
     orderBy: { name: "asc" },
   });

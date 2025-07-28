@@ -34,17 +34,14 @@ export default function PetReportCard({
 
   const petCategory = translateSpecies(report.pet.species)
 
-  console.log("meIsReporter", meIsReporter)
-
   return (
     <>
-      {/* overlay para cerrar haciendo clic fuera */}
       <div className="absolute inset-0 z-40" onClick={onClose} />
 
       <div className="absolute z-50 -translate-x-1/2" style={style}>
-        <Card className="shadow-xl border-2 border-background">
+        <Card className="w-78 max-w-sm shadow-xl border-2 border-background">
           <CardContent className="p-0">
-            {/* ——— Cabecera ——— */}
+            {/* Cabecera */}
             <div className="p-4 pb-3 flex items-start gap-3">
               <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-background shrink-0">
                 <img
@@ -70,7 +67,7 @@ export default function PetReportCard({
               </div>
             </div>
 
-            {/* ——— Datos clave ——— */}
+            {/* Datos */}
             <div className="px-4 pb-3 space-y-2">
               <div className="flex items-start gap-2 text-sm">
                 <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
@@ -95,7 +92,7 @@ export default function PetReportCard({
               </p>
             </div>
 
-            {/* ——— Acciones ——— */}
+            {/* Acciones */}
             <div className="flex justify-center items-center p-3 border-t gap-2">
               <Button
                 variant="outline"
@@ -135,7 +132,6 @@ export default function PetReportCard({
           </CardContent>
         </Card>
 
-        {/* flecha que apunta al marcador */}
         <div className="absolute -top-2 left-1/2 -translate-x-1/2">
           <div className="w-4 h-4 bg-background border-l-2 border-t-2 border-background rotate-45" />
         </div>

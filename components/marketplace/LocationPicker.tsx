@@ -75,7 +75,7 @@ export default function LocationPicker({
             >
               {picked && (
                 <Marker longitude={picked.lng} latitude={picked.lat} anchor="bottom">
-                  <MapPin className="text-red-600" size={28} />
+                  <MapPin size={28} className="text-secondary drop-shadow-lg" fill="currentColor" />
                 </Marker>
               )}
             </Map>

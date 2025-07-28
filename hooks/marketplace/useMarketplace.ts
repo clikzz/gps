@@ -13,7 +13,7 @@ export function useMarketplace() {
   const [petCats, setPetCats] = useState<string[]>([]);
   const [artCats, setArtCats] = useState<string[]>([]);
   const [condition, setCondition] = useState<string>("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [sortBy, setSortBy] = useState<"recent" | "price-low" | "price-high" | "name">("recent");
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export function useMarketplace() {
     setCity("all");
     setPetCats([]);
     setArtCats([]);
-    setPriceRange([0, 100000]);
+    setPriceRange([0, 10000000]);
     setCondition("");
     setSortBy("recent");
   };

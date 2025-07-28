@@ -69,10 +69,6 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
     }
   }, [loc, setValue]);
 
-  const condition = watch("condition");
-  const category = watch("category");
-  const petCategory = watch("pet_category");
-
   const handleFiles = (files: FileList) => {
     imageUpload.handleFileChange({ target: { files } } as any);
     const urls = Array.from(files).map((f) => URL.createObjectURL(f));
@@ -123,7 +119,7 @@ export default function NewItemForm({ onSuccess, initialData }: NewItemFormProps
               id="description"
               {...register("description")}
               placeholder="Describe tu producto…"
-              rows={4}
+              rows={3}
             />
             {errors.description && (
               <p className="text-sm text-destructive">

@@ -78,14 +78,14 @@ export default function MarketplacePage() {
     <div className="min-h-screen container mx-auto pb-20">
       <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 lg:max-w-7xl md:max-w-5xl px-6">
         <header>
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-2">
-                <Store className="h-6 w-6 text-primary" />
-                <h1 className="font-bold text-2xl md:text-3xl">Marketplace</h1>
-              </div>
+          <div className="container mx-auto px-4 space-y-2">
+            <div className="flex justify-start items-center gap-2">
+              <Store className="h-6 w-6 text-primary" />
+              <h1 className="font-bold text-2xl md:text-3xl">Marketplace</h1>
+            </div>
 
-              <Tabs value={tab} onValueChange={setTab} className="flex-1 max-w-md">
+            <div className="flex justify-center items-center">
+              <Tabs value={tab} onValueChange={setTab} className="flex-1">
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="para-ti">
                     <ShoppingBag className="mr-1 h-4 w-4"/> Para ti
@@ -148,7 +148,7 @@ export default function MarketplacePage() {
 
                 {loading && <LoadingScreen title="Cargando productos" subtext="Por favor, espera mientras cargamos los artículos." icon={Store} accentIcon={Store} />}
                 {error && <p className="text-red-600">Error: {error}</p>}
-                {items.length === 0 && <NoArticles title="No hay productos" subtext="No se encontraron artículos en esta categoría." icon={Store} accentIcon={Store} />}
+                {items.length === 0 && !loading && <NoArticles title="No hay productos" subtext="No se encontraron artículos en esta categoría." icon={Store} accentIcon={Store} />}
                 <MarketplaceGrid
                   items={items}
                   onToggleFavorite={handleToggleFav}
@@ -210,7 +210,7 @@ export default function MarketplacePage() {
             </div>
           </TabsContent>
 
-          {/* — Vender — */}
+          {/* Vender */}
           <TabsContent value="vender" className="mt-4">
             {loadingRepost ? (
               <LoadingScreen title="Obteniendo datos" subtext="Por favor, espera mientras rellenamos el formulario por ti." icon={Store} accentIcon={Store} />
@@ -225,7 +225,7 @@ export default function MarketplacePage() {
             )}
           </TabsContent>
 
-          {/* “Mis artículos” */}
+          {/* Mis artículos */}
           <TabsContent value="mis-articulos" className="mt-4">
             {userLoading && <p>Cargando tus artículos…</p>}
             {userError && <p className="text-red-600">Error: {userError}</p>}

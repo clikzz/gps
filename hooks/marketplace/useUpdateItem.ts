@@ -57,7 +57,7 @@ export function useUpdateItem() {
         updated_at: new Date(body.updated_at),
       };
 
-      toast.success("Artículo actualizado correctamente");
+      toast.success("Artículo actualizado correctamente.");
       return updated;
     },
     []

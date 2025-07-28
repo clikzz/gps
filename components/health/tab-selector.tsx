@@ -5,16 +5,34 @@ import { MedicationsTable } from "@/components/health/medications/medications-ta
 import { HealthTimeline } from "@/components/health/timeline/health-timeline";
 import { HealthCalendar } from "@/components/health/calendar/health-calendar";
 
-export function TabSelector() {
+interface TabSelectorProps {
+  onTabChange?: (value: string) => void;
+}
+
+export function TabSelector({ onTabChange }: TabSelectorProps) {
   return (
     <div className="w-full">
-      <Tabs defaultValue="nextdoses" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="nextdoses">Próximas</TabsTrigger>
-          <TabsTrigger value="vaccines">Vacunas</TabsTrigger>
-          <TabsTrigger value="medications">Medicamentos</TabsTrigger>
-          <TabsTrigger value="timeline">Historial</TabsTrigger>
-          <TabsTrigger value="calendar">Calendario</TabsTrigger>
+      <Tabs
+        defaultValue="nextdoses"
+        className="w-full"
+        onValueChange={onTabChange}
+      >
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1 h-auto p-1">
+          <TabsTrigger value="nextdoses" className="text-xs sm:text-sm">
+            Próximas
+          </TabsTrigger>
+          <TabsTrigger value="vaccines" className="text-xs sm:text-sm">
+            Vacunas
+          </TabsTrigger>
+          <TabsTrigger value="medications" className="text-xs sm:text-sm">
+            Medicamentos
+          </TabsTrigger>
+          <TabsTrigger value="timeline" className="text-xs sm:text-sm">
+            Historial
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="text-xs sm:text-sm">
+            Calendario
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="nextdoses" className="mt-6">
           <NextDosesTable />

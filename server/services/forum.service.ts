@@ -141,10 +141,13 @@ export const createPost = async (
       },
     });
 
-    if (profile?.menssageCount === 10) {
+    const newCount = (profile?.menssageCount ?? 0) + 1;
+
+    if (newCount === 10) {
       await assignBadge(userId, "MSG_10");
     }
-    if (profile?.menssageCount === 30) {
+
+    if (newCount === 30) {
       await assignBadge(userId, "MSG_30");
     }
     

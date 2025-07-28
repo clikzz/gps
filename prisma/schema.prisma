@@ -52,6 +52,7 @@ title        String
 message      String
 alert_date   DateTime
 sent         Boolean     @default(false)
+next_dose_date DateTime?
 created_at   DateTime    @default(now())
 users        users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 Pets         Pets        @relation(fields: [pet_id], references: [id], onDelete: Cascade)

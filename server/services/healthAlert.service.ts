@@ -17,6 +17,7 @@ export const createHealthAlert = async (user_id: string, data: HealthAlert) => {
       message: data.message,
       alert_date: data.alert_date,
       sent: data.sent ?? false,
+      next_dose_date: data.next_dose_date,
     },
   });
 };
@@ -34,6 +35,7 @@ export const updateHealthAlert = async (
       message: data.message,
       alert_date: data.alert_date,
       sent: data.sent ?? undefined,
+      next_dose_date: data.next_dose_date ?? undefined,
     },
   });
 };

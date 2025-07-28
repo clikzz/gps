@@ -202,7 +202,7 @@ export default function ProtectedNavbar({
         <div className="container mx-auto flex items-center justify-between p-4">
           <div className="flex items-center">
             <Link href="/home" className="text-xl font-bold">
-              Mi App
+              petly
             </Link>
           </div>
 

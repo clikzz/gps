@@ -9,8 +9,12 @@ export interface ForumTopic {
     name: string
     tag: number
   }
-  locked: boolean 
-  featured: boolean      
+  locked: boolean
+  featured: boolean
+  lastPost: {
+    createdAt: string;
+    author: { id: string; name: string | null; tag: number };
+  } | null;
 }
 
 export interface Reply {

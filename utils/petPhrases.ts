@@ -35,6 +35,8 @@ const cutePhrases: SpeciesPhrases = {
     "Siempre alegrando tus días.",
     "Con un corazón lleno de amor.",
     "Tu fiel amigo.",
+    "Un ser especial en tu vida.",
+    "Siempre a tu lado.",
   ],
 }
 

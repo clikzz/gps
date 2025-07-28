@@ -19,11 +19,11 @@ export default async function ForumFooter() {
       <div className="text-sm space-y-1">
         <div>
           Número total de temas:
-          <span className="font-medium ml-1">{totalTopics}</span>
+          <span className="font-medium ml-1 text-secondary">{totalTopics}</span>
         </div>
         <div>
           Número total de mensajes:
-          <span className="font-medium ml-1">{totalMessages}</span>
+          <span className="font-medium ml-1 text-secondary">{totalMessages}</span>
         </div>
       </div>
     </footer>

@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Shield, UserX, Clock, Ban } from "lucide-react"
+import { MoreHorizontal, Shield, UserX, Clock, Ban, MessageSquare } from "lucide-react"
 import { useUserProfile } from "@/stores/userProfile"
 import { Role, UserStatus } from ".prisma/client/default"
 import Link from "next/link"
@@ -91,11 +91,12 @@ export function MembersSearch({ users }: MembersSearchProps) {
       default:
         groupMatch = true
     }
-    // filtro por estado solo para moderadores/admins
+
     let statusMatch = true
     if (isModerator && statusFilter !== "all") {
       statusMatch = user.status === statusFilter
     }
+
     return groupMatch && statusMatch
   })
 
@@ -115,7 +116,6 @@ export function MembersSearch({ users }: MembersSearchProps) {
   const totalPages = Math.ceil(sortedUsers.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedUsers = sortedUsers.slice(startIndex, startIndex + itemsPerPage)
-  const [menuOpen, setMenuOpen] = useState(false)
 
   const handleBanUser = async () => {
     if (!selectedUser || !banReason.trim()) {
@@ -258,22 +258,22 @@ export function MembersSearch({ users }: MembersSearchProps) {
     }
   }
 
-
-
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-4 sm:py-8 px-4">
       <Card className="mb-6 bg-card shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl font-bold text-primary">Búsqueda de usuarios</CardTitle>
-          <CardDescription className="text-center text-sm text-muted-foreground">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-center text-xl sm:text-2xl font-bold text-primary">Búsqueda de usuarios</CardTitle>
+          <CardDescription className="text-center text-sm text-muted-foreground px-2">
             Elige el grupo de usuarios y organízalos por nombre o por el número de respuestas en orden ascendente o
             descendente.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div className="space-y-2">
-              <Label htmlFor="user-group">Grupo de usuarios</Label>
+              <Label htmlFor="user-group" className="text-sm font-medium">
+                Grupo de usuarios
+              </Label>
               <Select value={userGroup} onValueChange={setUserGroup}>
                 <SelectTrigger id="user-group" className="bg-background">
                   <SelectValue placeholder="Seleccionar grupo" />
@@ -286,9 +286,12 @@ export function MembersSearch({ users }: MembersSearchProps) {
                 </SelectContent>
               </Select>
             </div>
+
             {isModerator && (
               <div className="space-y-2">
-                <Label htmlFor="status-filter">Estado</Label>
+                <Label htmlFor="status-filter" className="text-sm font-medium">
+                  Estado
+                </Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger id="status-filter" className="bg-background">
                     <SelectValue placeholder="Seleccionar estado" />
@@ -302,8 +305,11 @@ export function MembersSearch({ users }: MembersSearchProps) {
                 </Select>
               </div>
             )}
+
             <div className="space-y-2">
-              <Label htmlFor="order-by">Ordenar por</Label>
+              <Label htmlFor="order-by" className="text-sm font-medium">
+                Ordenar por
+              </Label>
               <Select value={orderBy} onValueChange={setOrderBy}>
                 <SelectTrigger id="order-by" className="bg-background">
                   <SelectValue placeholder="Ordenar por" />
@@ -314,8 +320,11 @@ export function MembersSearch({ users }: MembersSearchProps) {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label htmlFor="order-criteria">Criterio de orden</Label>
+              <Label htmlFor="order-criteria" className="text-sm font-medium">
+                Criterio de orden
+              </Label>
               <Select value={orderCriteria} onValueChange={setOrderCriteria}>
                 <SelectTrigger id="order-criteria" className="bg-background">
                   <SelectValue placeholder="Criterio" />
@@ -330,9 +339,9 @@ export function MembersSearch({ users }: MembersSearchProps) {
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-center gap-2 text-sm mb-6">
+      <div className="flex items-center justify-center mb-6">
         <Pagination>
-          <PaginationContent>
+          <PaginationContent className="flex-wrap gap-1">
             <PaginationItem>
               <PaginationPrevious
                 href="#"
@@ -340,23 +349,39 @@ export function MembersSearch({ users }: MembersSearchProps) {
                   e.preventDefault()
                   setCurrentPage((prev) => Math.max(1, prev - 1))
                 }}
-                className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                className={`${currentPage === 1 ? "pointer-events-none opacity-50" : ""} text-xs sm:text-sm`}
               />
             </PaginationItem>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <PaginationItem key={page}>
-                <PaginationLink
-                  href="#"
-                  isActive={currentPage === page}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    setCurrentPage(page)
-                  }}
-                >
-                  {page}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((page) => {
+                if (totalPages <= 5) return true
+                if (page === 1 || page === totalPages) return true
+                if (Math.abs(page - currentPage) <= 1) return true
+                return false
+              })
+              .map((page, index, array) => {
+                const showEllipsis = index > 0 && page - array[index - 1] > 1
+                return (
+                  <div key={page} className="flex items-center">
+                    {showEllipsis && <span className="px-2 text-muted-foreground">...</span>}
+                    <PaginationItem>
+                      <PaginationLink
+                        href="#"
+                        isActive={currentPage === page}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setCurrentPage(page)
+                        }}
+                        className="text-xs sm:text-sm"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </div>
+                )
+              })}
+
             <PaginationItem>
               <PaginationNext
                 href="#"
@@ -364,7 +389,7 @@ export function MembersSearch({ users }: MembersSearchProps) {
                   e.preventDefault()
                   setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                 }}
-                className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                className={`${currentPage === totalPages ? "pointer-events-none opacity-50" : ""} text-xs sm:text-sm`}
               />
             </PaginationItem>
           </PaginationContent>
@@ -372,145 +397,256 @@ export function MembersSearch({ users }: MembersSearchProps) {
       </div>
 
       <Card className="bg-card shadow-sm">
-        <CardHeader>
-          <CardTitle>Miembros</CardTitle>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl">Miembros</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[200px] text-foreground">Nombre de usuario</TableHead>
-                <TableHead className="text-foreground">Título</TableHead>
-                {isModerator && <TableHead className="text-foreground">Estado</TableHead>}
-                <TableHead className="text-right text-foreground">Mensajes</TableHead>
-                {isModerator && <TableHead className="text-right text-foreground">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedUsers.map((user) => (
-                <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
-                  <TableCell className="font-medium">
-                    <Link href={`/forum/user/${user.id}`} className="hover:underline text-primary">
-                      {user.name}#{user.tag}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-foreground">{getUserTitle(user.menssageCount)}</TableCell>
-                  {isModerator && (
-                    <TableCell>
-                      {user.status === UserStatus.ACTIVE && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-destructive-foreground">
-                          Activo
-                        </span>
-                      )}
-                      {user.status === UserStatus.SUSPENDED && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-destructive-foreground">
-                          Suspendido
-                        </span>
-                      )}
-                      {user.status === UserStatus.BANNED && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">
-                          Baneado
-                        </span>
-                      )}
+        <CardContent className="p-0 sm:p-6">
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[200px] text-foreground">Nombre de usuario</TableHead>
+                  <TableHead className="text-foreground">Título</TableHead>
+                  {isModerator && <TableHead className="text-foreground">Estado</TableHead>}
+                  <TableHead className="text-right text-foreground">Mensajes</TableHead>
+                  {isModerator && <TableHead className="text-right text-foreground">Acciones</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedUsers.map((user) => (
+                  <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
+                    <TableCell className="font-medium">
+                      <Link href={`/forum/user/${user.id}`} className="text-sm font-medium hover:underline">
+                        <span className="text-accent">{user.name}</span>
+                        <span className="text-gray-400"> #{user.tag}</span>
+                      </Link>
                     </TableCell>
-                  )}
-                  <TableCell className="text-right text-foreground">{user.menssageCount}</TableCell>
-                  {isModerator && (
-                    <TableCell className="text-right">
-                      {user.role !== Role.ADMIN && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Abrir menú</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-popover text-popover-foreground">
-                            {user.status === UserStatus.ACTIVE && (
-                              <>
-                                <DropdownMenuItem
-                                  onSelect={() => openSuspendDialog(user)}
-                                  className="hover:bg-accent/50"
-                                >
-                                  <Clock className="h-4 w-4 mr-2" />
-                                  Suspender temporalmente
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onSelect={() => openBanDialog(user)}
-                                  className="hover:bg-destructive/50"
-                                >
-                                  <Ban className="h-4 w-4 mr-2" />
-                                  Banear permanentemente
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {user.status !== UserStatus.ACTIVE && (
-                              <DropdownMenuItem onSelect={() => unbanUser(user)} className="hover:bg-primary/50">
-                                <UserX className="h-4 w-4 mr-2" />
-                                Desbanear
-                              </DropdownMenuItem>
-                            )}
-                            {isAdmin && (
-                              <>
-                                {user.role === Role.USER && (
+                    <TableCell className="hover:underline text-xs font-semibold text-destructive">
+                      {getUserTitle(user.menssageCount)}
+                    </TableCell>
+                    {isModerator && (
+                      <TableCell>
+                        {user.status === UserStatus.ACTIVE && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-destructive-foreground">
+                            Activo
+                          </span>
+                        )}
+                        {user.status === UserStatus.SUSPENDED && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-destructive-foreground">
+                            Suspendido
+                          </span>
+                        )}
+                        {user.status === UserStatus.BANNED && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">
+                            Baneado
+                          </span>
+                        )}
+                      </TableCell>
+                    )}
+                    <TableCell className="text-right text-foreground">{user.menssageCount}</TableCell>
+                    {isModerator && (
+                      <TableCell className="text-right">
+                        {user.role !== Role.ADMIN && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Abrir menú</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-popover text-popover-foreground">
+                              {user.status === UserStatus.ACTIVE && (
+                                <>
                                   <DropdownMenuItem
-                                    onSelect={() => handlePromoteToModerator(user)}
-                                    className="hover:bg-primary/50"
+                                    onSelect={() => openSuspendDialog(user)}
+                                    className="hover:bg-accent/50"
                                   >
-                                    <Shield className="h-4 w-4 mr-2" />
-                                    Promover a moderador
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    Suspender temporalmente
                                   </DropdownMenuItem>
-                                )}
-                                {user.role === Role.MODERATOR && (
                                   <DropdownMenuItem
-                                    onSelect={() => handleRevokeModerator(user)}
+                                    onSelect={() => openBanDialog(user)}
                                     className="hover:bg-destructive/50"
                                   >
-                                    <UserX className="h-4 w-4 mr-2" />
-                                    Revocar moderador
+                                    <Ban className="h-4 w-4 mr-2" />
+                                    Banear permanentemente
                                   </DropdownMenuItem>
-                                )}
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                                </>
+                              )}
+                              {user.status !== UserStatus.ACTIVE && (
+                                <DropdownMenuItem onSelect={() => unbanUser(user)} className="hover:bg-primary/50">
+                                  <UserX className="h-4 w-4 mr-2" />
+                                  Desbanear
+                                </DropdownMenuItem>
+                              )}
+                              {isAdmin && (
+                                <>
+                                  {user.role === Role.USER && (
+                                    <DropdownMenuItem
+                                      onSelect={() => handlePromoteToModerator(user)}
+                                      className="hover:bg-primary/50"
+                                    >
+                                      <Shield className="h-4 w-4 mr-2" />
+                                      Promover a moderador
+                                    </DropdownMenuItem>
+                                  )}
+                                  {user.role === Role.MODERATOR && (
+                                    <DropdownMenuItem
+                                      onSelect={() => handleRevokeModerator(user)}
+                                      className="hover:bg-destructive/50"
+                                    >
+                                      <UserX className="h-4 w-4 mr-2" />
+                                      Revocar moderador
+                                    </DropdownMenuItem>
+                                  )}
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="md:hidden space-y-3 p-4">
+            {paginatedUsers.map((user) => (
+              <Card key={user.id} className="p-4 hover:bg-muted/30 transition-colors">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/forum/user/${user.id}`} className="font-medium hover:underline block">
+                        <span className="text-accent text-base">{user.name}</span>
+                        <span className="text-gray-400 text-sm"> #{user.tag}</span>
+                      </Link>
+                      <p className="text-xs font-semibold text-destructive mt-1">{getUserTitle(user.menssageCount)}</p>
+                    </div>
+
+                    {isModerator && user.role !== Role.ADMIN && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Abrir menú</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-popover text-popover-foreground">
+                          {user.status === UserStatus.ACTIVE && (
+                            <>
+                              <DropdownMenuItem onSelect={() => openSuspendDialog(user)} className="hover:bg-accent/50">
+                                <Clock className="h-4 w-4 mr-2" />
+                                Suspender temporalmente
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => openBanDialog(user)}
+                                className="hover:bg-destructive/50"
+                              >
+                                <Ban className="h-4 w-4 mr-2" />
+                                Banear permanentemente
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {user.status !== UserStatus.ACTIVE && (
+                            <DropdownMenuItem onSelect={() => unbanUser(user)} className="hover:bg-primary/50">
+                              <UserX className="h-4 w-4 mr-2" />
+                              Desbanear
+                            </DropdownMenuItem>
+                          )}
+                          {isAdmin && (
+                            <>
+                              {user.role === Role.USER && (
+                                <DropdownMenuItem
+                                  onSelect={() => handlePromoteToModerator(user)}
+                                  className="hover:bg-primary/50"
+                                >
+                                  <Shield className="h-4 w-4 mr-2" />
+                                  Promover a moderador
+                                </DropdownMenuItem>
+                              )}
+                              {user.role === Role.MODERATOR && (
+                                <DropdownMenuItem
+                                  onSelect={() => handleRevokeModerator(user)}
+                                  className="hover:bg-destructive/50"
+                                >
+                                  <UserX className="h-4 w-4 mr-2" />
+                                  Revocar moderador
+                                </DropdownMenuItem>
+                              )}
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{user.menssageCount}</span>
+                        <span className="text-xs text-muted-foreground">mensajes</span>
+                      </div>
+                    </div>
+
+                    {isModerator && (
+                      <div>
+                        {user.status === UserStatus.ACTIVE && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-accent text-destructive-foreground">
+                            Activo
+                          </span>
+                        )}
+                        {user.status === UserStatus.SUSPENDED && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary text-destructive-foreground">
+                            Suspendido
+                          </span>
+                        )}
+                        {user.status === UserStatus.BANNED && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">
+                            Baneado
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
       <Dialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
-        <DialogContent className="bg-card text-card-foreground">
+        <DialogContent className="bg-card text-card-foreground w-[95vw] max-w-md mx-auto">
           <DialogHeader>
-            <DialogTitle>Banear usuario permanentemente</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg">Banear usuario permanentemente</DialogTitle>
+            <DialogDescription className="text-sm">
               Está a punto de banear permanentemente a <strong>{selectedUser?.name}</strong>. Esta acción impedirá que
               el usuario acceda al foro.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="ban-reason">Motivo del baneo *</Label>
+              <Label htmlFor="ban-reason" className="text-sm font-medium">
+                Motivo del baneo *
+              </Label>
               <Textarea
                 id="ban-reason"
                 placeholder="Explique el motivo del baneo..."
                 value={banReason}
                 onChange={(e) => setBanReason(e.target.value)}
                 rows={4}
-                className="bg-background text-foreground border-input"
+                className="bg-background text-foreground border-input text-sm"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBanDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setBanDialogOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={handleBanUser}>
+            <Button variant="destructive" onClick={handleBanUser} className="w-full sm:w-auto">
               Banear permanentemente
             </Button>
           </DialogFooter>
@@ -518,29 +654,33 @@ export function MembersSearch({ users }: MembersSearchProps) {
       </Dialog>
 
       <Dialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
-        <DialogContent className="bg-card text-card-foreground">
+        <DialogContent className="bg-card text-card-foreground w-[95vw] max-w-md mx-auto">
           <DialogHeader>
-            <DialogTitle>Suspender usuario temporalmente</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg">Suspender usuario temporalmente</DialogTitle>
+            <DialogDescription className="text-sm">
               Está a punto de suspender temporalmente a <strong>{selectedUser?.name}</strong>. El usuario no podrá
               acceder al foro durante el período de suspensión.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="suspend-reason">Motivo de la suspensión</Label>
+              <Label htmlFor="suspend-reason" className="text-sm font-medium">
+                Motivo de la suspensión
+              </Label>
               <Textarea
                 id="suspend-reason"
                 placeholder="Explique el motivo de la suspensión..."
                 value={suspendReason}
                 onChange={(e) => setSuspendReason(e.target.value)}
                 rows={4}
-                className="bg-background text-foreground border-input"
+                className="bg-background text-foreground border-input text-sm"
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="suspend-date">Fecha de fin</Label>
+                <Label htmlFor="suspend-date" className="text-sm font-medium">
+                  Fecha de fin
+                </Label>
                 <input
                   id="suspend-date"
                   type="date"
@@ -550,7 +690,9 @@ export function MembersSearch({ users }: MembersSearchProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="suspend-time">Hora de fin</Label>
+                <Label htmlFor="suspend-time" className="text-sm font-medium">
+                  Hora de fin
+                </Label>
                 <input
                   id="suspend-time"
                   type="time"
@@ -561,11 +703,13 @@ export function MembersSearch({ users }: MembersSearchProps) {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSuspendDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setSuspendDialogOpen(false)} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleSuspendUser}>Suspender temporalmente</Button>
+            <Button onClick={handleSuspendUser} className="w-full sm:w-auto">
+              Suspender temporalmente
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -3,7 +3,8 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { useNewServiceForm } from "@/hooks/useNewServiceForm"
-import { TextField, MultiSelectField, CATEGORY_OPTIONS } from "@/components/services/ServiceFormField"
+import { TextField, MultiSelectField, PhoneField } from "@/components/services/ServiceFormField"
+import { CATEGORY_OPTIONS } from "@/types/service"
 import { Check, MapPin, Loader2 } from "lucide-react"
 
 interface NewServiceFormProps {
@@ -29,8 +30,8 @@ const NewServiceForm: React.FC<NewServiceFormProps> = ({
 
   React.useEffect(() => {
     if (selectedServiceLocation) {
-      serviceForm.form.setFieldValue("latitude", selectedServiceLocation.lat.toString())
-      serviceForm.form.setFieldValue("longitude", selectedServiceLocation.lng.toString())
+      serviceForm.form.setFieldValue("latitude", selectedServiceLocation.lat)
+      serviceForm.form.setFieldValue("longitude", selectedServiceLocation.lng)
     }
   }, [selectedServiceLocation, serviceForm.form])
 
@@ -43,12 +44,12 @@ const NewServiceForm: React.FC<NewServiceFormProps> = ({
           </div>
         </div>
         <div>
-          <h3 className="text-lg font-medium text-gray-800 mb-2">Selecciona la ubicación</h3>
+          <h3 className="text-lg font-medium text-secondary mb-2">Selecciona la ubicación</h3>
           <p className="text-sm text-gray-600 mb-4">
             Haz clic en el mapa principal para marcar donde se encuentra tu servicio
           </p>
           {isSelectingLocation && (
-            <div className="flex items-center justify-center space-x-2 text-sm text-blue-600">
+            <div className="flex items-center justify-center space-x-2 text-sm text-primary">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span>Esperando selección en el mapa...</span>
             </div>
@@ -64,14 +65,11 @@ const NewServiceForm: React.FC<NewServiceFormProps> = ({
       {/* Mostrar ubicación seleccionada - estilo minimalista */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center space-x-2">
-          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-            <MapPin className="w-3 h-3 text-white" />
-          </div>
           <span className="text-sm font-medium text-green-800">Ubicación confirmada</span>
         </div>
         <p className="text-xs text-gray-600">Tu servicio se ubicará aquí</p>
-        <div className="text-xs text-gray-500 font-mono">
-          📍 {selectedServiceLocation.lat.toFixed(6)}, {selectedServiceLocation.lng.toFixed(6)}
+        <div className="text-xs text-muted-foreground font-mono">
+          {selectedServiceLocation.lat.toFixed(6)}, {selectedServiceLocation.lng.toFixed(6)}
         </div>
       </div>
 
@@ -111,11 +109,10 @@ const NewServiceForm: React.FC<NewServiceFormProps> = ({
         {/* Teléfono */}
         <serviceForm.form.Field name="phone">
           {(field) => (
-            <TextField
+            <PhoneField
               field={field}
               label="Teléfono de contacto"
-              placeholder="Ej: +56 9 1234 5678"
-              type="tel"
+              placeholder="9 1234 5678"
               required
             />
           )}

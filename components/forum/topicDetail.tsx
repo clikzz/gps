@@ -1,12 +1,21 @@
 "use client"
-
 import Link from "next/link"
 import { formatDateLabel } from "@/lib/date"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { useUserProfile } from "@/stores/userProfile"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
+import { set } from "date-fns"
+import { Badge } from "@/types/forum" 
 
 interface TopicDetailProps {
   topic: {
@@ -21,11 +30,13 @@ interface TopicDetailProps {
       tag: number
       menssageCount: number
       avatar_url?: string
+      role: string
+      badges?: Badge[]
     }
     locked: boolean
   }
   mainPost: {
-    id: number                
+    id: number
     content: string
     createdAt: string
     author: {
@@ -34,6 +45,8 @@ interface TopicDetailProps {
       tag: number
       menssageCount: number
       avatar_url?: string
+      role: string
+      badges?: Badge[]
     }
   } | null
 }
@@ -51,20 +64,30 @@ const getUserTitle = (messageCount: number): string => {
 export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
   const currentUserId = useUserProfile((s) => s.user?.id)
   const currentUserRole = useUserProfile((s) => s.user?.role)
-
   const isAuthor = currentUserId === topic.author.id
-  const canEdit  = isAuthor || currentUserRole === "MODERATOR" || currentUserRole === "ADMIN"
-  const canDelete= isAuthor || currentUserRole === "ADMIN"
-
+  const canEdit = isAuthor || currentUserRole === "MODERATOR" || currentUserRole === "ADMIN"
+  const canDelete = isAuthor || currentUserRole === "ADMIN"
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(mainPost?.content ?? "")
   const [displayContent, setDisplayContent] = useState(mainPost?.content ?? "")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [authorBadges, setAuthorBadges] = useState<Badge[]>([])
+  const [badges, setBadges] = useState<Badge[]>([]);
   const router = useRouter()
 
   useEffect(() => {
     setDisplayContent(mainPost?.content ?? "")
     setEditContent(mainPost?.content ?? "")
   }, [mainPost])
+
+
+  useEffect(() => {
+    fetch(`/api/forum/users/${topic.author.id}/badges`, { credentials: "include" })
+      .then((res) => res.ok ? res.json() : [])
+      .then((data: Badge[]) => setBadges(data))
+      .catch(console.error);
+  }, [topic.author.id]);
+
 
   const handleSaveContent = async () => {
     if (!mainPost) return
@@ -87,8 +110,13 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
     }
   }
 
-  const handleDeleteTopic = async () => {
-    if (!confirm("¿Eliminar este tema y todas sus respuestas?")) return
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    setDeleteDialogOpen(false)
+
     try {
       const res = await fetch(`/api/forum/topics/${topic.id}`, {
         method: "DELETE",
@@ -102,6 +130,10 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
     } catch (err: any) {
       toast.error(err.message)
     }
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false)
   }
 
   if (!mainPost) {
@@ -120,34 +152,47 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
           <span>#{topic.id}</span>
         </div>
       </div>
-
       <div className="flex">
         <div className="w-48 border-r p-4 text-center space-y-3">
           <div>
             <Link href={`/forum/user/${topic.author.id}`} className="font-medium hover:underline text-sm">
-              {topic.author.name}#{topic.author.tag}
+              <span className="text-accent">{topic.author.name}</span>
+              <span className="text-gray-400"> #{topic.author.tag}</span>
             </Link>
           </div>
-          <div className="text-xs font-semibold text-accent">{getUserTitle(topic.author.menssageCount)}</div>
+          <div className="text-xs font-semibold text-destructive">{getUserTitle(topic.author.menssageCount)}</div>{" "}
           <div className="flex justify-center">
             {topic.author.avatar_url ? (
               <img
                 src={topic.author.avatar_url ?? "/placeholder.svg"}
                 alt={`Avatar de ${topic.author.name}`}
-                className="w-24 h-24 rounded border"
+                className="w-32 h-32 rounded border"
               />
             ) : (
               <img
                 src="/placeholder.svg?height=120&width=120"
                 alt={`Avatar de ${topic.author.name}`}
-                className="w-24 h-24 rounded border"
+                className="w-32 h-32 rounded border"
               />
             )}
           </div>
+            {badges.length > 0 ? (
+              <div className="flex flex-wrap justify-center gap-1">
+                {badges.map((badge) => (
+                  <div className="text-center " key={badge.id}>
+                    <img
+                      src={badge.icon}
+                      alt={badge.label}
+                      className="inline-block w-9 h-9"
+                    />
+                  </div>
+                ))}
+              </div>
+            ): (
+            <div className="mt-2 text-sm opacity-50"></div>
+          )}
           <div className="text-xs">Mensajes: {topic.author.menssageCount.toLocaleString()}</div>
         </div>
-
-
         <div className="flex-1 p-4 min-h-[200px] relative">
           {isEditing ? (
             <div className="space-y-4">
@@ -157,8 +202,12 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
                 className="w-full min-h-[100px] p-3 border rounded-lg resize-none"
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveContent}>Guardar</Button>
-                <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>
+                <Button size="sm" onClick={handleSaveContent}>
+                  Guardar
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
+                  Cancelar
+                </Button>
               </div>
             </div>
           ) : (
@@ -166,18 +215,36 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
               <div className="prose max-w-none mb-8">
                 <p className="whitespace-pre-wrap">{displayContent}</p>
               </div>
-
               {(canEdit || canDelete) && (
                 <div className="absolute bottom-4 right-4 flex gap-2 text-sm">
                   {canEdit && <button onClick={() => setIsEditing(true)}>Editar</button>}
                   {canEdit && canDelete && <span>|</span>}
-                  {canDelete && <button onClick={handleDeleteTopic}>Eliminar</button>}
+                  {canDelete && <button onClick={handleDeleteClick}>Eliminar</button>}
                 </div>
               )}
             </>
           )}
         </div>
       </div>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirmar eliminación del tema</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que quieres eliminar este tema y todas sus respuestas? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelDelete}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Eliminar tema
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import {
   createMarketplaceItem as createItemService,
   listMarketplaceItems as listItemsService,
@@ -5,14 +6,24 @@ import {
   listUserSoldItems as listUserSoldItemsService,
   softDeleteMarketplaceItem as softDeleteService,
   markItemAsSold as markAsSoldService,
+  listMarketplaceCities as listCitiesService,
+  listMarketplacePetCategories as listPetCategoriesService,
+  countUserMarketplaceItems as countUserItemsService,
+  getMarketplaceItemById as getItemByIdService,
+  updateMarketplaceItem as updateItemService,
+  addFavorite,
+  removeFavorite,
+  clearFavorites,
+  listFavorites,
 } from "@/server/services/marketplace.service";
 import {
   createItemSchema,
   listFiltersSchema,
   deleteItemSchema,
   markSoldSchema,
+  updateItemSchema,
 } from "@/server/validations/marketplace.validation";
-import type { MarketplaceItemInput, ListFilters, MarketplaceItem } from "@/types/marketplace";
+import type { MarketplaceItemInput, ListFilters } from "@/types/marketplace";
 
 /**
  * Crear un anuncio.
@@ -38,8 +49,9 @@ export const createMarketplaceItem = async (
       title: item.title,
       description: item.description,
       category: item.category,
+      pet_category: item.pet_category,
       condition: item.condition,
-      price: item.price.toString(),
+      price: Number(item.price),
       photo_urls: item.photo_urls,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -65,6 +77,93 @@ export const createMarketplaceItem = async (
 };
 
 /**
+ * Actualizar un anuncio.
+ */
+export const updateMarketplaceItem = async (
+  itemId: string,
+  userId: string,
+  body: any
+) => {
+  const parseResult = updateItemSchema.safeParse({ id: itemId, ...body })
+  if (!parseResult.success) {
+    return new Response(JSON.stringify({ error: parseResult.error.format() }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    const updated = await updateItemService(
+      BigInt(itemId),
+      userId,
+      parseResult.data
+    );
+
+    const output = {
+      id: updated.id.toString(),
+      title: updated.title,
+      description: updated.description,
+      category: updated.category,
+      pet_category: updated.pet_category,
+      condition: updated.condition,
+      price: updated.price,
+      photo_urls: updated.photo_urls,
+      latitude: updated.latitude,
+      longitude: updated.longitude,
+      city: updated.city,
+      region: updated.region,
+      country: updated.country,
+      status: updated.status,
+      created_at: updated.created_at.toISOString(),
+      updated_at: updated.updated_at.toISOString(),
+    };
+    return new Response(JSON.stringify(output), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
+/**
+ * Obtener un anuncio por ID.
+ */
+export const fetchMarketplaceItemById = async (params: { id?: string }) => {
+  const { id } = params;
+  if (!id) {
+    return NextResponse.json({ error: "Falta el parámetro id" }, { status: 400 });
+  }
+
+  try {
+    const item = await getItemByIdService(BigInt(id));
+    return NextResponse.json({
+      id: item.id.toString(),
+      title: item.title,
+      description: item.description,
+      price: Number(item.price),
+      category: item.category,
+      pet_category: item.pet_category,
+      condition: item.condition,
+      photo_urls: item.photo_urls,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      city: item.city,
+      region: item.region,
+      country: item.country,
+      status: item.status,
+      created_at: item.created_at.toISOString(),
+      updated_at: item.updated_at.toISOString(),
+    }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: err.message === "Anuncio no encontrado." ? 404 : 500 });
+  }
+};
+
+/**
  * Listar anuncios públicos.
  */
 export const fetchPublicMarketplaceItems = async (
@@ -80,20 +179,29 @@ export const fetchPublicMarketplaceItems = async (
 
   const filters = parseResult.data as ListFilters;
   const list = await listItemsService(filters);
-  const output = list.map((item: MarketplaceItem) => ({
+  const output = list.map(item => ({
     id: item.id.toString(),
     user_id: item.user_id,
+    seller: {
+      name: item.seller.name,
+      email: item.seller.email,
+      avatar_url: item.seller.avatar_url,
+      instagram: item.seller.instagram ?? "",
+      phone: item.seller.phone ?? "",
+      created_at: item.seller.created_at.toISOString(),
+    },
     title: item.title,
-    description: item.description,
+    description: item.description ?? undefined,
     category: item.category,
+    pet_category: item.pet_category,
     condition: item.condition,
-    price: item.price.toString(),
+    price: Number(item.price),
     photo_urls: item.photo_urls,
     latitude: item.latitude,
     longitude: item.longitude,
-    city: item.city,
-    region: item.region,
-    country: item.country,
+    city: item.city ?? undefined,
+    region: item.region ?? undefined,
+    country: item.country ?? undefined,
     status: item.status,
     created_at: item.created_at.toISOString(),
     updated_at: item.updated_at.toISOString(),
@@ -115,7 +223,18 @@ export const fetchUserMarketplaceItems = async (
   const output = list.map(item => ({
     id: item.id.toString(),
     title: item.title,
+    description: item.description ?? undefined,
     status: item.status,
+    price: Number(item.price),
+    pet_category: item.pet_category,
+    category: item.category,
+    condition: item.condition,
+    photo_urls: item.photo_urls,
+    latitude: item.latitude,
+    longitude: item.longitude,
+    city: item.city ?? undefined,
+    region: item.region ?? undefined,
+    country: item.country ?? undefined,
     created_at: item.created_at.toISOString(),
   }));
 
@@ -135,7 +254,22 @@ export const fetchUserSoldMarketplaceItems = async (
   const output = list.map(item => ({
     id: item.id.toString(),
     title: item.title,
-    sold_at: item.updated_at.toISOString(),
+    status: item.status,
+    price: Number(item.price),
+    photo_urls: item.photo_urls,
+    category: item.category,
+    condition: item.condition,
+    description: item.description ?? undefined,
+    pet_category: item.pet_category,
+    latitude: item.latitude,
+    longitude: item.longitude,
+    city: item.city ?? undefined,
+    region: item.region ?? undefined,
+    country: item.country ?? undefined,
+    sold_price: Number(item.sales?.price),
+    sold_at: item.sales?.sold_at.toISOString(),
+    notes: item.sales?.notes ?? undefined,
+    created_at: item.created_at.toISOString(),
   }));
 
   return new Response(JSON.stringify(output), {
@@ -177,7 +311,7 @@ export const deleteMarketplaceItem = async (
  */
 export const markMarketplaceItemAsSold = async (
   userId: string,
-  params: { id: string }
+  params: { id: string; sold_price: string; sold_at: string; notes?: string }
 ) => {
   const parseResult = markSoldSchema.safeParse(params);
   if (!parseResult.success) {
@@ -187,18 +321,117 @@ export const markMarketplaceItemAsSold = async (
     });
   }
 
-  const itemId = BigInt(params.id);
+  const { id, sold_price, sold_at, notes } = parseResult.data;
+
   try {
-    await markAsSoldService(itemId, userId);
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const sale = await markAsSoldService(
+      BigInt(id),
+      userId,
+      sold_price,
+      new Date(sold_at),
+      notes,
+    );
+    return NextResponse.json({
+      success: true,
+      sale: {
+        price: Number(sale.price),
+        sold_at: sale.sold_at.toISOString(),
+        notes: sale.notes,
+      },
     });
   } catch (err: any) {
-    const msg = err.message || "No autorizado.";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 403,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ error: err.message }, { status: 403 });
   }
 };
+
+/**
+ * Listar ciudades existentes en el marketplace.
+ */
+export const fetchMarketplaceCities = async () => {
+  try {
+    const pairs = await listCitiesService();
+    const locations: Record<string, string[]> = {};
+    for (const { country, city } of pairs) {
+      if (!locations[country]) locations[country] = [];
+      locations[country]!.push(city);
+    }
+    return NextResponse.json({ locations }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
+  }
+};
+
+/**
+ * Listar tipos de mascotas disponibles en el marketplace.
+ */
+export const fetchMarketplacePetCategories = async () => {
+  try {
+    const categories = await listPetCategoriesService();
+    return NextResponse.json({ categories }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
+  }
+};
+
+/**
+ * Listar cantidad de articulos ha publicado un usuario, cuantos tiene 
+ * activos y cuantos vendidos.
+ */
+export const fetchUserMarketplaceStats = async (userId: string) => {
+  try {
+    const stats = await countUserItemsService(userId);
+    return NextResponse.json(stats, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || "Error interno" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function fetchFavorites(userId: string) {
+  const favs = await listFavorites(userId);
+  const output = favs.map(f => ({
+    ...f.item,
+    id: f.item.id.toString(),
+    price: f.item.price,
+    seller: {
+      name: f.item.seller.name,
+      email: f.item.seller.email,
+      avatar_url: f.item.seller.avatar_url,
+      instagram: f.item.seller.instagram ?? "",
+      phone: f.item.seller.phone ?? "",
+      created_at: f.item.seller.created_at.toISOString(),
+    },
+    created_at: f.item.created_at.toISOString(),
+    updated_at: f.item.updated_at.toISOString(),
+  }));
+  return NextResponse.json(output);
+}
+
+export async function createFavorite(userId: string, params: { itemId?: string }) {
+  if (!params.itemId) {
+    return NextResponse.json({ error: "Falta itemId" }, { status: 400 });
+  }
+  await addFavorite(userId, BigInt(params.itemId));
+  return NextResponse.json({ success: true });
+}
+
+export async function deleteFavorite(userId: string, params: { itemId?: string }) {
+  if (!params.itemId) {
+    return NextResponse.json({ error: "Falta itemId" }, { status: 400 });
+  }
+  await removeFavorite(userId, BigInt(params.itemId));
+  return NextResponse.json({ success: true });
+}
+
+export async function deleteAllFavorites(userId: string) {
+  await clearFavorites(userId);
+  return NextResponse.json({ success: true });
+}

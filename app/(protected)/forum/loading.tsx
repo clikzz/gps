@@ -7,7 +7,7 @@ export default function Loading() {
   return (
     <LoadingScreen
       title="Cargando foro"
-      subtext="Obteniendo categorías y subforos"
+      subtext="Obteniendo categorías, subforos y miembros del foro..."
       icon={PawPrint}
     />
   )

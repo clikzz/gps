@@ -6,6 +6,7 @@ import { fetcher } from "@/lib/utils"
 import { notFound } from "next/navigation"
 import { ForumNavigation } from "@/components/forum/forumNavigation"
 import { TopicHeader } from "@/components/forum/topicHeader"
+import { ForumRules } from "@/components/forum/forumRules"
 
 export interface Post {
   id: number
@@ -46,14 +47,13 @@ interface Topic {
 
 async function getTopic(topicId: number): Promise<Topic | null> {
   try {
-    const topics = await fetcher<Topic[]>("/api/forum/topics");
-    return topics.find((t) => parseInt(String(t.id)) === topicId) || null;
+    const topics = await fetcher<Topic[]>("/api/forum/topics")
+    return topics.find((t) => parseInt(String(t.id)) === topicId) || null
   } catch (error) {
-    console.error("Error fetching topic:", error);
-    return null;
+    console.error("Error fetching topic:", error)
+    return null
   }
 }
-
 
 async function getPosts(topicId: number): Promise<Post[]> {
   try {
@@ -66,17 +66,46 @@ async function getPosts(topicId: number): Promise<Post[]> {
 export default async function TopicPage({
   params,
 }: {
-  params: Promise<{ slug: string; id: string }>;
+  params: Promise<{ slug: string; id: string }>
 }) {
-  const { slug, id } = await params;
-  const topicId = parseInt(id, 10);
-  if (isNaN(topicId)) notFound();
+  const { slug, id } = await params
 
-  const topic = await getTopic(topicId);
-  if (!topic) notFound();
-  const posts = await getPosts(topicId);
+  if (id === "rules") {
+    return (
+      <div className="h-full w-full">
+        <ForumNavigation />
+        <main className="h-full w-full px-4 py-6 space-y-6 max-w-6xl mx-auto">
+          <div className="text-sm breadcrumbs">
+            <Link href="/forum" className="hover:underline">
+              Inicio
+            </Link>
+            {" > "}
+            <Link href={`/forum/subforum/${slug}`} className="hover:underline">
+              Subforo
+            </Link>
+            {" > "}
+            <span className="truncate">Reglas del Foro - ¡LÉEME PRIMERO!</span>
+          </div>
+          <div className="flex items-center space-x-2 mb-4">
+            <h1 className="text-2xl font-bold">Reglas del Foro - ¡LÉEME PRIMERO!</h1>
+          </div>
+          <ForumRules />
+          <div className="p-4 text-center rounded bg-muted/50">
+            Las reglas del foro no permiten respuestas. Si tienes dudas, contacta a los moderadores.
+          </div>
+        </main>
+      </div>
+    )
+  }
 
-  const [mainPost, ...replies] = posts;
+  const topicId = parseInt(id, 10)
+  if (isNaN(topicId)) notFound()
+
+  const topic = await getTopic(topicId)
+  if (!topic) notFound()
+
+  const posts = await getPosts(topicId)
+  const [mainPost, ...replies] = posts
 
   return (
     <div className="h-full w-full">
@@ -93,32 +122,31 @@ export default async function TopicPage({
           {" > "}
           <span className="truncate">{topic.title}</span>
         </div>
-
         <TopicHeader
           topic={{ id: topic.id, title: topic.title, isLocked: topic.locked }}
         />
-
-        {mainPost && <TopicDetail
-          topic={{
-            id: topic.id,
-            title: topic.title,
-            createdAt: topic.createdAt,
-            locked: topic.locked,
-            author: {
-              ...topic.author,
-              avatar_url: topic.author.avatar_url ?? ""  
-            },
-            subforumId: topic.subforumId,
-            subforumSlug: slug,
-          }}
-          mainPost={mainPost}
-        />}
+        {mainPost && (
+          <TopicDetail
+            topic={{
+              id: topic.id,
+              title: topic.title,
+              createdAt: topic.createdAt,
+              locked: topic.locked,
+              author: {
+                ...topic.author,
+                avatar_url: topic.author.avatar_url ?? "",
+              },
+              subforumId: topic.subforumId,
+              subforumSlug: slug,
+            }}
+            mainPost={mainPost}
+          />
+        )}
         <ReplyList replies={replies} />
-
         {topic.locked ? (
           <div className="p-4 text-center rounded">
             Este tema está cerrado. No puedes añadir respuestas.
-          </div>
+            </div>
         ) : (
           <ReplyForm topicId={topicId} />
         )}

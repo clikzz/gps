@@ -31,7 +31,10 @@ export const listTopics = async (
       Subforums: 
       { select: { name: true, category: true }}
     },
-    orderBy: { updated_at: "desc" },
+    orderBy: [
+      { featured: "desc" },     
+      { updated_at: "desc" }    
+    ],
   });
 
   return topics.map(t => ({
@@ -95,6 +98,9 @@ export const createTopic = async (
 
     if (updatedUser.menssageCount === 10) {
       await assignBadge(userId, "MSG_10");
+    }
+    if (updatedUser.menssageCount === 30) {
+      await assignBadge(userId, "MSG_30");
     }
 
     return topic;
@@ -353,7 +359,6 @@ export async function listUsers(): Promise<
   });
 }
 
-//HU2.5 
 export async function updateTopicLock(
   currentUserId: string,
   topicId: number,
@@ -367,5 +372,20 @@ export async function updateTopicLock(
   return prisma.topics.update({
     where: { id: topicId },
     data: { locked: locked, updated_at: new Date() },
+  });
+}
+
+export async function updateTopicFeatured(
+  currentUserId: string,
+  topicId: number,
+  featured: boolean
+) {
+  const me = await prisma.users.findUnique({ where: { id: currentUserId } });
+  if (!me || (me.role !== "MODERATOR" && me.role !== "ADMIN")) {
+    throw new Error("FORBIDDEN_MODERATOR");
+  }
+  return prisma.topics.update({
+    where: { id: topicId },
+    data: { featured, updated_at: new Date() },
   });
 }

@@ -20,51 +20,99 @@ export interface ForumCategoryProps {
 export function ForumCategory({ category }: ForumCategoryProps) {
   return (
     <div className="space-y-1">
-      <div className="border rounded-t-lg p-4 font-medium text-lg bg-muted/50">{category.name}</div>
-
+      <div className="border rounded-t-lg p-3 sm:p-4 font-medium text-base sm:text-lg bg-muted/50">
+      {category.name}
+      </div>
       <div className="border rounded-b-lg overflow-hidden">
         {category.subforums.map((subforum, index) => (
-          <div
-            key={`${category.id}-${subforum.slug}`}
+          <div 
+            key={`${category.id}-${subforum.slug}`} 
             className={`${index !== 0 ? "border-t" : ""}`}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-12 p-4 gap-4 hover:bg-muted/30 transition-colors">
-              <div className="lg:col-span-7 xl:col-span-8">
-                <Link href={`/forum/subforum/${subforum.slug}`} className="font-medium hover:underline text-base">
-                  {subforum.name}
-                </Link>
-                {subforum.description && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{subforum.description}</p>
-                )}
-              </div>
-
-              <div className="flex lg:block lg:col-span-2 xl:col-span-1 gap-4 lg:gap-0">
-                <div className="text-center">
-                  <div className="text-sm text-muted-foreground">Temas</div>
-                  <div className="font-medium">{subforum.topicCount}</div>
-                </div>
-              </div>
-
-              <div className="flex lg:block lg:col-span-2 xl:col-span-1 gap-4 lg:gap-0">
-                <div className="text-center">
-                  <div className="text-sm text-muted-foreground">Mensajes</div>
-                  <div className="font-medium">{subforum.messageCount}</div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-1 xl:col-span-2 text-sm lg:text-right">
+            >
+            <div className="p-3 sm:p-4 hover:bg-muted/30 transition-colors">
+              <div className="block lg:hidden space-y-3">
                 <div>
-                  {subforum.lastPost ? (
-                    <>
-                      <div className="text-muted-foreground">
-                        {formatDateLabel(subforum.lastPost.date)}
+                  <Link
+                    href={`/forum/subforum/${subforum.slug}`}
+                    className="font-medium hover:underline text-base block"
+                  >
+                    {subforum.name}
+                  </Link>
+                  {subforum.description && (
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{subforum.description}</p>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-6">
+                    <div className="text-center">
+                      <div className="text-xs text-muted-foreground">Temas</div>
+                      <div className="font-medium text-sm">
+                        {subforum.topicCount}
                         </div>
-                      <div>
-                        por {subforum.lastPost.author.name}#{subforum.lastPost.author.tag}
-                        <Link href={`/forum/user/${subforum.lastPost.author.id}`} className="hover:underline">
-                        </Link>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-muted-foreground">Mensajes</div>
+                      <div className="font-medium text-sm">
+                        {subforum.messageCount}
+                        </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right text-xs">
+                    {subforum.lastPost ? (
+                      <div className="space-y-1">
+                        <div className="text-muted-foreground">{formatDateLabel(subforum.lastPost.date)}</div>
+                        <div className="max-w-[120px] truncate">
+                          <span className="text-accent font-medium">{subforum.lastPost.author.name}</span>
+                          <span className="text-gray-400 font-medium ml-1">#{subforum.lastPost.author.tag}</span>
+                        </div>
                       </div>
-                    </>
+                    ) : (
+                      <span className="text-muted-foreground">Sin actividad</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden lg:grid lg:grid-cols-12 gap-4 items-center">
+                <div className="col-span-7 xl:col-span-8">
+                  <Link href={`/forum/subforum/${subforum.slug}`} className="font-medium hover:underline text-base">
+                    {subforum.name}
+                  </Link>
+                  {subforum.description && (
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{subforum.description}</p>
+                  )}
+                </div>
+
+                <div className="col-span-2 xl:col-span-1">
+                  <div className="text-center">
+                    <div className="text-sm text-muted-foreground">Temas</div>
+                    <div className="font-medium">{subforum.topicCount}</div>
+                  </div>
+                </div>
+
+                <div className="col-span-2 xl:col-span-1">
+                  <div className="text-center">
+                    <div className="text-sm text-muted-foreground">Mensajes</div>
+                    <div className="font-medium">{subforum.messageCount}</div>
+                  </div>
+                </div>
+
+                <div className="col-span-1 xl:col-span-2 text-sm text-right">
+                  {subforum.lastPost ? (
+                    <div className="space-y-1">
+                      <div className="text-muted-foreground">{formatDateLabel(subforum.lastPost.date)}</div>
+                      <div>
+                        <span className="text-muted-foreground">
+                          por
+                          <Link href={`/forum/user/${subforum.lastPost.author.id}`} className="hover:underline">
+                            <span className="text-accent font-medium"> {subforum.lastPost.author.name}</span>
+                            <span className="text-gray-400 font-medium ml-1">#{subforum.lastPost.author.tag}</span>
+                          </Link>
+                        </span>
+                      </div>
+                    </div>
                   ) : (
                     <span className="text-muted-foreground">Sin actividad</span>
                   )}

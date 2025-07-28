@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Lock, LockOpen } from "lucide-react";
+import { Lock, LockOpen, Pin, PinOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,6 @@ interface TopicHeaderProps {
 
 export function TopicHeader({ topic }: TopicHeaderProps) {
   const [isLocked, setIsLocked] = useState(topic.isLocked);
-  console.log("Initial locked state:", isLocked);
   const currentUserRole = useUserProfile((s) => s.user?.role)
   const canModerate = currentUserRole === "MODERATOR" || currentUserRole === "ADMIN";
   const router = useRouter();
@@ -57,27 +56,27 @@ export function TopicHeader({ topic }: TopicHeaderProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center text-sm text-muted-foreground">
-      </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {isLocked &&
-            <Lock className="h-5 w-5 text-muted-foreground" />}
+          {isLocked && <Lock className="h-5 w-5 text-muted-foreground" />}
         </div>
+
         {canModerate && (
-          <Button size="sm" variant="outline" onClick={toggleLock}>
-            {isLocked ? (
-              <>
-                <LockOpen className="h-4 w-4 mr-1" />
-                Abrir tema
-              </>
-            ) : (
-              <>
-                <Lock className="h-4 w-4 mr-1" />
-                Cerrar tema
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={toggleLock}>
+              {isLocked ? (
+                <>
+                  <LockOpen className="h-4 w-4 mr-1" />
+                  Abrir tema
+                </>
+              ) : (
+                <>
+                  <Lock className="h-4 w-4 mr-1" />
+                  Cerrar tema
+                </>
+              )}
+            </Button>
+          </div>
         )}
       </div>
     </div>

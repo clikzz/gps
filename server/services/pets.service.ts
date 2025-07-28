@@ -12,6 +12,38 @@ export const getPetById = async (id: number) => {
   });
 };
 
+async function assignPetBadges(userId: string) {
+  const pets = await prisma.pets.findMany({
+    where: { user_id: userId, deleted: false },
+    select: { species: true },
+  });
+
+  const speciesSet = new Set(pets.map((p) => p.species.toLowerCase()));
+
+  const toEarn: Array<"DOG_LOVER" | "CAT_LOVER" | "PET_LOVER2"> = [];
+  if (speciesSet.has("dog")) toEarn.push("DOG_LOVER");
+  if (speciesSet.has("cat")) toEarn.push("CAT_LOVER");
+  if (speciesSet.size > 1) toEarn.push("PET_LOVER2");
+
+  if (toEarn.length === 0) return;
+
+  const badges = await prisma.badge.findMany({
+    where: { key: { in: toEarn } },
+    select: { id: true, key: true },
+  });
+  const badgeMap = Object.fromEntries(badges.map((b) => [b.key, b.id]));
+
+  await Promise.all(
+    toEarn.map((key) =>
+      prisma.userBadge.upsert({
+        where: { userId_badgeId: { userId, badgeId: badgeMap[key] } },
+        create: { userId, badgeId: badgeMap[key] },
+        update: {}, 
+      })
+    )
+  );
+}
+
 export const createPet = async ({
   user,
   pet,
@@ -50,7 +82,7 @@ export const createPet = async ({
     );
   }
 
-  return await prisma.pets.create({
+  const newPet = await prisma.pets.create({
     data: {
       user_id: user.id,
       name: pet.name,
@@ -63,7 +95,11 @@ export const createPet = async ({
       ...(pet.photo_url && { photo_url: pet.photo_url }),
     },
   });
+  assignPetBadges(user.id).catch(console.error);
+  
+  return newPet;
 };
+
 
 export const putPetById = async ({
   id,

@@ -2,10 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Settings, User, X } from "lucide-react"
-import { Badge } from "./Badge"
+import { Settings, User, X, Phone, Instagram } from "lucide-react" 
 import { useRouter } from "next/navigation"
-import { useUserProfile } from "@/stores/userProfile"
+import { useUserProfile, useSelectedBadges } from "@/stores/userProfile"
 
 interface ProfilePreviewProps {
   onClose: () => void
@@ -14,11 +13,11 @@ interface ProfilePreviewProps {
 export function ProfilePreview({ onClose }: ProfilePreviewProps) {
   const router = useRouter()
   const { user } = useUserProfile()
-  const menssageCount = useUserProfile(state => state.user?.menssageCount ?? 0)
+  const selectedBadges = useSelectedBadges()
 
   if (!user) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-md mx-auto">
         <CardContent className="p-6 text-center">
           <div className="text-xl font-bold mb-4">Error al cargar perfil</div>
           <Button onClick={onClose} variant="outline">
@@ -32,70 +31,94 @@ export function ProfilePreview({ onClose }: ProfilePreviewProps) {
   const displayName = user.name || (user.email ? user.email.split("@")[0] : "Usuario")
   const tag = user.tag ? `#${user.tag}` : ""
 
-  // insignias de ejemplo
-  const exampleBadges = [
-    { id: "1", name: "Trofeo", icon: "🏆", description: "Usuario destacado" },
-    { id: "2", name: "Vip", icon: "⭐", description: "Miembro VIP" },
-    { id: "3", name: "Objetivo", icon: "🎯", description: "Buen participante" },
-    { id: "4", name: "Pet", icon: "🐕", description: "Pet Lover" },
-    { id: "5", name: "Vaquero", icon: "🤠", description: "yolorejiju" },
-    { id: "6", name: "Angry", icon: "🤬", description: "Professional Hater" },
-  ]
-
   const handleSettings = () => {
     onClose()
     router.push("/profile")
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <div className="flex items-center gap-2">
-          <User className="w-5 h-5" />
-          <h2 className="text-xl font-bold">
-            {displayName} {tag && <span className="text-muted-foreground">{tag}</span>}
-          </h2>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={handleSettings}>
-            <Settings className="w-5 h-5" />
+    <Card className="w-full max-w-md mx-auto overflow-hidden">
+      <CardHeader className="relative flex flex-col items-center justify-center p-6 pb-4 bg-muted/20">
+        <div className="absolute top-3 right-3 flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSettings}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <Settings className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="w-5 h-5" />
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground hover:text-destructive">
+            <X className="w-4 h-4" />
           </Button>
         </div>
+        <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/30 shadow-md mb-3">
+          {user.avatar_url ? (
+            <img src={user.avatar_url || "/placeholder.svg"} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <User className="w-10 h-10 text-muted-foreground" />
+            </div>
+          )}
+        </div>
+        <h2 className="text-xl font-bold text-center truncate max-w-[calc(100%-2rem)]">
+          <span className="truncate">{displayName}</span>
+          {tag && <span className="text-muted-foreground text-sm ml-1">{tag}</span>}
+        </h2>
+        {user.email && (
+          <p className="text-sm text-muted-foreground truncate max-w-[calc(100%-2rem)]" title={user.email}>
+            {user.email}
+          </p>
+        )}
       </CardHeader>
+      <CardContent className="space-y-5 px-6 py-6">
 
-      <CardContent className="space-y-6">
-        <div className="flex gap-6 items-center">          <div className="flex-shrink-0">
-            <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center overflow-hidden bg-muted">
-              <img
-                src={user.avatar_url || "/placeholder.svg"}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
+        {(user.phone || user.instagram) && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Social</h3>
+            <div className="flex flex-col gap-2">
+              {user.phone && (
+                <div className="flex items-center gap-2 text-sm text-foreground">
+                  <Phone className="w-4 h-4 text-muted-foreground" />
+                  <span>{user.phone}</span>
+                </div>
+              )}
+              {user.instagram && (
+                <div className="flex items-center gap-2 text-sm text-foreground">
+                  <Instagram className="w-4 h-4 text-muted-foreground" />
+                  <span>{user.instagram}</span>
+                </div>
+              )}
             </div>
           </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Insignias</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {exampleBadges.map((badge) => (
-                <Badge key={badge.id} name={badge.name} icon={badge.icon} description={badge.description} />
+        )}
+
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Insignias</h3>
+          {selectedBadges.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-2">
+              {selectedBadges.map((badge) => (
+                <div key={badge.id} className="group">
+                  <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-border">
+                    <img
+                      src={badge.icon || "/placeholder.svg"}
+                      alt={badge.label}
+                      title={badge.label}
+                      className="w-10 h-10 object-contain"
+                    />
+                  </div>
+                </div>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Insignias de ejemplo</p>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t space-y-2">
-          <div className="text-sm">
-            <span className="font-medium">Email:</span>
-            <span className="text-muted-foreground ml-2">{user.email}</span>
-          </div>
-          <div className="text-sm">
-            <span className="font-medium">Mensajes:</span>
-            <span className="text-muted-foreground ml-2">{user.menssageCount.toLocaleString()}</span>
-          </div>
+          ) : (
+            <div className="text-center py-4 border border-dashed border-muted-foreground/30 rounded-lg bg-muted/10">
+              <div className="w-12 h-12 mx-auto flex items-center justify-center mb-2">
+                <User className="w-6 h-6 text-muted-foreground/50" />
+              </div>
+              <p className="text-xs text-muted-foreground mb-1">Sin insignias seleccionadas</p>
+              <p className="text-xs text-muted-foreground/70">Ve a configuración para añadir algunas</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

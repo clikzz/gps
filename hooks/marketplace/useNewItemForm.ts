@@ -81,12 +81,12 @@ export function useNewItemForm(
         throw new Error(err.error || "Error al publicar")
       }
 
-      toast.success("Artículo publicado")
+      toast.success("Artículo publicado correctamente.")
       form.reset()
       imageUpload.resetImage()
       onSuccess?.()
     } catch (e: any) {
-      toast.error(e.message || "Error inesperado")
+      toast.error(e.message || "Error inesperado.")
     }
   })
 

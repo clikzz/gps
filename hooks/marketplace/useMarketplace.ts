@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import type { Item } from "@/types/marketplace";
 
 export function useMarketplace() {
@@ -13,17 +13,33 @@ export function useMarketplace() {
   const [petCats, setPetCats] = useState<string[]>([]);
   const [artCats, setArtCats] = useState<string[]>([]);
   const [condition, setCondition] = useState<string>("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [sortBy, setSortBy] = useState<"recent" | "price-low" | "price-high" | "name">("recent");
 
-  useEffect(() => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     setError(null);
-    fetch("/api/marketplace?mode=public")
-      .then((r) => r.json())
-      .then((data: Item[]) => setItems(data))
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+    try {
+      const res = await fetch("/api/marketplace?mode=public");
+      const data = (await res.json()) as Item[];
+      setItems(data);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
+
+  const updateLocalItem = useCallback((updated: Partial<Item> & { id: string }) => {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === updated.id ? { ...it, ...updated } : it
+      )
+    );
   }, []);
 
   const filteredAndSorted = useMemo(() => {
@@ -58,7 +74,7 @@ export function useMarketplace() {
     setCity("all");
     setPetCats([]);
     setArtCats([]);
-    setPriceRange([0, 100000]);
+    setPriceRange([0, 10000000]);
     setCondition("");
     setSortBy("recent");
   };
@@ -67,6 +83,8 @@ export function useMarketplace() {
     items: filteredAndSorted,
     loading,
     error,
+    fetchItems,
+    updateLocalItem,
     filters: { search, city, petCats, artCats, priceRange, condition, sortBy },
     setters: { setSearch, setCity, setPetCats, setArtCats, setPriceRange, setCondition, setSortBy },
     clearFilters,

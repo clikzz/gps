@@ -9,7 +9,10 @@ import {
   reportPetFound,
   fetchOtherMissingPets,
   reportFound,
-  fetchFoundReports
+  fetchFoundReports,
+  editMissingPet,
+  removeMissingPet,
+  removeFoundReport
 } from "@/server/controllers/find.controller";
 
 /**
@@ -89,4 +92,42 @@ export async function PUT(req: NextRequest) {
   }
 
   return reportPetFound(user.id, petId);
+}
+
+/* PATCH /api/find?id=<reporteId> → edita un reporte de mascota desaparecida
+*/
+export async function PATCH(req: NextRequest) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+
+  const idRaw = new URL(req.url).searchParams.get("id");
+  if (!idRaw) return NextResponse.json({ error: "id requerido" }, { status: 400 });
+
+  const reportId = Number(idRaw);
+  if (isNaN(reportId))
+    return NextResponse.json({ error: "id inválido" }, { status: 400 });
+
+  const body = await req.json().catch(() => ({}));
+  return editMissingPet(user.id, reportId, body);
+}
+
+/* DELETE /api/find?id=<reporteId> → elimina un reporte de mascota desaparecida
+*/
+export async function DELETE(req: NextRequest) {
+  const user = await authenticateUser(req);
+  if (user instanceof Response) return user;
+
+  const idRaw = new URL(req.url).searchParams.get("id");
+  const mode = new URL(req.url).searchParams.get("mode");
+
+  if (!idRaw) return NextResponse.json({ error: "id requerido" }, { status: 400 });
+
+  const reportId = Number(idRaw);
+  if (isNaN(reportId)) return NextResponse.json({ error: "id inválido" }, { status: 400 });
+
+  if (mode === "found") {
+    return removeFoundReport(user.id, reportId);
+  }
+
+  return removeMissingPet(user.id, reportId);
 }

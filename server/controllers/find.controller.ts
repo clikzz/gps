@@ -7,18 +7,22 @@ import {
   listOtherMissingPets,
   markPetAsFound,
   createFoundReport,
-  listFoundReportsForUser
+  listFoundReportsForUser,
+  updateMissingPet,
+  deleteMissingPet,
+  rejectFoundReport
 } from "@/server/services/find.service";
 import { 
   reportMissingPetSchema,
-  reportFoundSchema
+  reportFoundSchema,
+  editMissingPetSchema
 } from "@/server/validations/find.validation";
 
 export const reportMissingPet = async (reporterId: string, body: any) => {
   const parseResult = reportMissingPetSchema.safeParse(body);
   if (!parseResult.success) {
-    const formatted = parseResult.error.format();
-    return new Response(JSON.stringify({ error: formatted }), {
+    const firstMessage = parseResult.error.errors[0]?.message ?? "Datos inválidos";
+    return new Response(JSON.stringify({ error: firstMessage }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
@@ -61,6 +65,59 @@ export const reportMissingPet = async (reporterId: string, body: any) => {
   }
 };
 
+export const editMissingPet = async (
+  reporterId: string,
+  reportId: number,
+  body: any
+) => {
+  const parse = editMissingPetSchema.safeParse(body)
+  if (!parse.success) {
+    return new Response(
+      JSON.stringify({ error: parse.error.errors[0]?.message }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    )
+  }
+
+  try {
+    const rpt = await updateMissingPet(reportId, reporterId, parse.data)
+    const output = {
+      ...rpt,
+      id: rpt.id.toString(),
+      pet_id: rpt.pet_id.toString(),
+      reporter_id: rpt.reporter_id.toString(),
+    };
+    return new Response(JSON.stringify({ ok: true, report: output }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })
+  } catch (e: any) {
+    const msg = e.message.includes("No autorizado") ? 403 : 500
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: msg,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+}
+
+export const removeMissingPet = async (
+  reporterId: string,
+  reportId: number
+) => {
+  try {
+    await deleteMissingPet(reportId, reporterId)
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    })
+  } catch (e: any) {
+    const msg = e.message.includes("No autorizado") ? 403 : 500
+    return new Response(JSON.stringify({ error: e.message }), {
+      status: msg,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+}
+
 export const reportPetFound = async (
   userId: string,
   petId: number
@@ -101,10 +158,14 @@ export const fetchAllMissingPets = async () => {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url ?? undefined,
+      species: item.Pets.species || "Desconocido",
     },
     reporter: {
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
+      phone: item.users.phone || "No disponible",
+      instagram: item.users.instagram || "No disponible",
+      email: item.users.email || "No disponible",
     },
   }));
 
@@ -116,8 +177,6 @@ export const fetchAllMissingPets = async () => {
 
 export const fetchRecentMissingPets = async () => {
   const list = await listRecentMissingPets();
-
-  console.log(list);
 
   const output = list.map((item) => ({
     id: item.id.toString(),
@@ -139,10 +198,14 @@ export const fetchRecentMissingPets = async () => {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url,
+      species: item.Pets.species || "Desconocido",
     },
     reporter: {
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
+      phone: item.users.phone || "No disponible",
+      instagram: item.users.instagram || "No disponible",
+      email: item.users.email || "No disponible",
     },
   }));
 
@@ -162,6 +225,7 @@ export const fetchMyMissingPets = async (userId: string) => {
     description: item.description,
     latitude: item.latitude,
     longitude: item.longitude,
+    photo_urls: item.photo_urls,
     full_address: item.full_address,
     address: item.address,
     street: item.street,
@@ -173,10 +237,14 @@ export const fetchMyMissingPets = async (userId: string) => {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url,
+      species: item.Pets.species || "Desconocido",
     },
     reporter: {
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
+      phone: item.users.phone || "No disponible",
+      instagram: item.users.instagram || "No disponible",
+      email: item.users.email || "No disponible",
     },
   }));
   return new Response(JSON.stringify(output), {
@@ -193,6 +261,7 @@ export const fetchOtherMissingPets = async (userId: string) => {
     pet_id: item.pet_id.toString(),
     reporter_id: item.reporter_id.toString(),
     description: item.description,
+    photo_urls: item.photo_urls,
     latitude: item.latitude,
     longitude: item.longitude,
     full_address: item.full_address,
@@ -206,10 +275,14 @@ export const fetchOtherMissingPets = async (userId: string) => {
       id: item.Pets.id.toString(),
       name: item.Pets.name || "Sin nombre",
       photo_url: item.Pets.photo_url,
+      species: item.Pets.species || "Desconocido",
     },
     reporter: {
       id: item.users.id.toString(),
       name: item.users.name || "Desconocido",
+      phone: item.users.phone || "No disponible",
+      instagram: item.users.instagram || "No disponible",
+      email: item.users.email || "No disponible",
     },
     reported_at: item.reported_at.toISOString(),
   }));
@@ -240,7 +313,7 @@ export const reportFound = async (
 ) => {
   const parseResult = reportFoundSchema.safeParse(body);
   if (!parseResult.success) {
-    return new Response(JSON.stringify({ error: parseResult.error.format() }), {
+    return new Response(JSON.stringify({ error: parseResult.error.errors[0]?.message  }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
@@ -279,6 +352,25 @@ export const reportFound = async (
   }
 };
 
+export const removeFoundReport = async (
+  ownerId: string,
+  foundId: number
+) => {
+  try {
+    await rejectFoundReport(foundId, ownerId);
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e: any) {
+    const status = e.message.includes("No autorizado") ? 403 : 404;
+    return new Response(JSON.stringify({ error: e.message }), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+};
+
 export const fetchFoundReports = async (userId: string) => {
   const list = await listFoundReportsForUser(userId);
 
@@ -288,12 +380,16 @@ export const fetchFoundReports = async (userId: string) => {
     ownerId: r.MissingPets.reporter_id.toString(),
     helper: {
       id: r.users.id.toString(),
-      name: r.users.name
+      name: r.users.name || "Desconocido",
+      phone: r.users.phone || "No disponible",
+      instagram: r.users.instagram || "No disponible",
+      email: r.users.email || "No disponible",
     },
     pet: {
       id: r.MissingPets.pet_id.toString(),
       name: r.MissingPets.Pets.name,
-      photo_url: r.MissingPets.Pets.photo_url
+      photo_url: r.MissingPets.Pets.photo_url,
+      species: r.MissingPets.Pets.species || "Desconocido",
     },
     description: r.description,
     latitude: r.latitude,

@@ -17,7 +17,7 @@ import type { UserArticle } from "@/types/marketplace"
 import { CATEGORY_OPTIONS, PET_OPTIONS, CONDITION_OPTIONS } from "@/types/marketplace"
 import { getPetCategoryLabel, getItemCategoryLabel, getItemConditionLabel, getItemStatusLabel } from "@/types/translateLabels";
 import LocationPicker, { LatLng } from "@/components/marketplace/LocationPicker"
-import { Minimap } from "@/components/marketplace/Minimap"
+import { Minimap } from "@/components/Minimap"
 
 interface EditArticleModalProps {
   article: UserArticle | null

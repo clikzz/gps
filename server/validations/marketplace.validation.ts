@@ -22,7 +22,8 @@ export const createItemSchema = z.object({
     }),
   price: z
     .number()
-    .min(0, { message: "El precio no puede ser negativo." }),
+    .min(0, { message: "El precio no puede ser negativo." })
+    .max(10000000, { message: "El precio es demasiado alto." }),
   photo_urls: z
     .array(z.string().url({ message: "Cada URL de imagen debe ser válida." })),
   latitude: z

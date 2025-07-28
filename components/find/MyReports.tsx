@@ -15,12 +15,14 @@ interface MyReportsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onGoTo: (report: MissingReport) => void;
+  onEdit: (report: MissingReport) => void;
 }
 
 export default function MyReportsModal({
   isOpen,
   onClose,
   onGoTo,
+  onEdit,
 }: MyReportsModalProps) {
   const [myReports, setMyReports] = useState<MissingReport[]>([]);
   const [loading, setLoading] = useState(false);
@@ -80,28 +82,39 @@ export default function MyReportsModal({
                         <p className="text-lg font-semibold">
                           🐾 {r.pet.name}
                         </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onGoTo(r)}
-                        >
-                          Ver en mapa
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onGoTo(r)}
+                          >
+                            Ver en mapa
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => onEdit(r)}
+                          >
+                            Editar
+                          </Button>
+                        </div>
                       </div>
+                    </div>
+                    <div className="space-y-1 mt-1">
                       <p className="text-xs text-muted-foreground">
                         {new Date(r.reported_at).toLocaleString()}
                       </p>
-                    </div>
-                    {r.description ? (
-                      <p className="text-sm">{r.description}</p>
-                    ) : (
-                      <p className="text-sm italic text-muted-foreground">
-                        Sin descripción
+                      {r.description ? (
+                        <p className="text-sm">{r.description}</p>
+                      ) : (
+                        <p className="text-sm italic text-muted-foreground">
+                          Sin descripción
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        📍 {`${r.address || r.street}, ${r.city}, ${r.region}` || "Ubicación no registrada"}
                       </p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      📍 {`${r.address || r.street}, ${r.city}, ${r.region}` || "Ubicación no registrada"}
-                    </p>
+                    </div>
                   </CardContent>
                 </Card>
               ))}

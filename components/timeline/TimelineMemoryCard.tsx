@@ -164,11 +164,12 @@ export default function TimelineMemoryCard({
             <motion.div variants={itemVariants} layout>
               {entry.title && (
                 <motion.h3
-                  className="text-lg sm:text-xl font-bold text-foreground max-w-[50ch] whitespace-normal break-all leading-tight"
+                  className="text-lg sm:text-xl font-bold text-foreground max-w-[50ch] break-words hyphens-auto leading-tight"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: 0.1 }}
                   layout
+                  style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
                 >
                   {entry.title}
                 </motion.h3>
@@ -178,7 +179,6 @@ export default function TimelineMemoryCard({
                 <span className="text-xs sm:text-sm">{date}</span>
               </motion.div>
             </motion.div>
-
             <motion.div className="flex flex-col items-end gap-2 max-w-[60%]" variants={contentVariants} layout>
               <motion.div
                 className="flex flex-wrap items-center justify-end gap-2"
@@ -193,7 +193,7 @@ export default function TimelineMemoryCard({
                 {milestones.slice(0, initialVisibleCount).map((milestone, idx) => (
                   <motion.span
                     key={`${entry.id}-${milestone.id}`}
-                    className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] whitespace-normal break-words hover:bg-muted/80 transition-colors duration-200"
+                    className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] break-words hyphens-auto hover:bg-muted/80 transition-colors duration-200"
                     variants={badgeVariants}
                     initial={{ opacity: 1, scale: 1 }}
                     whileHover={{
@@ -202,18 +202,18 @@ export default function TimelineMemoryCard({
                     transition={{ duration: 0.2 }}
                     layout
                     layoutId={`milestone-visible-${entry.id}-${milestone.id}`}
+                    style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
                   >
                     <Tag className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-foreground" />
                     <span className="text-foreground text-xs">{milestone.name}</span>
                   </motion.span>
                 ))}
-
                 <AnimatePresence mode="popLayout" key={`milestones-${entry.id}`}>
                   {expanded &&
                     milestones.slice(initialVisibleCount).map((milestone, idx) => (
                       <motion.span
                         key={`${entry.id}-${milestone.id}`}
-                        className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] whitespace-normal break-words hover:bg-muted/80 transition-colors duration-200"
+                        className="inline-flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-muted rounded-full text-xs max-w-[8rem] sm:max-w-[10rem] break-words hyphens-auto hover:bg-muted/80 transition-colors duration-200"
                         initial={{ opacity: 0, scale: 0.8, y: -10 }}
                         animate={{
                           opacity: 1,
@@ -239,6 +239,7 @@ export default function TimelineMemoryCard({
                         }}
                         layout
                         layoutId={`milestone-${entry.id}-${milestone.id}`}
+                        style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
                       >
                         <Tag className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-foreground" />
                         <span className="text-foreground text-xs">{milestone.name}</span>
@@ -246,7 +247,6 @@ export default function TimelineMemoryCard({
                     ))}
                 </AnimatePresence>
               </motion.div>
-
               {hasMore && (
                 <motion.div
                   variants={expandButtonVariants}
@@ -280,7 +280,6 @@ export default function TimelineMemoryCard({
             </motion.div>
           </div>
         </motion.div>
-
         <CardContent className="p-6">
           <motion.div
             variants={contentVariants}
@@ -296,9 +295,10 @@ export default function TimelineMemoryCard({
           >
             {entry.description && (
               <motion.p
-                className="text-sm sm:text-base text-foreground mb-6 break-words leading-relaxed"
+                className="text-sm sm:text-base text-foreground mb-6 break-words hyphens-auto leading-relaxed"
                 variants={itemVariants}
                 layout
+                style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
               >
                 {entry.description}
               </motion.p>
@@ -308,7 +308,6 @@ export default function TimelineMemoryCard({
             </motion.div>
           </motion.div>
         </CardContent>
-
         <CardFooter className="justify-end space-x-2">
           <NewTimelineDrawer petId={petId} mode="edit" entryToEdit={entry} onSuccess={handleEditSuccess} />
           <motion.div

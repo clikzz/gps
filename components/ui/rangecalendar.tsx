@@ -48,7 +48,6 @@ export default function RangeCalendar({
   const [startDate, setStartDate] = useState<Date | null>(initialStartDate)
   const todayLocal = new Date()
   const localMaxDate = new Date(todayLocal.getFullYear(), todayLocal.getMonth(), todayLocal.getDate())
-
   const [endDate, setEndDate] = useState<Date | null>(initialEndDate)
   const [hoverDate, setHoverDate] = useState<Date | null>(null)
 
@@ -60,10 +59,8 @@ export default function RangeCalendar({
 
   const today = new Date()
   const currentMonth = new Date(today.getFullYear(), today.getMonth())
-
   const [rightCalendarDate, setRightCalendarDate] = useState<Date>(currentMonth)
   const [leftCalendarDate, setLeftCalendarDate] = useState<Date>(new Date(today.getFullYear(), today.getMonth() - 1))
-
   const [mobileActiveCalendar, setMobileActiveCalendar] = useState<"left" | "right">("right")
 
   const daysInMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
@@ -225,6 +222,7 @@ export default function RangeCalendar({
         start = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate())
         break
     }
+
     setStartDate(start)
     setEndDate(end)
   }
@@ -239,62 +237,59 @@ export default function RangeCalendar({
     return `${startDate!.toLocaleDateString("es-ES")} - ${endDate!.toLocaleDateString("es-ES")}`
   }
 
-  const renderCalendar = (currentDate: Date, isRight = false, isMobile = false) => {
+  const renderCalendar = (currentDate: Date, isRight = false, isMobileTablet = false) => {
     const cells = generateCalendarCells(currentDate)
-
     return (
-      <div className={`${isMobile ? "p-3" : "flex-1 p-4 sm:p-6"}`}>
-        <div className={`flex items-center justify-between ${isMobile ? "mb-3" : "mb-4 sm:mb-6"}`}>
+      <div className={`${isMobileTablet ? "p-4 md:p-5" : "flex-1 p-6 lg:p-8"}`}>
+        <div className={`flex items-center justify-between ${isMobileTablet ? "mb-4 md:mb-5" : "mb-6 lg:mb-8"}`}>
           <Button
             variant="ghost"
             size="sm"
             onClick={() =>
-              isMobile
+              isMobileTablet
                 ? navigateMobileCalendar("prev")
                 : isRight
                   ? navigateRightMonth("prev")
                   : navigateLeftMonth("prev")
             }
-            className={`${isMobile ? "h-6 w-6 p-0" : "h-8 w-8 p-0"} hover:bg-muted`}
+            className={`${isMobileTablet ? "h-8 w-8 p-0 md:h-9 md:w-9" : "h-10 w-10 p-0"} hover:bg-muted`}
           >
-            <ChevronLeft className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
+            <ChevronLeft className={`${isMobileTablet ? "h-4 w-4" : "h-5 w-5"}`} />
           </Button>
-          <h2 className={`${isMobile ? "text-sm" : "text-base sm:text-lg"} font-semibold text-foreground`}>
+          <h2 className={`${isMobileTablet ? "text-base md:text-lg" : "text-xl"} font-semibold text-foreground`}>
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h2>
           <Button
             variant="ghost"
             size="sm"
             onClick={() =>
-              isMobile
+              isMobileTablet
                 ? navigateMobileCalendar("next")
                 : isRight
                   ? navigateRightMonth("next")
                   : navigateLeftMonth("next")
             }
-            className={`${isMobile ? "h-6 w-6 p-0" : "h-8 w-8 p-0"} hover:bg-muted`}
+            className={`${isMobileTablet ? "h-8 w-8 p-0 md:h-9 md:w-9" : "h-10 w-10 p-0"} hover:bg-muted`}
             disabled={
-              isRight || (isMobile && mobileActiveCalendar === "right")
+              isRight || (isMobileTablet && mobileActiveCalendar === "right")
                 ? currentDate.getFullYear() >= currentMonth.getFullYear() &&
                   currentDate.getMonth() >= currentMonth.getMonth()
                 : currentDate.getFullYear() >= currentMonth.getFullYear() &&
                   currentDate.getMonth() >= currentMonth.getMonth() - 1
             }
           >
-            <ChevronRight className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
+            <ChevronRight className={`${isMobileTablet ? "h-4 w-4" : "h-5 w-5"}`} />
           </Button>
         </div>
-
-        <div className={`grid grid-cols-7 gap-1 ${isMobile ? "mb-2" : "mb-3"}`}>
+        <div className={`grid grid-cols-7 gap-1 ${isMobileTablet ? "mb-3 md:mb-4" : "mb-4"}`}>
           {dayNames.map((dn) => (
-            <div key={dn} className={`${isMobile ? "h-6" : "h-8 sm:h-10"} flex items-center justify-center`}>
-              <span className={`${isMobile ? "text-xs" : "text-xs sm:text-sm"} font-medium text-muted-foreground`}>
+            <div key={dn} className={`${isMobileTablet ? "h-8 md:h-10" : "h-12"} flex items-center justify-center`}>
+              <span className={`${isMobileTablet ? "text-sm" : "text-base"} font-medium text-muted-foreground`}>
                 {dn}
               </span>
             </div>
           ))}
         </div>
-
         <div className="grid grid-cols-7 gap-1">
           {cells.map(({ date, isCurrent }, idx) => {
             const isStart = isCurrent && isStartDate(date)
@@ -314,8 +309,8 @@ export default function RangeCalendar({
                 onMouseEnter={() => setHoverDate(date)}
                 onMouseLeave={() => setHoverDate(null)}
                 className={`
-                  ${isMobile ? "h-6 w-6 p-0 text-xs" : "h-8 w-8 sm:h-10 sm:w-10 p-0 text-xs sm:text-sm"} 
-                  font-normal transition-all duration-200 relative
+                  ${isMobileTablet ? "h-8 w-8 md:h-10 md:w-10 p-0 text-sm" : "h-12 w-12 p-0 text-base"}
+                   font-normal transition-all duration-200 relative
                   ${
                     isStart || isEnd
                       ? "bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
@@ -351,17 +346,17 @@ export default function RangeCalendar({
   const currentMobileDate = mobileActiveCalendar === "left" ? leftCalendarDate : rightCalendarDate
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-lg">
-      <CardHeader className={`pb-2 sm:pb-4`}>
-        <p className="text-xs sm:text-sm text-muted-foreground">{formatDateRange()}</p>
+    <Card className="w-full max-w-5xl mx-auto shadow-lg">
+      <CardHeader className="pb-3 lg:pb-4">
+        <p className="text-sm lg:text-base text-muted-foreground">{formatDateRange()}</p>
       </CardHeader>
-
       <CardContent className="p-0">
-        <div className="sm:hidden border-t">
+
+        <div className="lg:hidden border-t">
           <div className="flex border-b bg-muted/20">
             <button
               onClick={() => setMobileActiveCalendar("left")}
-              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+              className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
                 mobileActiveCalendar === "left"
                   ? "bg-background text-foreground border-b-2 border-primary"
                   : "text-muted-foreground hover:text-foreground"
@@ -371,7 +366,7 @@ export default function RangeCalendar({
             </button>
             <button
               onClick={() => setMobileActiveCalendar("right")}
-              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+              className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
                 mobileActiveCalendar === "right"
                   ? "bg-background text-foreground border-b-2 border-primary"
                   : "text-muted-foreground hover:text-foreground"
@@ -383,34 +378,33 @@ export default function RangeCalendar({
           {renderCalendar(currentMobileDate, mobileActiveCalendar === "right", true)}
         </div>
 
-        <div className="hidden sm:flex border-t">
+        <div className="hidden lg:flex border-t">
           {renderCalendar(leftCalendarDate, false)}
           <div className="w-px bg-border"></div>
           {renderCalendar(rightCalendarDate, true)}
         </div>
 
-        <div className="border-t bg-muted/30 p-3 sm:p-6">
-          <div className="flex flex-col gap-3 sm:gap-4">
-            <div className="flex flex-wrap gap-1 sm:gap-2">
+        <div className="border-t bg-muted/30 p-4 lg:p-6">
+          <div className="flex flex-col gap-4 lg:gap-5">
+            <div className="flex flex-wrap gap-2">
               {quickRangeOptions.map((option) => (
                 <Badge
                   key={option.key}
                   variant="outline"
-                  className="cursor-pointer hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-colors text-xs px-2 py-1 border-muted-foreground/20"
+                  className="cursor-pointer hover:bg-primary/10 hover:text-primary hover:border-primary/50 transition-colors text-sm px-3 py-1.5 border-muted-foreground/20"
                   onClick={() => setQuickRange(option.key as any)}
                 >
                   {option.label}
                 </Badge>
               ))}
             </div>
-
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-3 justify-end">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleClear}
                 disabled={!startDate && !endDate}
-                className="min-w-[80px] sm:min-w-[100px] text-xs sm:text-sm h-8 sm:h-9 bg-transparent"
+                className="min-w-[100px] lg:min-w-[120px] text-sm h-9 lg:h-10 bg-transparent"
               >
                 Limpiar
               </Button>
@@ -418,7 +412,7 @@ export default function RangeCalendar({
                 onClick={handleApply}
                 disabled={!hasChanges}
                 size="sm"
-                className="min-w-[80px] sm:min-w-[100px] text-xs sm:text-sm h-8 sm:h-9"
+                className="min-w-[100px] lg:min-w-[120px] text-sm h-9 lg:h-10"
               >
                 Aplicar
               </Button>

@@ -1,11 +1,12 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 import type { FieldApi } from "@tanstack/react-form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus } from "lucide-react"
+import PhoneInput from "@/components/ui/phone-input"
 
 interface FormFieldWrapperProps {
   children: React.ReactNode
@@ -55,6 +56,33 @@ export const TextField: React.FC<TextFieldProps> = ({ field, label, placeholder,
   )
 }
 
+interface PhoneFieldProps {
+  field: FieldApi<any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any, any>
+  label: string
+  placeholder?: string
+  required?: boolean
+}
+
+export const PhoneField: React.FC<PhoneFieldProps> = ({ field, label, placeholder = "Número de teléfono", required = false }) => {
+  const errorMessage =
+    Array.isArray(field.state.meta.errors) && field.state.meta.errors.length > 0
+      ? typeof field.state.meta.errors[0] === "object" && field.state.meta.errors[0] !== null
+        ? (field.state.meta.errors[0] as { message?: string }).message
+        : (field.state.meta.errors[0] as string)
+      : undefined
+
+  return (
+    <FormFieldWrapper label={label} required={required} error={errorMessage}>
+      <PhoneInput
+        value={field.state.value || ""}
+        onChange={field.handleChange}
+        placeholder={placeholder}
+        required={required}
+      />
+    </FormFieldWrapper>
+  )
+}
+
 interface SelectOption {
   value: string
   label: string
@@ -85,7 +113,11 @@ export const SelectField: React.FC<SelectFieldProps> = ({ field, label, placehol
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem 
+              key={option.value} 
+              value={option.value}
+              className="cursor-pointer hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary transition-colors duration-200"
+            >
               <div className="flex items-center space-x-2">
                 {option.emoji && <span>{option.emoji}</span>}
                 <span>{option.label}</span>
@@ -154,14 +186,14 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
                 <Badge
                   key={value}
                   variant="secondary"
-                  className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-800 border border-gray-200 hover:bg-gray-200 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors duration-200"
                 >
                   {option?.emoji && <span className="text-sm">{option.emoji}</span>}
                   <span className="text-sm font-medium">{option?.label}</span>
                   <button
                     type="button"
                     onClick={() => removeCategory(value)}
-                    className="ml-1 hover:bg-gray-300 rounded-full w-4 h-4 flex items-center justify-center transition-colors"
+                    className="ml-1 hover:bg-primary/30 rounded-full w-4 h-4 flex items-center justify-center transition-colors duration-200"
                     title="Eliminar categoría"
                   >
                     <X className="w-3 h-3" />
@@ -181,7 +213,7 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
               }}
               value=""
             >
-              <SelectTrigger className="border-dashed border-gray-300 hover:border-gray-400">
+              <SelectTrigger className="border-dashed border-gray-300 hover:border-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer">
                 <div className="flex items-center space-x-2 text-gray-600">
                   <Plus className="w-4 h-4" />
                   <span className="text-sm">
@@ -193,7 +225,11 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {availableOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem 
+                    key={option.value} 
+                    value={option.value}
+                    className="cursor-pointer hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary transition-colors duration-200"
+                  >
                     <div className="flex items-center space-x-2">
                       {option.emoji && <span>{option.emoji}</span>}
                       <span>{option.label}</span>
@@ -220,13 +256,3 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
     </FormFieldWrapper>
   )
 }
-
-export const CATEGORY_OPTIONS: SelectOption[] = [
-  { value: "veterinaria", label: "Veterinaria", emoji: "🏥" },
-  { value: "peluqueria", label: "Peluquería", emoji: "✂️" },
-  { value: "tienda", label: "Tienda de mascotas", emoji: "🛒" },
-  { value: "guarderia", label: "Guardería", emoji: "🏠" },
-  { value: "adiestramiento", label: "Centro de adiestramiento", emoji: "🎓" },
-  { value: "adopcion", label: "Centro de adopción", emoji: "❤️" },
-  { value: "otro", label: "Otro", emoji: "🐾" },
-]

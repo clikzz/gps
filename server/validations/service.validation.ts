@@ -1,4 +1,4 @@
-import { z } from "zod/v4"
+import { z } from "zod"
 
 export const serviceCategories = [
   "veterinaria",
@@ -33,9 +33,12 @@ export const serviceSchema = z.object({
     .min(8, "El teléfono debe tener al menos 8 dígitos")
     .max(15, "El teléfono no puede exceder 15 dígitos")
     .regex(/^[+]?[\d\s\-()]+$/, "Formato de teléfono inválido"),
+  user_id: z.string().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
 })
 
-export const createServiceSchema = serviceSchema.omit({ id: true })
+export const createServiceSchema = serviceSchema.omit({ id: true, user_id: true, created_at: true, updated_at: true })
 
 export const getServicesSchema = z.object({
   latitude: z.number().min(-90).max(90).optional(),

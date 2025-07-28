@@ -21,9 +21,9 @@ export const getUserProfile = async (userId: string) => {
     MODERATOR: "MODERATOR_ROLE",
   };
 
-  const roleKeys = Object.keys(badgeKeysByRole); 
-  const currentRoleKey = badgeKeysByRole[user.role]; 
-  const badgeAssignments = user.userBadges.map((ub) => ub.badge.key); 
+  const roleKeys = Object.keys(badgeKeysByRole);
+  const currentRoleKey = badgeKeysByRole[user.role];
+  const badgeAssignments = user.userBadges.map((ub) => ub.badge.key);
 
   if (currentRoleKey && !badgeAssignments.includes(currentRoleKey)) {
     const badge = await prisma.badge.findUnique({ where: { key: currentRoleKey } });
@@ -56,8 +56,8 @@ export const getUserProfile = async (userId: string) => {
     where: { id: userId },
     include: {
       Pets: {
-        where: { 
-          deleted: false, 
+        where: {
+          deleted: false,
         },
       },
       userBadges: {
@@ -86,7 +86,7 @@ export const updateUserProfile = async (
     instagram,
     phone,
   } = data;
-  
+
   const defaultAvatarUrl = "https://fwjwzustxplwudyivyjs.supabase.co/storage/v1/object/public/images/profile/defaultpfp.png";
   const finalAvatarUrl = avatar_url === null ? defaultAvatarUrl : avatar_url;
 
@@ -94,13 +94,19 @@ export const updateUserProfile = async (
     ...(name !== undefined && { name }),
     ...(email !== undefined && { email }),
     avatar_url: finalAvatarUrl,
-    ...(selectedBadgeIds && { selectedBadgeIds }),
-    ...(instagram !== undefined && { instagram }),
-    ...(phone !== undefined && { phone }),
   };
 
   if (selectedBadgeIds !== undefined) {
     updateData.selectedBadgeIds = selectedBadgeIds;
+  }
+
+  if (instagram !== undefined) {
+    updateData.instagram = instagram || null;
+  }
+
+  if (phone !== undefined) {
+    const cleanPhone = phone ? phone.replace(/\s+/g, '') : null;
+    updateData.phone = cleanPhone;
   }
 
   return await prisma.users.update({

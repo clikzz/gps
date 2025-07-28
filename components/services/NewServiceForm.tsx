@@ -3,7 +3,8 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { useNewServiceForm } from "@/hooks/useNewServiceForm"
-import { TextField, MultiSelectField, CATEGORY_OPTIONS } from "@/components/services/ServiceFormField"
+import { TextField, MultiSelectField, PhoneField } from "@/components/services/ServiceFormField"
+import { CATEGORY_OPTIONS } from "@/types/service"
 import { Check, MapPin, Loader2 } from "lucide-react"
 
 interface NewServiceFormProps {
@@ -29,8 +30,8 @@ const NewServiceForm: React.FC<NewServiceFormProps> = ({
 
   React.useEffect(() => {
     if (selectedServiceLocation) {
-      serviceForm.form.setFieldValue("latitude", selectedServiceLocation.lat.toString())
-      serviceForm.form.setFieldValue("longitude", selectedServiceLocation.lng.toString())
+      serviceForm.form.setFieldValue("latitude", selectedServiceLocation.lat)
+      serviceForm.form.setFieldValue("longitude", selectedServiceLocation.lng)
     }
   }, [selectedServiceLocation, serviceForm.form])
 
@@ -108,11 +109,10 @@ const NewServiceForm: React.FC<NewServiceFormProps> = ({
         {/* Teléfono */}
         <serviceForm.form.Field name="phone">
           {(field) => (
-            <TextField
+            <PhoneField
               field={field}
               label="Teléfono de contacto"
-              placeholder="Ej: +56 9 1234 5678"
-              type="tel"
+              placeholder="9 1234 5678"
               required
             />
           )}

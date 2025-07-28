@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { FoundReport } from "@/types/find";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
+import { Ban, CheckCircle, X } from "lucide-react";
 import { translateSpecies } from "@/utils/translateSpecies"
 
 interface FoundReportsModalProps {
@@ -22,7 +23,7 @@ export default function FoundReports({
 }: FoundReportsModalProps) {
   const [foundReports, setFoundReports] = useState<FoundReport[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [rejecting, setRejecting] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [marking, setMarking] = useState(false);
@@ -79,11 +80,39 @@ export default function FoundReports({
     }
   };
 
-  const petCategory = translateSpecies(report.pet.species)
+  const handleReject = async () => {
+    if (!report) return
+    setRejecting(true)
+    try {
+      const res = await fetch(`/api/find?mode=found&id=${report.id}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || res.statusText)
+      }
+      toast.success("Hallazgo rechazado.");
+      setFoundReports(prev => prev.filter(r => r.id !== report.id));
+      if (currentIdx >= total - 1) setCurrentIdx(0);
+      if (onMarkedFound) onMarkedFound();
+    } catch (e: any) {
+      toast.error(e.message || "Error al rechazar hallazgo.")
+    } finally {
+      setRejecting(false)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50">
       <Card className="w-full max-w-3xl mx-4 relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4"
+          onClick={onClose}
+        >
+          <X className="w-5 h-5" />
+        </Button>
         <CardHeader>
           <CardTitle>Avisos de Hallazgo</CardTitle>
         </CardHeader>
@@ -97,7 +126,7 @@ export default function FoundReports({
             <>
               <div className="flex justify-between items-center">
                 <p className="text-lg font-semibold">🐾 {report.pet.name}</p>
-                <Badge variant="outline">{petCategory}</Badge>
+                <Badge variant="outline">{translateSpecies(report.pet.species)}</Badge>
               </div>
 
               {report.photo_urls && report.photo_urls.length > 0 ? (
@@ -175,18 +204,26 @@ export default function FoundReports({
             {/* Botón para marcar encontrada */}
             {report && !loading && (
               <Button
-                variant="destructive"
                 size="sm"
                 onClick={handleMarkFound}
                 disabled={marking}
               >
+                <CheckCircle className="w-4 h-4 mr-1" />
                 {marking ? "Marcando..." : "Marcar encontrada"}
               </Button>
             )}
 
-            <Button variant="outline" size="sm" onClick={onClose}>
-              Cerrar
-            </Button>
+            {report && !loading && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleReject}
+                disabled={rejecting}
+              >
+                <Ban className="w-4 h-4 mr-1" />
+                {rejecting ? "Rechazando…" : "Rechazar hallazgo"}
+              </Button>
+            )}
           </div>
         </CardFooter>
       </Card>

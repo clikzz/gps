@@ -388,6 +388,9 @@ export default function FindMap() {
       <FoundReports
         isOpen={isFoundReportsModalOpen}
         onClose={() => setIsFoundReportsModalOpen(false)}
+        onMarkedFound={() => {
+          refreshFoundReports();
+        }}
       />
       <EditReportModal
         report={reportToEdit}

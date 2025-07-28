@@ -55,7 +55,6 @@ export function NextDosesTable() {
     medications
       .filter(
         (med) =>
-          med.pet_id.toString() == activePet.id &&
           med.active &&
           med.next_dose_date &&
           new Date(med.next_dose_date) > today
@@ -70,7 +69,7 @@ export function NextDosesTable() {
           isOverdue: isPast(nextDate),
           isUpcoming: isWithinInterval(nextDate, {
             start: today,
-            end: addDays(today, 7),
+            end: addDays(today, 31),
           }),
           details: `Dosis: ${med.dose}`,
           id: med.id,

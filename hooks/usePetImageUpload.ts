@@ -21,21 +21,79 @@ export const useImageUpload = () => {
     return true;
   };
 
+  const cropImageToSquare = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          reject(new Error("No se pudo crear el contexto del canvas"));
+          return;
+        }
+
+        const size = Math.min(img.width, img.height);
+        canvas.width = size;
+        canvas.height = size;
+
+        const sourceX = (img.width - size) / 2;
+        const sourceY = (img.height - size) / 2;
+
+        ctx.drawImage(
+          img,
+          sourceX,
+          sourceY,
+          size,
+          size,
+          0,
+          0,
+          size,
+          size
+        );
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const croppedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: file.lastModified,
+            });
+            resolve(croppedFile);
+          } else {
+            reject(new Error("Error al procesar la imagen"));
+          }
+        }, file.type);
+      };
+
+      img.onerror = () => {
+        reject(new Error("Error al cargar la imagen"));
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleFileChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
 
       if (!file) return;
 
       if (!validateFile(file)) return;
 
-      setSelectedFile(file);
+      try {
+        const croppedFile = await cropImageToSquare(file);
+        setSelectedFile(croppedFile);
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(croppedFile);
+      } catch (error) {
+        console.error("Error al procesar la imagen:", error);
+        toast.error("Error al procesar la imagen");
+      }
     },
     []
   );

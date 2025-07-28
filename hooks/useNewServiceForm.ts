@@ -3,6 +3,12 @@
 import { useForm } from "@tanstack/react-form"
 import { useState } from "react"
 import { toast } from "sonner"
+import {
+  NewServiceFormData,
+  NewServiceFormInput,
+  newServiceFormSchema,
+  type ServiceCategory
+} from "@/types/service"
 
 interface UseNewServiceFormProps {
   onSuccess?: () => void
@@ -14,12 +20,12 @@ export const useNewServiceForm = ({ onSuccess }: UseNewServiceFormProps) => {
   const form = useForm({
     defaultValues: {
       name: "",
-      categories: [] as string[],
+      categories: [] as ServiceCategory[],
       description: "",
-      latitude: "",
-      longitude: "",
+      latitude: 0,
+      longitude: 0,
       phone: "",
-    },
+    } as NewServiceFormData,
     onSubmit: async ({ value }) => {
       setIsSubmitting(true)
       try {
@@ -32,8 +38,8 @@ export const useNewServiceForm = ({ onSuccess }: UseNewServiceFormProps) => {
             name: value.name,
             categories: Array.isArray(value.categories) ? value.categories : [],
             description: value.description,
-            latitude: Number.parseFloat(value.latitude),
-            longitude: Number.parseFloat(value.longitude),
+            latitude: value.latitude,
+            longitude: value.longitude,
             phone: value.phone,
           }),
         })

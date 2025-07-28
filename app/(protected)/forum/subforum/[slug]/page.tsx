@@ -67,14 +67,14 @@ export default async function SubforumPage({
           <span>{subforumName}</span>
         </div>
 
-        <div className="border rounded-lg p-4 font-medium text-lg">{subforumName}</div>
+        <div className="border rounded-lg p-4 font-medium text-lg bg-accent text-white">{subforumName}</div>
 
         <TopicList topics={topics} subforumSlug={slug} subforumId={subforum?.id} />
 
         <div className="flex justify-end">
           <Link
             href={`/forum/subforum/${slug}/new-topic`}
-            className="border rounded-full py-2 px-4 text-sm hover:bg-accent transition-colors"
+            className="border rounded-full py-2 px-4 text-sm hover:bg-accent/10 transition-colors font-medium"
           >
             Nuevo tema
           </Link>

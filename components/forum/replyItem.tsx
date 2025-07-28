@@ -60,8 +60,8 @@ export function ReplyItem({
         <div className="w-48 border-r p-4 text-center space-y-3">
           <div>
             <Link href={`/forum/user/${reply.author.id}`} className="font-medium hover:underline text-sm">
-              <span className="text-accent">{reply.author.name}</span>
-              <span className="text-gray-400"> #{reply.author.tag}</span>
+              <span className="text-accent font-semibold">{reply.author.name}</span>
+              <span className="text-gray-400 font-semibold"> #{reply.author.tag}</span>
             </Link>
           </div>
           <div className="text-xs font-semibold text-destructive">{getUserTitle(reply.author.menssageCount)}</div>{" "}

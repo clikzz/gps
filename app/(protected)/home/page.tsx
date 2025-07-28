@@ -11,7 +11,7 @@ import PetSelector from "@/components/PetSelector";
 import { translateSpecies } from "@/utils/translateSpecies";
 import { getRandomPhraseBySpecies } from "@/utils/petPhrases";
 import LoadingScreen from "@/components/LoadingScreen";
-import { Heart } from "lucide-react";
+import { Home as HomeIcon, Heart } from "lucide-react"; 
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -44,7 +44,7 @@ export default function Home() {
       <LoadingScreen
         title="Cargando"
         subtext="Obteniendo página de inicio..."
-        icon={Home}
+        icon={HomeIcon}  
         accentIcon={Heart}
       />
     );

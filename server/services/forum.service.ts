@@ -24,16 +24,16 @@ export const listTopics = async (
   const topics = await prisma.topics.findMany({
     where,
     include: {
-      users: 
+      users:
         { select: { id: true, name: true, tag: true, menssageCount: true, avatar_url: true } },
-      Posts: 
+      Posts:
         { select: { id: true } },
-      Subforums: 
-      { select: { name: true, category: true }}
+      Subforums:
+        { select: { name: true, category: true } }
     },
     orderBy: [
-      { featured: "desc" },     
-      { updated_at: "desc" }    
+      { featured: "desc" },
+      { updated_at: "desc" }
     ],
   });
 
@@ -56,8 +56,8 @@ export const listPosts = async (
 > => {
   return prisma.posts.findMany({
     where: { topic_id: topicId },
-    include: { 
-      users: { select: { id: true, name: true, tag: true, menssageCount: true, avatar_url: true } } 
+    include: {
+      users: { select: { id: true, name: true, tag: true, menssageCount: true, avatar_url: true } }
     },
     orderBy: { created_at: "asc" },
   }).then(posts =>
@@ -144,6 +144,9 @@ export const createPost = async (
     if (profile?.menssageCount === 10) {
       await assignBadge(userId, "MSG_10");
     }
+    if (profile?.menssageCount === 30) {
+      await assignBadge(userId, "MSG_30");
+    }
     
     return post;
   });
@@ -169,8 +172,8 @@ export async function updateAnyPost(
     where: { id: postId },
     data: {
       content,
-      moderated_at: new Date(),    
-      moderated_by: editorId,      
+      moderated_at: new Date(),
+      moderated_by: editorId,
     },
   });
 }

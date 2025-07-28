@@ -156,8 +156,8 @@ export function TopicDetail({ topic, mainPost }: TopicDetailProps) {
         <div className="w-48 border-r p-4 text-center space-y-3">
           <div>
             <Link href={`/forum/user/${topic.author.id}`} className="font-medium hover:underline text-sm">
-              <span className="text-accent">{topic.author.name}</span>
-              <span className="text-gray-400"> #{topic.author.tag}</span>
+              <span className="text-accent font-semibold">{topic.author.name}</span>
+              <span className="text-gray-400 font-semibold"> #{topic.author.tag}</span>
             </Link>
           </div>
           <div className="text-xs font-semibold text-destructive">{getUserTitle(topic.author.menssageCount)}</div>{" "}

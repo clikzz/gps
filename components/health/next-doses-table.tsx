@@ -27,6 +27,7 @@ import { format, isPast, isWithinInterval, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { BellRing } from "lucide-react";
 import ConfirmationButton from "@/components/ConfirmationButton";
+import { toast } from "sonner";
 
 export function NextDosesTable() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -108,8 +109,6 @@ export function NextDosesTable() {
     );
   }, [activePet, medications, vaccinations]);
 
-  console.log(nextDoses);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const totalPages = Math.ceil(nextDoses.length / itemsPerPage);
@@ -154,7 +153,6 @@ export function NextDosesTable() {
   };
 
   const handleEnableNotifications = async (dose: Dose) => {
-    console.log(`Habilitar notificaciones para la dosis: ${dose.name}`);
     try {
       const response = await fetch(`/api/health/alerts/${dose.id}`, {
         method: "POST",
@@ -168,9 +166,7 @@ export function NextDosesTable() {
         throw new Error("Error al habilitar notificaciones");
       }
 
-      alert(`Notificaciones habilitadas para ${dose.name}`);
-
-      console.log(`Notificaciones habilitadas para ${dose.name}`);
+      toast.success(`Notificaciones habilitadas para ${dose.name}`);
 
       const updatedDoses = nextDoses.map((d) =>
         d.global_id === dose.global_id ? { ...d, send: true } : d
@@ -183,12 +179,8 @@ export function NextDosesTable() {
           vac.id === dose.id ? { ...vac, send: true } : vac
         ),
       });
-      console.log("Dosis actualizadas:", updatedDoses);
-
-      console.log("Notificaciones habilitadas correctamente");
     } catch (error) {
-      console.error("Error al habilitar notificaciones:", error);
-      alert("No se pudo habilitar las notificaciones. Inténtalo más tarde.");
+      toast.error(`Error al habilitar notificaciones`);
     }
   };
 

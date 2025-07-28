@@ -11,8 +11,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Nombre Página",
-  description: "Descripción Página",
+  title: "petly",
+  description: "Tu asistente de salud para mascotas",
 };
 
 const poppinsSans = Poppins({

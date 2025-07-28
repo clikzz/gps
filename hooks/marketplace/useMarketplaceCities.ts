@@ -16,8 +16,7 @@ export function useMarketplaceCities() {
       .then((data: { locations: Record<string, string[]> }) => {
         setLocations(data.locations);
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         setError("No se pudieron cargar las ubicaciones.");
       })
       .finally(() => setLoading(false));

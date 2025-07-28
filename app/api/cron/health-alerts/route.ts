@@ -170,7 +170,7 @@ function generateEmailContent(alert: any): string {
             <h3>${alert.title}</h3>
             <p>${alert.message}</p>
             ${specificInfo}
-            <p><strong>Fecha de la alerta:</strong> ${alert.alert_date.toLocaleDateString()}</p>
+            <p><strong>Fecha de la alerta:</strong> ${alert.alert_date.toLocaleDateString("es-ES")}</p>
           </div>
           
           <p>No olvides cuidar la salud de tu mascota. Si tienes alguna pregunta, consulta con tu veterinario.</p>

@@ -20,7 +20,7 @@ export interface ForumCategoryProps {
 export function ForumCategory({ category }: ForumCategoryProps) {
   return (
     <div className="space-y-1">
-      <div className="border rounded-t-lg p-3 sm:p-4 font-medium text-base sm:text-lg bg-muted/50">
+      <div className="border rounded-t-lg p-3 sm:p-4 font-medium text-base sm:text-lg bg-accent text-white">
       {category.name}
       </div>
       <div className="border rounded-b-lg overflow-hidden">
@@ -47,13 +47,13 @@ export function ForumCategory({ category }: ForumCategoryProps) {
                   <div className="flex gap-6">
                     <div className="text-center">
                       <div className="text-xs text-muted-foreground">Temas</div>
-                      <div className="font-medium text-sm">
+                      <div className="font-medium text-secondary text-sm">
                         {subforum.topicCount}
                         </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xs text-muted-foreground">Mensajes</div>
-                      <div className="font-medium text-sm">
+                      <div className="font-medium text-secondary text-sm">
                         {subforum.messageCount}
                         </div>
                     </div>
@@ -64,8 +64,8 @@ export function ForumCategory({ category }: ForumCategoryProps) {
                       <div className="space-y-1">
                         <div className="text-muted-foreground">{formatDateLabel(subforum.lastPost.date)}</div>
                         <div className="max-w-[120px] truncate">
-                          <span className="text-accent font-medium">{subforum.lastPost.author.name}</span>
-                          <span className="text-gray-400 font-medium ml-1">#{subforum.lastPost.author.tag}</span>
+                          <span className="text-accent font-semibold">{subforum.lastPost.author.name}</span>
+                          <span className="text-gray-400 font-semibold ml-1">#{subforum.lastPost.author.tag}</span>
                         </div>
                       </div>
                     ) : (
@@ -88,14 +88,14 @@ export function ForumCategory({ category }: ForumCategoryProps) {
                 <div className="col-span-2 xl:col-span-1">
                   <div className="text-center">
                     <div className="text-sm text-muted-foreground">Temas</div>
-                    <div className="font-medium">{subforum.topicCount}</div>
+                    <div className="font-medium text-secondary">{subforum.topicCount}</div>
                   </div>
                 </div>
 
                 <div className="col-span-2 xl:col-span-1">
                   <div className="text-center">
                     <div className="text-sm text-muted-foreground">Mensajes</div>
-                    <div className="font-medium">{subforum.messageCount}</div>
+                    <div className="font-medium text-secondary">{subforum.messageCount}</div>
                   </div>
                 </div>
 
@@ -107,8 +107,8 @@ export function ForumCategory({ category }: ForumCategoryProps) {
                         <span className="text-muted-foreground">
                           por
                           <Link href={`/forum/user/${subforum.lastPost.author.id}`} className="hover:underline">
-                            <span className="text-accent font-medium"> {subforum.lastPost.author.name}</span>
-                            <span className="text-gray-400 font-medium ml-1">#{subforum.lastPost.author.tag}</span>
+                            <span className="text-accent font-semibold"> {subforum.lastPost.author.name}</span>
+                            <span className="text-gray-400 font-semibold ml-1">#{subforum.lastPost.author.tag}</span>
                           </Link>
                         </span>
                       </div>

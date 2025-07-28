@@ -67,7 +67,7 @@ export default async function SubforumPage({
           <span>{subforumName}</span>
         </div>
 
-        <div className="border rounded-lg p-4 font-medium text-lg">{subforumName}</div>
+        <div className="border rounded-lg p-4 font-medium text-lg bg-accent text-white">{subforumName}</div>
 
         <TopicList topics={topics} subforumSlug={slug} subforumId={subforum?.id} />
 
